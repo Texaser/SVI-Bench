@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Envs
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# Data / artifacts (local only, real data lives on HF)
+data/
+outputs/
+results/
+runs/
+wandb/
+*.ckpt
+*.pt
+*.parquet
+
+# Secrets
+.env
+.env.local
+*.key

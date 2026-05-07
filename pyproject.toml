@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "svi-bench"
+version = "0.0.1"
+description = "SVI-Bench: a multi-task benchmark with per-task installable subsets."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "SVI-Bench contributors" }]
+keywords = ["benchmark", "evaluation", "multimodal", "video"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+# Core deps stay lightweight. Heavy/per-task deps go in optional-dependencies
+# below and must be lazy-imported inside the relevant task module.
+dependencies = [
+    "datasets>=2.18",
+    "huggingface_hub>=0.23",
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+    "tqdm>=4.66",
+    "openai>=1.30",
+]
+
+[project.optional-dependencies]
+t1 = []
+t2 = []
+t3 = ["decord>=0.6", "torchvision>=0.17"]
+t4 = []
+t5 = ["scipy>=1.11"]
+t6 = []
+t7 = ["langchain>=0.2", "anthropic>=0.30"]
+t8 = []
+t9 = ["gymnasium>=0.29"]
+all = [
+    "svi-bench[t1,t2,t3,t4,t5,t6,t7,t8,t9]",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+svi-bench = "svi_bench.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/your-org/svi-bench"
+Dataset = "https://huggingface.co/datasets/svi-bench/svi-bench"
+
+[tool.setuptools.packages.find]
+include = ["svi_bench*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

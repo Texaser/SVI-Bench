@@ -1,0 +1,10 @@
+# Default eval config for T3 (t3_action_recognition).
+# Override on the CLI or by passing config= to evaluate.run().
+task: t3_action_recognition
+split: test
+prompt_template: "{question}"
+metrics:
+  - accuracy
+generation:
+  temperature: 0.0
+  max_tokens: 256

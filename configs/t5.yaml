@@ -1,0 +1,10 @@
+# Default eval config for T5 (t5_placeholder).
+# Override on the CLI or by passing config= to evaluate.run().
+task: t5_placeholder
+split: test
+prompt_template: "{question}"
+metrics:
+  - accuracy
+generation:
+  temperature: 0.0
+  max_tokens: 256

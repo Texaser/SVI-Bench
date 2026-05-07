@@ -1,0 +1,10 @@
+# Default eval config for T7 (t7_deep_game_analysis).
+# Override on the CLI or by passing config= to evaluate.run().
+task: t7_deep_game_analysis
+split: test
+prompt_template: "{question}"
+metrics:
+  - accuracy
+generation:
+  temperature: 0.0
+  max_tokens: 256
