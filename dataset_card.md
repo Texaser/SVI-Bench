@@ -25,24 +25,24 @@ extra_gated_fields:
 configs:
   - config_name: shared
     data_files: shared/*.parquet
-  - config_name: t1_scene_recognition
-    data_files: t1_scene_recognition/*.parquet
-  - config_name: t2_placeholder
-    data_files: t2_placeholder/*.parquet
-  - config_name: t3_action_recognition
-    data_files: t3_action_recognition/*.parquet
-  - config_name: t4_placeholder
-    data_files: t4_placeholder/*.parquet
-  - config_name: t5_placeholder
-    data_files: t5_placeholder/*.parquet
-  - config_name: t6_placeholder
-    data_files: t6_placeholder/*.parquet
-  - config_name: t7_deep_game_analysis
-    data_files: t7_deep_game_analysis/*.parquet
-  - config_name: t8_placeholder
-    data_files: t8_placeholder/*.parquet
-  - config_name: t9_placeholder
-    data_files: t9_placeholder/*.parquet
+  - config_name: t1_structured_play_description
+    data_files: t1_structured_play_description/*.parquet
+  - config_name: t2_fine_grained_action_qa
+    data_files: t2_fine_grained_action_qa/*.parquet
+  - config_name: t3_compositional_video_retrieval
+    data_files: t3_compositional_video_retrieval/*.parquet
+  - config_name: t4_strategic_reasoning_qa
+    data_files: t4_strategic_reasoning_qa/*.parquet
+  - config_name: t5_outcome_forecasting
+    data_files: t5_outcome_forecasting/*.parquet
+  - config_name: t6_long_form_narrative_synthesis
+    data_files: t6_long_form_narrative_synthesis/*.parquet
+  - config_name: t7_motion_conditioned_generation
+    data_files: t7_motion_conditioned_generation/*.parquet
+  - config_name: t8_goal_conditioned_action_generation
+    data_files: t8_goal_conditioned_action_generation/*.parquet
+  - config_name: t9_cross_corpus_agentic_reasoning
+    data_files: t9_cross_corpus_agentic_reasoning/*.parquet
   - config_name: all
     data_files:
       - shared/*.parquet

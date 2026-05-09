@@ -12,15 +12,15 @@ from __future__ import annotations
 
 # Short-slug -> full-slug mapping. Update both when a task is renamed.
 TASK_REGISTRY: dict[str, str] = {
-    "t1": "t1_scene_recognition",
-    "t2": "t2_placeholder",
-    "t3": "t3_action_recognition",
-    "t4": "t4_placeholder",
-    "t5": "t5_placeholder",
-    "t6": "t6_placeholder",
-    "t7": "t7_deep_game_analysis",
-    "t8": "t8_placeholder",
-    "t9": "t9_placeholder",
+    "t1": "t1_structured_play_description",
+    "t2": "t2_fine_grained_action_qa",
+    "t3": "t3_compositional_video_retrieval",
+    "t4": "t4_strategic_reasoning_qa",
+    "t5": "t5_outcome_forecasting",
+    "t6": "t6_long_form_narrative_synthesis",
+    "t7": "t7_motion_conditioned_generation",
+    "t8": "t8_goal_conditioned_action_generation",
+    "t9": "t9_cross_corpus_agentic_reasoning",
 }
 
 

@@ -35,7 +35,7 @@ your HF token unlocks all configs:
 from datasets import load_dataset
 
 # Only T3 is downloaded
-ds = load_dataset("svi-bench/svi-bench", "t3_action_recognition")
+ds = load_dataset("svi-bench/svi-bench", "t3_compositional_video_retrieval")
 
 # Or download everything
 ds = load_dataset("svi-bench/svi-bench", "all")
@@ -59,10 +59,15 @@ svi-bench/
 ├── svi_bench/
 │   ├── core/                 # shared utilities (data, metrics, models, config)
 │   ├── tasks/                # one subpackage per task, lazy-imported
-│   │   ├── t1_scene_recognition/
-│   │   ├── t3_action_recognition/
-│   │   ├── t7_deep_game_analysis/
-│   │   └── ...
+│   │   ├── t1_structured_play_description/
+│   │   ├── t2_fine_grained_action_qa/
+│   │   ├── t3_compositional_video_retrieval/
+│   │   ├── t4_strategic_reasoning_qa/
+│   │   ├── t5_outcome_forecasting/
+│   │   ├── t6_long_form_narrative_synthesis/
+│   │   ├── t7_motion_conditioned_generation/
+│   │   ├── t8_goal_conditioned_action_generation/
+│   │   └── t9_cross_corpus_agentic_reasoning/
 │   └── cli.py                # unified entry point
 ├── configs/                  # YAML hyperparameters per task
 └── scripts/                  # helper scripts (download, etc.)
