@@ -1,11 +1,57 @@
 # T8 — Goal-Conditioned Action Generation
 
-LoRA fine-tune of **Wan2.1-Fun-V1.1-1.3B-Control** that builds on T7 but
-swaps the static prompt for **per-video polished captions** and switches
-the bbox conditioning to **first/last-frame only** — i.e. the model has to
-fill in the in-between motion that takes the players from their start
-positions to their end positions. Typically chained off a T7 checkpoint via
+Part of SVI-Bench **Pillar 3: Strategic Simulation**, sibling task to T7.
+Where T7 prescribes exact trajectories, T8 forces the model to **plan**
+intermediate actions toward a high-level goal under explicit spatial
+constraints.
+
+The implementation in this directory is a LoRA fine-tune of
+**Wan2.1-Fun-V1.1-1.3B-Control** that builds on T7 but swaps the static
+prompt for **per-video polished captions** and switches the bbox
+conditioning to **first/last-frame only** — i.e. the model has to fill in
+the in-between motion that takes the players from their start positions to
+their end positions. Typically chained off a T7 checkpoint via
 `--lora_checkpoint`.
+
+## Task
+
+Given:
+
+- an **initial frame**,
+- a **player-removed background video** (same construction as T7), and
+- a **textual instruction** specifying target player(s), spatial constraints
+  (start and end bounding boxes), and a desired action outcome — e.g. a
+  rebound, a contested layup,
+
+the model must generate a 5–10 s video in which the specified players
+execute a coherent action sequence that achieves the described objective.
+
+Unlike T7's trajectory-following, T8 requires implicit understanding of
+environment dynamics and goal-directed reasoning that goes beyond
+open-ended text-conditioned generation.
+
+## Data construction
+
+Curated basketball video clips paired with structured goal specifications
+derived from annotated actions, covering diverse goal-conditioned behaviors:
+completing plays at designated locations, executing specific moves, and
+interaction-aware scenarios. Per-video prompts are stored in
+`polished_captions_final.json` (one entry per clip); start/end bbox
+constraints come from the same bbox listings used by T7.
+
+## Evaluation metrics
+
+Three metrics specified in the paper. **Note:** the scoring code is not yet
+bundled in this repo — the `inference/` scripts only generate the sample
+videos. Plug in your own metric pass over the output directory.
+
+- **Final-frame mIoU** — bounding-box overlap between generated and target
+  player positions at the last frame.
+- **Final-frame feature similarity** — visual fidelity of the realized
+  outcome.
+- **Goal accuracy** — fraction judged successful by a fine-tuned
+  video-language QA model that asks whether the generated video achieves
+  the specified objective.
 
 ## Install
 

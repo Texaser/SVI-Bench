@@ -1,8 +1,55 @@
 # T7 — Motion-Conditioned Generation
 
-LoRA fine-tune of **Wan2.1-Fun-V1.1-1.3B-Control** conditioned on per-frame
-player bounding boxes and a background-video stream. Trains the DiT side of
-the pipeline with `q,k,v,o,ffn.0,ffn.2` LoRA targets at rank 32.
+Part of SVI-Bench **Pillar 3: Strategic Simulation**, which evaluates whether
+video generation models can simulate alternative futures while respecting the
+physical constraints of real multi-agent play.
+
+The implementation in this directory is a LoRA fine-tune of
+**Wan2.1-Fun-V1.1-1.3B-Control** conditioned on per-frame player bounding
+boxes and a background-video stream. It trains the DiT side of the pipeline
+with `q,k,v,o,ffn.0,ffn.2` LoRA targets at rank 32.
+
+## Task
+
+Given:
+
+- an **initial frame** showing all players in their starting positions,
+- a **player-removed background video** — the original footage with all
+  players digitally erased via video inpainting, leaving only the court or
+  pitch and static elements, and
+- a set of **player motion trajectories** specified as time-aligned
+  bounding-box sequences,
+
+the model must generate a 5–10 s video in which players follow the
+prescribed trajectories while remaining visually, physically, and temporally
+coherent.
+
+Unlike prior trajectory-conditioned generation that typically handles one or
+two objects in simple scenes, T7 targets multi-agent coordination where 10+
+players move simultaneously, interact physically, and occlude one another.
+
+## Data construction
+
+Each instance consists of:
+
+1. an initial frame,
+2. per-player motion trajectories as bounding-box sequences, and
+3. a player-removed background video generated via video inpainting.
+
+Explicit quality filtering removes instances with unstable tracking, severe
+occlusion, or visible inpainting artifacts (residual player silhouettes,
+texture bleeding) so generation operates on clean background inputs.
+
+## Evaluation metrics
+
+Two metrics specified in the paper. **Note:** the scoring code is not yet
+bundled in this repo — the `inference/` scripts only generate the sample
+videos. Plug in your own metric pass over the output directory.
+
+- **Video mIoU** — spatiotemporal alignment between player trajectories in
+  the generated and reference videos.
+- **Temporal feature similarity** — SigLIP features from corresponding
+  player regions across frames, measuring visual consistency.
 
 ## Install
 
