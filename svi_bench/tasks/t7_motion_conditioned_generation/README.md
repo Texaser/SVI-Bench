@@ -1,5 +1,13 @@
 # T7 — Motion-Conditioned Generation
 
+![Pillar 3 figure: T7 (top) and T8 (bottom)](../../../docs/figures/pillar3.png)
+
+_The top row of the figure illustrates T7: an initial frame plus the
+player-removed background video with per-player bbox motion trajectories
+become the conditioning inputs; the target output is a 5–10 s video where
+players follow those trajectories. Vector source:
+[`docs/figures/pillar3.pdf`](../../../docs/figures/pillar3.pdf)._
+
 Part of SVI-Bench **Pillar 3: Strategic Simulation**, which evaluates whether
 video generation models can simulate alternative futures while respecting the
 physical constraints of real multi-agent play.

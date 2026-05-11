@@ -1,5 +1,15 @@
 # T8 — Goal-Conditioned Action Generation
 
+![Pillar 3 figure: T7 (top) and T8 (bottom)](../../../docs/figures/pillar3.png)
+
+_The bottom row of the figure illustrates T8: an initial frame plus the
+player-removed background video annotated with the spatial target (red
+bbox at the goal location) and a goal instruction (e.g. "Simulate the
+player in the blue box attempting and missing a shot from the location
+marked by the red box") become the conditioning inputs; the target output
+is a 5–10 s video where the specified player executes the action. Vector
+source: [`docs/figures/pillar3.pdf`](../../../docs/figures/pillar3.pdf)._
+
 Part of SVI-Bench **Pillar 3: Strategic Simulation**, sibling task to T7.
 Where T7 prescribes exact trajectories, T8 forces the model to **plan**
 intermediate actions toward a high-level goal under explicit spatial
