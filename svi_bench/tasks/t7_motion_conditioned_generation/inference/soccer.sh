@@ -1,34 +1,32 @@
 #!/usr/bin/env bash
-# T8 — basketball post-training evaluation (task2 final).
-# Runs the bundled `basketball.py` validation script on the task2 basketball
-# test set with polished per-video captions and first/last-frame bbox
-# conditioning, sharded across NUM_GPUS GPUs in parallel.
+# T7 — soccer inference.
+# Same pipeline as basketball.sh but on the soccer test set with the
+# soccer-trained LoRA checkpoint.
 #
 # Usage:
-#   bash eval/basketball.sh [output_path]
+#   bash inference/soccer.sh [output_path]
 #
-# Edit TEST_SUBSET / POLISHED_CAPTIONS / VALIDATION_VIDEO_BASE /
-# VALIDATION_BACKGROUND_VIDEO_BASE below to point at your local data.
+# Edit TEST_SUBSET / VALIDATION_VIDEO_BASE / VALIDATION_BACKGROUND_VIDEO_BASE
+# below to point at your local soccer data.
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TASK_DIR="$(cd "$HERE/.." && pwd)"
 
-# `from diffsynth import ...` in basketball.py resolves to TASK_DIR/diffsynth.
+# `from diffsynth import ...` in soccer.py resolves to TASK_DIR/diffsynth.
 export PYTHONPATH="$TASK_DIR:${PYTHONPATH:-}"
 
-DEFAULT_OUTPUT_PATH="./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_task2"
+DEFAULT_OUTPUT_PATH="./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_soccer_full_scale"
 OUTPUT_PATH="${1:-$DEFAULT_OUTPUT_PATH}"
 
-VALIDATION_SCRIPT="$HERE/basketball.py"
-TEST_SUBSET="/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/basketball_set/test_task2_final_1000.txt"
-POLISHED_CAPTIONS_FILE="/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/polished_captions_final.json"
-NUM_GPUS=8
-SPLIT_DIR="./validation_splits_task2"
+VALIDATION_SCRIPT="$HERE/soccer.py"
+TEST_SUBSET="/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/soccer_set/test_5.txt"
+NUM_GPUS=4
+SPLIT_DIR="./validation_splits"
 
 echo "============================================================"
-echo "T8 Basketball (task2) Multi-GPU Evaluation"
+echo "T7 Soccer Multi-GPU Inference"
 echo "============================================================"
 echo "Output path: $OUTPUT_PATH"
 echo "Number of GPUs: $NUM_GPUS"
@@ -67,21 +65,14 @@ python "$HERE/split_validation_set.py" \
     --output-dir "$SPLIT_DIR" \
     --num-splits $NUM_GPUS
 
-# Task2 specific env: polished per-video captions, first/last bbox only,
-# color overlay mode.
 export VALIDATION_NUM_FRAMES=81
 export VALIDATION_TIME_DIVISION_FACTOR=1
-export VALIDATION_VIDEO_BASE="/mnt/bum/hanyi/data/basketball_fps_15_task2"
-export VALIDATION_BACKGROUND_VIDEO_BASE="/mnt/bum/hanyi/data/basketball_inpainting_video_task2"
-export POLISHED_CAPTIONS="$POLISHED_CAPTIONS_FILE"
-export BBOX_CHANNELS=16
-export BACKGROUND_VIDEO_CHANNELS=8
-export USE_OVERLAY_METHOD=1
-export BBOX_COLOR_MODE=color
+export VALIDATION_VIDEO_BASE="/mnt/bum/hanyi/data/soccer_video_fps_15"
+export VALIDATION_BACKGROUND_VIDEO_BASE="/mnt/bum/hanyi/data/soccer_inpainting_video"
 
 START_TIME=$(date +%s)
 PIDS=()
-LOG_DIR="./validation_logs_task2"
+LOG_DIR="./validation_logs"
 mkdir -p "$LOG_DIR"
 
 TEST_BASENAME=$(basename "$TEST_SUBSET" .txt)

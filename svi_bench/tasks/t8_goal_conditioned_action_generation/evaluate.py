@@ -1,9 +1,9 @@
 """T8 entry point exposed to ``svi-bench evaluate``.
 
-T8 is a generation task — there is no closed-form accuracy metric to
-return. The CLI hook dispatches to ``eval/basketball.sh``, which shards
-the task2 basketball test set across GPUs and runs the bundled validation
-Python on each shard. Per-sample video outputs land under the checkpoint's
+T8 is a generation task — the CLI hook dispatches to
+``inference/basketball.sh``, which shards the task2 basketball test set
+across GPUs and runs the trained Wan2.1-Fun LoRA on each shard to produce
+video samples. Per-sample outputs land under the checkpoint's
 ``validation/step-<N>/`` directory.
 
 Unlike T7, T8 only covers the basketball domain.
@@ -33,7 +33,7 @@ def run(
     if config:
         output_path = config.get("output_path", output_path)
 
-    script = os.path.join(HERE, "eval", "basketball.sh")
+    script = os.path.join(HERE, "inference", "basketball.sh")
     cmd = ["bash", script]
     if output_path:
         cmd.append(output_path)

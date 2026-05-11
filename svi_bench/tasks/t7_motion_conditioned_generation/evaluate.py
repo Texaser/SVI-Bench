@@ -1,10 +1,10 @@
 """T7 entry point exposed to ``svi-bench evaluate``.
 
-T7 is a generation task — there is no closed-form accuracy metric to
-return. The CLI hook dispatches to one of the ``eval/*.sh`` scripts, which
-shard the test set across GPUs and run the bundled validation Python on
-each shard. Per-sample video outputs land under the checkpoint's
-``validation/step-<N>/`` directory.
+T7 is a generation task — the CLI hook just dispatches to one of the
+``inference/*.sh`` scripts, which shard the test set across GPUs and run
+the trained Wan2.1-Fun LoRA on each shard to produce video samples.
+Per-sample outputs land under the checkpoint's ``validation/step-<N>/``
+directory.
 
 Domains:
     - basketball  (default)
@@ -43,7 +43,7 @@ def run(
     if domain not in DOMAINS:
         raise ValueError(f"unknown T7 domain {domain!r}; pick one of {DOMAINS}")
 
-    script = os.path.join(HERE, "eval", f"{domain}.sh")
+    script = os.path.join(HERE, "inference", f"{domain}.sh")
     cmd = ["bash", script]
     if output_path:
         cmd.append(output_path)

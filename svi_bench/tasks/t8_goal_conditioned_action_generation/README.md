@@ -24,14 +24,14 @@ modelscope / imageio / ...).
 bash svi_bench/tasks/t8_goal_conditioned_action_generation/train.sh
 ```
 
-### Evaluate (post-training)
+### Inference
 
-T8 only covers basketball. Runs the multi-GPU-sharded task2 validation
-pipeline on the latest `step-*.safetensors` checkpoint under the LoRA
-output dir:
+T8 only covers basketball. Loads the latest `step-*.safetensors`
+checkpoint under the LoRA output dir and generates video samples for the
+task2 basketball test set, sharded across 8 GPUs by default:
 
 ```bash
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/eval/basketball.sh
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/inference/basketball.sh
 ```
 
 Pass a different output dir as `$1` to override the default. Edit the data
@@ -53,7 +53,8 @@ svi-bench evaluate --task t8 --model wan2.1-fun
 - [`validate.py`](validate.py) — **in-training** task2 validation hook
   invoked by `train.py` via `$VALIDATION_SCRIPT`. Renders a small number
   of samples each save step.
-- [`eval/`](eval/) — **post-training** multi-GPU evaluation pipeline:
+- [`inference/`](inference/) — multi-GPU inference pipeline that loads
+  the trained LoRA and generates video samples:
   - `basketball.{sh,py}` — full task2 test-set run, default 8 GPUs.
   - `split_validation_set.py` — helper that shards a test-set listing
     into N per-GPU split files.

@@ -1,32 +1,35 @@
 #!/usr/bin/env bash
-# T7 — soccer post-training evaluation.
-# Same pipeline as basketball.sh but on the soccer test set with the
-# soccer-trained LoRA checkpoint.
+# T7 — basketball inference.
+# Loads the latest trained LoRA checkpoint and generates video samples for
+# every clip in the basketball test set, sharded across NUM_GPUS GPUs.
 #
 # Usage:
-#   bash eval/soccer.sh [output_path]
+#   bash inference/basketball.sh [output_path]
 #
-# Edit TEST_SUBSET / VALIDATION_VIDEO_BASE / VALIDATION_BACKGROUND_VIDEO_BASE
-# below to point at your local soccer data.
+# - output_path defaults to the basketball LoRA output dir from train.sh.
+# - The latest step-*.safetensors checkpoint under output_path is picked
+#   automatically.
+# - Edit TEST_SUBSET / VALIDATION_VIDEO_BASE / VALIDATION_BACKGROUND_VIDEO_BASE
+#   below to point at your local data.
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TASK_DIR="$(cd "$HERE/.." && pwd)"
 
-# `from diffsynth import ...` in soccer.py resolves to TASK_DIR/diffsynth.
+# `from diffsynth import ...` in basketball.py resolves to TASK_DIR/diffsynth.
 export PYTHONPATH="$TASK_DIR:${PYTHONPATH:-}"
 
-DEFAULT_OUTPUT_PATH="./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_soccer_full_scale"
+DEFAULT_OUTPUT_PATH="./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_full_scale"
 OUTPUT_PATH="${1:-$DEFAULT_OUTPUT_PATH}"
 
-VALIDATION_SCRIPT="$HERE/soccer.py"
-TEST_SUBSET="/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/soccer_set/test_5.txt"
-NUM_GPUS=4
+VALIDATION_SCRIPT="$HERE/basketball.py"
+TEST_SUBSET="/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/basketball_set/test_subset.txt"
+NUM_GPUS=8
 SPLIT_DIR="./validation_splits"
 
 echo "============================================================"
-echo "T7 Soccer Multi-GPU Evaluation"
+echo "T7 Basketball Multi-GPU Inference"
 echo "============================================================"
 echo "Output path: $OUTPUT_PATH"
 echo "Number of GPUs: $NUM_GPUS"
@@ -65,10 +68,11 @@ python "$HERE/split_validation_set.py" \
     --output-dir "$SPLIT_DIR" \
     --num-splits $NUM_GPUS
 
+# Shared validation env (per-GPU env vars set inside the per-GPU subshell)
 export VALIDATION_NUM_FRAMES=81
 export VALIDATION_TIME_DIVISION_FACTOR=1
-export VALIDATION_VIDEO_BASE="/mnt/bum/hanyi/data/soccer_video_fps_15"
-export VALIDATION_BACKGROUND_VIDEO_BASE="/mnt/bum/hanyi/data/soccer_inpainting_video"
+export VALIDATION_VIDEO_BASE="/mnt/bum/hanyi/data/basketball_fps_15"
+export VALIDATION_BACKGROUND_VIDEO_BASE="/mnt/bum/hanyi/data/basketball_inpainting_video"
 
 START_TIME=$(date +%s)
 PIDS=()
