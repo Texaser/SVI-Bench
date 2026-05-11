@@ -7,17 +7,16 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SHARED="$HERE/../_wan_shared"
 
-# Put the vendored DiffSynth slice on PYTHONPATH so `from diffsynth import ...`
-# in train.py and validate.py resolves to ${SHARED}/diffsynth.
-export PYTHONPATH="$SHARED:${PYTHONPATH:-}"
+# Put the bundled DiffSynth slice on PYTHONPATH so `from diffsynth import ...`
+# in train.py and validate.py resolves to ${HERE}/diffsynth.
+export PYTHONPATH="$HERE:${PYTHONPATH:-}"
 
 export VALIDATION_SCRIPT="$HERE/validate.py"
 export VALIDATION_NUM_FRAMES=81
 export VALIDATION_TIME_DIVISION_FACTOR=1
 
-accelerate launch "$SHARED/train.py" \
+accelerate launch "$HERE/train.py" \
   --bbox_folder /mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/basketball_set/train.txt \
   --video_base_path /mnt/bum/hanyi/data/basketball_fps_15 \
   --background_video_folder /mnt/bum/hanyi/data/basketball_inpainting_video \

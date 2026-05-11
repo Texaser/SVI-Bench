@@ -30,9 +30,13 @@ svi-bench evaluate --task t8 --model wan2.1-fun
 
 ## Files
 
-- [`train.sh`](train.sh) — `accelerate launch` wrapper around the shared
-  vendored `train.py`; passes `--polished_captions` and
-  `--bbox_first_last_only`.
+- [`train.sh`](train.sh) — `accelerate launch` wrapper around the bundled
+  `train.py`; passes `--polished_captions` and `--bbox_first_last_only`.
+- [`train.py`](train.py) — training entry point, vendored verbatim from
+  `DiffSynth-Studio/examples/wanvideo/model_training/train.py` (same file
+  T7 ships).
+- [`diffsynth/`](diffsynth/) — slimmed copy of the Wan2.1-Fun-related
+  closure from upstream DiffSynth-Studio. T7 ships an identical copy.
 - [`validate.py`](validate.py) — task2 validation hook. Loads per-video
   prompts from the polished captions JSON and renders samples using
   first/last bbox conditioning.
@@ -56,5 +60,10 @@ svi-bench evaluate --task t8 --model wan2.1-fun
 - `train.sh` resumes from a step-8000 T7 checkpoint by default — adjust
   `--lora_checkpoint` if your run path differs.
 - Output dir: `./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_task2`
-- See [`../_wan_shared/README.md`](../_wan_shared/README.md) for what was
-  vendored from upstream DiffSynth-Studio and how to re-sync.
+## Vendored DiffSynth-Studio slice
+
+`diffsynth/` is a slimmed copy of upstream
+[DiffSynth-Studio](https://github.com/modelscope/DiffSynth-Studio). Non-Wan
+model families and their registry entries were dropped to keep the slice
+under ~1.4 MB. T7 carries an identical copy — keep the two in sync when
+re-syncing from upstream. See T7's README for the re-sync checklist.
