@@ -1,9 +1,12 @@
 """T8 entry point exposed to ``svi-bench evaluate``.
 
-T8 is a generation task — there is no closed-form accuracy metric to return.
-The CLI hook just dispatches to ``train.sh``, which runs LoRA fine-tuning
-followed by periodic validation through ``validate.py``. Per-video sample
-outputs land in the ``--output_path`` configured inside ``train.sh``.
+T8 is a generation task — there is no closed-form accuracy metric to
+return. The CLI hook dispatches to ``eval/basketball.sh``, which shards
+the task2 basketball test set across GPUs and runs the bundled validation
+Python on each shard. Per-sample video outputs land under the checkpoint's
+``validation/step-<N>/`` directory.
+
+Unlike T7, T8 only covers the basketball domain.
 """
 
 from __future__ import annotations
@@ -16,16 +19,28 @@ TASK = "t8_goal_conditioned_action_generation"
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
-def run(model_name: str | None = None, *, config: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Launch the T8 training+validation pipeline.
+def run(
+    model_name: str | None = None,
+    *,
+    config: dict[str, Any] | None = None,
+    output_path: str | None = None,
+) -> dict[str, Any]:
+    """Run T8 post-training evaluation on the latest checkpoint.
 
-    ``model_name`` is accepted for CLI uniformity but ignored: the model is
-    fixed to Wan2.1-Fun-V1.1-1.3B-Control by the shell wrapper.
+    ``model_name`` is accepted for CLI uniformity but ignored. ``output_path``
+    overrides the default task2 LoRA checkpoint directory.
     """
-    script = os.path.join(HERE, "train.sh")
-    proc = subprocess.run(["bash", script], check=False)
+    if config:
+        output_path = config.get("output_path", output_path)
+
+    script = os.path.join(HERE, "eval", "basketball.sh")
+    cmd = ["bash", script]
+    if output_path:
+        cmd.append(output_path)
+    proc = subprocess.run(cmd, check=False)
     return {
         "task": TASK,
+        "domain": "basketball",
         "script": script,
         "returncode": proc.returncode,
     }

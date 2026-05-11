@@ -16,14 +16,33 @@ DiffSynth-Studio slice bundled inside this task at [`diffsynth/`](diffsynth/).
 
 ## Run
 
-The training+validation pipeline lives in `train.sh`. Edit the data paths
-at the top before launching:
+### Train
+
+Edit the data paths at the top of `train.sh` first, then launch:
 
 ```bash
 bash svi_bench/tasks/t7_motion_conditioned_generation/train.sh
 ```
 
-Or via the unified CLI:
+### Evaluate (post-training)
+
+T7 covers two domains. Each runs the multi-GPU-sharded validation pipeline
+on the latest `step-*.safetensors` checkpoint under the LoRA output dir:
+
+```bash
+# Basketball (default 8 GPUs)
+bash svi_bench/tasks/t7_motion_conditioned_generation/eval/basketball.sh
+
+# Soccer (default 4 GPUs)
+bash svi_bench/tasks/t7_motion_conditioned_generation/eval/soccer.sh
+```
+
+You can override the output directory by passing it as `$1`. Edit the
+`TEST_SUBSET` / `VALIDATION_VIDEO_BASE` / `VALIDATION_BACKGROUND_VIDEO_BASE`
+lines inside each script to point at your data.
+
+The unified CLI dispatches to `eval/basketball.sh` by default and accepts
+`domain=soccer` via the config:
 
 ```bash
 svi-bench evaluate --task t7 --model wan2.1-fun
@@ -36,13 +55,18 @@ svi-bench evaluate --task t7 --model wan2.1-fun
   to [`diffsynth/`](diffsynth/).
 - [`train.py`](train.py) — training entry point, vendored verbatim from
   `DiffSynth-Studio/examples/wanvideo/model_training/train.py`.
+- [`validate.py`](validate.py) — **in-training** validation hook invoked
+  by `train.py` via the `$VALIDATION_SCRIPT` env var. Samples a small
+  number of video clips at each save step as a sanity check.
+- [`eval/`](eval/) — **post-training** multi-GPU evaluation pipeline:
+  - `basketball.{sh,py}` — full basketball test-set run, default 8 GPUs.
+  - `soccer.{sh,py}` — full soccer test-set run, default 4 GPUs.
+  - `split_validation_set.py` — helper that shards a test-set listing
+    into N per-GPU split files.
 - [`diffsynth/`](diffsynth/) — slimmed copy of the Wan2.1-Fun-related
   closure from upstream DiffSynth-Studio. T8 ships an identical copy.
-- [`validate.py`](validate.py) — periodic-validation hook invoked by
-  `train.py` via the `$VALIDATION_SCRIPT` env var. Samples short video
-  clips at each save step using the bbox + background-video conditioning.
-- [`evaluate.py`](evaluate.py) — thin Python wrapper that just shells out
-  to `train.sh`; exposed via `svi-bench evaluate --task t7`.
+- [`evaluate.py`](evaluate.py) — Python wrapper exposed via
+  `svi-bench evaluate --task t7`. Dispatches to `eval/<domain>.sh`.
 
 ## Data
 

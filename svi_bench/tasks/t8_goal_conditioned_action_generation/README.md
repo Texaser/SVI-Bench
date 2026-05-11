@@ -18,11 +18,26 @@ modelscope / imageio / ...).
 
 ## Run
 
+### Train
+
 ```bash
 bash svi_bench/tasks/t8_goal_conditioned_action_generation/train.sh
 ```
 
-Or via the unified CLI:
+### Evaluate (post-training)
+
+T8 only covers basketball. Runs the multi-GPU-sharded task2 validation
+pipeline on the latest `step-*.safetensors` checkpoint under the LoRA
+output dir:
+
+```bash
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/eval/basketball.sh
+```
+
+Pass a different output dir as `$1` to override the default. Edit the data
+paths inside the script to match your local layout.
+
+The unified CLI is equivalent:
 
 ```bash
 svi-bench evaluate --task t8 --model wan2.1-fun
@@ -35,12 +50,16 @@ svi-bench evaluate --task t8 --model wan2.1-fun
 - [`train.py`](train.py) — training entry point, vendored verbatim from
   `DiffSynth-Studio/examples/wanvideo/model_training/train.py` (same file
   T7 ships).
+- [`validate.py`](validate.py) — **in-training** task2 validation hook
+  invoked by `train.py` via `$VALIDATION_SCRIPT`. Renders a small number
+  of samples each save step.
+- [`eval/`](eval/) — **post-training** multi-GPU evaluation pipeline:
+  - `basketball.{sh,py}` — full task2 test-set run, default 8 GPUs.
+  - `split_validation_set.py` — helper that shards a test-set listing
+    into N per-GPU split files.
 - [`diffsynth/`](diffsynth/) — slimmed copy of the Wan2.1-Fun-related
   closure from upstream DiffSynth-Studio. T7 ships an identical copy.
-- [`validate.py`](validate.py) — task2 validation hook. Loads per-video
-  prompts from the polished captions JSON and renders samples using
-  first/last bbox conditioning.
-- [`evaluate.py`](evaluate.py) — Python wrapper invoked by
+- [`evaluate.py`](evaluate.py) — Python wrapper exposed via
   `svi-bench evaluate --task t8`.
 
 ## Data
