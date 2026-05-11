@@ -38,8 +38,26 @@ t3 = ["decord>=0.6", "torchvision>=0.17"]
 t4 = []
 t5 = ["scipy>=1.11"]
 t6 = []
-t7 = ["langchain>=0.2", "anthropic>=0.30"]
-t8 = []
+# T7 and T8 share the vendored DiffSynth-Studio Wan2.1-Fun slice in
+# svi_bench/tasks/_wan_shared. They install the same dep set.
+_wan_shared = [
+    "torch>=2.0",
+    "torchvision",
+    "accelerate>=0.30",
+    "peft>=0.11",
+    "transformers>=4.40",
+    "safetensors>=0.4",
+    "einops>=0.7",
+    "imageio[ffmpeg]>=2.34",
+    "modelscope>=1.15",
+    "sentencepiece",
+    "protobuf",
+    "ftfy",
+    "pandas>=2.0",
+    "pynvml",
+]
+t7 = ["svi-bench[_wan_shared]"]
+t8 = ["svi-bench[_wan_shared]"]
 t9 = ["gymnasium>=0.29"]
 all = [
     "svi-bench[t1,t2,t3,t4,t5,t6,t7,t8,t9]",
