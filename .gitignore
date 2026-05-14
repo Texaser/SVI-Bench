@@ -38,11 +38,11 @@ wandb/
 *.safetensors
 *.parquet
 
-# Model checkpoints live under pretrained/ at repo root (shared by T7/T8).
-# Users download / copy them locally — see pretrained/README.md.
-pretrained/*.pth*
-pretrained/*.safetensors
-pretrained/*.bin
+# Model checkpoints live under each task's local pretrained/ subdir
+# (e.g. svi_bench/tasks/t7_motion_conditioned_generation/eval/pretrained/).
+# Users download / copy the binaries locally — the *.pth*/*.safetensors
+# wildcards above already exclude them. The per-task pretrained/README.md
+# stays tracked so the README documenting what to drop in is preserved.
 
 # Secrets
 .env

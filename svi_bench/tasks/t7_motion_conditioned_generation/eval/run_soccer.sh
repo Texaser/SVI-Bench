@@ -6,12 +6,16 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
 export PYTHONPATH="$HERE:$HERE/MixViT:${PYTHONPATH:-}"
+
+# CD into the eval/ dir so `track.yaml`'s relative
+# `pretrained/MixFormer_sports_train.pth.tar` (loaded by mixformer_deit at
+# tracker init) resolves to $HERE/pretrained/.
+cd "$HERE"
 
 VIDEO_DIR="${1:-/mnt/bum/hanyi/repo/MagicMotion/magicmotion_gen_soccer/final_output}"
 GT_LIST="${2:-/mnt/bum/hanyi/repo/ATI/test_subset_soccer_100.txt}"
-CKPT="${3:-$REPO_ROOT/pretrained/yolox_x_sports_train.pth.tar}"
+CKPT="${3:-$HERE/pretrained/yolox_x_sports_train.pth.tar}"
 
 EXP_FILE="$HERE/exps/example/mot/yolox_x_soccernet.py"
 OUTPUT_DIR="${VIDEO_DIR}/eval_results"
