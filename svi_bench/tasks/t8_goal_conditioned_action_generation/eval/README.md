@@ -1,4 +1,4 @@
-# T8 Evaluation — Last-Frame mIoU + SigLIP2 Feature Similarity
+# T8 Evaluation — Last-Frame mIoU + SigLIP2 Feature Similarity + LLaVA Goal Accuracy
 
 End-to-end scoring pipeline for the task2 basketball videos produced by
 `inference/basketball.sh`:
@@ -10,6 +10,10 @@ End-to-end scoring pipeline for the task2 basketball videos produced by
    `polished_captions_final.json`.
 3. Compute **SigLIP2 last-frame IoU-gated feature similarity** for the
    same target players at frame 80 (matched pred-vs-GT crops).
+4. Compute **LLaVA-Qwen goal accuracy** — run a fine-tuned video-language
+   QA model on each generated clip and check whether the rendered Q/A
+   pairs (one per QA-type) get answered correctly. Reports per-QA-type
+   and aggregate accuracy.
 
 T8 only covers basketball (the task2 variant of T7's training flow), so
 there is only one wrapper here. T7 ships an identical-purpose `eval/` with
@@ -41,6 +45,33 @@ bash eval/run_basketball_featsim.sh \
 
 Results land at `${VIDEO_DIR}/feature_sim_task2/{summary.json, per_clip_metrics.csv}`.
 
+### 3. LLaVA goal accuracy
+
+Needs:
+- A separate conda env with LLaVA-NeXT's deps installed (the king /
+  ltx envs used for steps 1-2 won't work; flash-attn + specific
+  transformers version are required). See `llava_requirements.txt`.
+- The fine-tuned LLaVA-Qwen checkpoint (~15 GB, **not bundled**).
+  Path supplied via `MODEL_PATH` env var or 3rd positional arg.
+- The QA source dir — `Q*.json` files + pre-rendered bbox-overlay
+  videos referenced by the JSONs. Released via the HuggingFace
+  dataset (see the task-level README).
+
+```bash
+conda activate llava
+
+bash eval/run_basketball_goalacc.sh \
+    /path/to/generated_videos_dir \
+    /path/to/QA/llava_format/test_final \
+    /path/to/basketball_bbox_qa_f16_full_ft/checkpoint-15500
+```
+
+`test_llavaov.py` internally fans out across visible GPUs via
+`torch.multiprocessing`; the wrapper just iterates Q*.json files
+sequentially. Results land at
+`${VIDEO_DIR}/goal_accuracy_results/<qa_type>/qa_eval_f16_results.json`,
+with a summary table printed at the end.
+
 If your generated videos are under DiffSynth's per-clip layout
 (`validation/step-N/<clip>/generated.mp4`), point `VALIDATION_DIR` env
 var at it and the wrapper will auto-flatten symlinks:
@@ -62,6 +93,14 @@ Results land at `${VIDEO_DIR}/video_miou_task2_results/{summary.json,per_video_m
 - `video_miou_task2.py` — last-frame mIoU scorer.
 - `feature_sim.py` — SigLIP2-only last-frame IoU-gated feature similarity
   scorer (DINOv3 removed).
+- `run_basketball_goalacc.sh` — LLaVA-Qwen QA orchestration wrapper.
+- `test_llavaov.py` — LLaVA-Qwen QA worker (verbatim from upstream
+  LLaVA-NeXT). Multi-GPU via internal `torch.multiprocessing`.
+- `llava/` — vendored LLaVA-NeXT package (74 .py / 2.7 MB, full copy).
+  Used by `test_llavaov.py` for model loading, vision tower, conversation
+  templates, etc.
+- `llava_requirements.txt` — pip requirements from upstream LLaVA-NeXT
+  for reproducing the conda env this metric needs.
 
 ## Required external assets
 

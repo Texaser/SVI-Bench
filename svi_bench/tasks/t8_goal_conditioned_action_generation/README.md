@@ -63,7 +63,13 @@ Three metrics specified in the paper:
   pipeline via `bash eval/run_basketball_featsim.sh <VIDEO_DIR>`.
 - **Goal accuracy** — fraction judged successful by a fine-tuned
   video-language QA model that asks whether the generated video achieves
-  the specified objective. _Not yet bundled._
+  the specified objective. **Implementation bundled** at
+  [`eval/test_llavaov.py`](eval/test_llavaov.py) + the vendored
+  [`eval/llava/`](eval/llava/) package. Run after the mIoU pipeline via
+  `bash eval/run_basketball_goalacc.sh <VIDEO_DIR> <QA_SOURCE> <MODEL_PATH>`.
+  Requires a fine-tuned LLaVA-Qwen checkpoint (~15 GB, user-supplied via
+  `MODEL_PATH`) and the LLaVA-NeXT conda env (`llava_requirements.txt`
+  inside `eval/`).
 
 ## Install
 
