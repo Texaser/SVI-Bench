@@ -1,4 +1,4 @@
-# T7 Evaluation — Video mIoU
+# T7 Evaluation — Video mIoU + SigLIP2 Feature Similarity
 
 End-to-end scoring pipeline for the videos produced by `inference/*.sh`:
 
@@ -6,12 +6,17 @@ End-to-end scoring pipeline for the videos produced by `inference/*.sh`:
    + MixFormer-ViT tracker) to extract per-frame player bboxes.
 2. Compute **Holistic Video mIoU** by accumulating `intersection / union`
    across all frames and matched track pairs against ground-truth bboxes.
+3. Compute **SigLIP2 IoU-gated feature similarity** — for each GT bbox,
+   find the best-IoU pred bbox; if matched, crop both and take cosine sim
+   of SigLIP2 vision features.
 
 Both pieces are vendored from
 [`MixSort`](https://github.com/MCG-NJU/MixSort) and slimmed down to the
 inference path only (no training code, no non-sports tracker variants).
 
 ## Run
+
+### 1. Tracker + mIoU
 
 ```bash
 # Basketball (8 GPUs by default, override with NUM_GPUS=4 etc.)
@@ -29,15 +34,44 @@ bash eval/run_soccer.sh \
 
 Results land at `${VIDEO_DIR}/video_miou_results/{summary.json,per_video_metrics.csv}`.
 
+### 2. SigLIP2 feature similarity (after step 1)
+
+Re-uses the tracker output from step 1. SigLIP2 model is auto-downloaded
+from HF (`google/siglip2-so400m-patch14-384`, ~3 GB on first run).
+
+```bash
+# Basketball
+bash eval/run_basketball_featsim.sh \
+    /path/to/step_dir \
+    /path/to/test_subset.txt
+
+# Soccer
+bash eval/run_soccer_featsim.sh \
+    /path/to/step_dir \
+    /path/to/test_subset_soccer.txt
+```
+
+`STEP_DIR` is the directory containing both the per-clip subdirs and a
+`miou_results_all/` produced by the mIoU pipeline. Results land at
+`${STEP_DIR}/feature_sim/{summary.json, per_clip_metrics.csv}`.
+
+Override mode via env: `MODE=both bash eval/run_basketball_featsim.sh ...`
+to additionally report the no-tracker baseline ("gt_box" mode).
+
 ## Files
 
 - `run_basketball.sh` / `run_soccer.sh` — orchestration wrappers
   (multi-GPU shard → tracker → mIoU).
+- `run_basketball_featsim.sh` / `run_soccer_featsim.sh` — orchestration
+  wrappers for SigLIP2 feature similarity (assumes the tracker pass
+  has already populated `miou_results_all/`).
 - `eval_generated_videos.py` — per-GPU worker: loads YOLOX detector,
   runs MixSort tracker on each video in the shard, writes per-clip bbox
   output.
 - `video_miou.py` — final scorer: ingests tracker output + GT bbox files,
   emits Holistic Video mIoU.
+- `feature_sim.py` — SigLIP2-only IoU-gated feature similarity scorer.
+  DINOv3 was removed; SigLIP2 only.
 - `miou_metric.py` — shared module providing the `Predictor` class +
   `imageflow_demo_allframes()` runtime (used by `eval_generated_videos`)
   and the helper functions (`load_bbox_file`, `establish_track_id_mapping`,

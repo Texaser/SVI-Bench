@@ -58,7 +58,9 @@ Three metrics specified in the paper:
   [`eval/`](eval/) (slim copy of `MixSort` + last-frame matcher). Run via
   `bash eval/run_basketball.sh` after the generation step.
 - **Final-frame feature similarity** — visual fidelity of the realized
-  outcome. _Not yet bundled._
+  outcome. **Implementation bundled** at [`eval/feature_sim.py`](eval/feature_sim.py)
+  (last-frame IoU-gated SigLIP2 cosine sim). Run after the mIoU
+  pipeline via `bash eval/run_basketball_featsim.sh <VIDEO_DIR>`.
 - **Goal accuracy** — fraction judged successful by a fine-tuned
   video-language QA model that asks whether the generated video achieves
   the specified objective. _Not yet bundled._

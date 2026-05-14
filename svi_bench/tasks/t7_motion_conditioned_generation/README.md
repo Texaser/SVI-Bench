@@ -60,7 +60,10 @@ Two metrics specified in the paper:
   generation step.
 - **Temporal feature similarity** — SigLIP features from corresponding
   player regions across frames, measuring visual consistency.
-  _Not yet bundled_ — plug in your own pass over the generated videos.
+  **Implementation bundled** at [`eval/feature_sim.py`](eval/feature_sim.py)
+  (IoU-gated mode: tracker output → per-pair SigLIP2 cosine sim). Run
+  after the mIoU pipeline via `bash eval/run_basketball_featsim.sh
+  <STEP_DIR>` or `bash eval/run_soccer_featsim.sh <STEP_DIR>`.
 
 ## Install
 
