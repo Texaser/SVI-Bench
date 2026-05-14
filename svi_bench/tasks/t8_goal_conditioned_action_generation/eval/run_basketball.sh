@@ -21,12 +21,13 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
 export PYTHONPATH="$HERE:$HERE/MixViT:${PYTHONPATH:-}"
 
 VIDEO_DIR="${1:-${VIDEO_DIR:-}}"
 GT_LIST="${2:-/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/basketball_set/test_task2_final_1000.txt}"
 POLISHED_CAPTIONS="${3:-/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/polished_captions_final.json}"
-CKPT="${4:-pretrained/yolox_x_sports_train.pth.tar}"
+CKPT="${4:-$REPO_ROOT/pretrained/yolox_x_sports_train.pth.tar}"
 
 # Optional preprocess: flatten <validation>/<clip>/generated.mp4 -> <video_dir>/<clip>.mp4
 if [ -n "${VALIDATION_DIR:-}" ]; then

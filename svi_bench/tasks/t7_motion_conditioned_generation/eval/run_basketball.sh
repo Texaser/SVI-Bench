@@ -17,13 +17,14 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
 
 # `from yolox..` / `from miou_metric..` / `from MixViT lib..` all resolve here.
 export PYTHONPATH="$HERE:$HERE/MixViT:${PYTHONPATH:-}"
 
 VIDEO_DIR="${1:-/mnt/bum/hanyi/repo/MagicMotion/magicmotion_gen/final_output}"
 GT_LIST="${2:-/mnt/bum/hanyi/repo/ATI/test_subset_100.txt}"
-CKPT="${3:-pretrained/yolox_x_sports_train.pth.tar}"
+CKPT="${3:-$REPO_ROOT/pretrained/yolox_x_sports_train.pth.tar}"
 
 EXP_FILE="$HERE/exps/example/mot/yolox_x_sportsmot.py"
 OUTPUT_DIR="${VIDEO_DIR}/eval_results"
