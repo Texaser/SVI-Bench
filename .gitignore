@@ -42,3 +42,4 @@ tmp/
 .env
 .env.local
 *.key
+context/
