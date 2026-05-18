@@ -51,17 +51,25 @@ constraints come from the same bbox listings used by T7.
 
 ## Evaluation metrics
 
-Three metrics specified in the paper. **Note:** the scoring code is not yet
-bundled in this repo — the `inference/` scripts only generate the sample
-videos. Plug in your own metric pass over the output directory.
+Three metrics specified in the paper:
 
 - **Final-frame mIoU** — bounding-box overlap between generated and target
-  player positions at the last frame.
+  player positions at the last frame. **Implementation bundled** at
+  [`eval/`](eval/) (slim copy of `MixSort` + last-frame matcher). Run via
+  `bash eval/run_basketball.sh` after the generation step.
 - **Final-frame feature similarity** — visual fidelity of the realized
-  outcome.
+  outcome. **Implementation bundled** at [`eval/feature_sim.py`](eval/feature_sim.py)
+  (last-frame IoU-gated SigLIP2 cosine sim). Run after the mIoU
+  pipeline via `bash eval/run_basketball_featsim.sh <VIDEO_DIR>`.
 - **Goal accuracy** — fraction judged successful by a fine-tuned
   video-language QA model that asks whether the generated video achieves
-  the specified objective.
+  the specified objective. **Implementation bundled** at
+  [`eval/test_llavaov.py`](eval/test_llavaov.py) + the vendored
+  [`eval/llava/`](eval/llava/) package. Run after the mIoU pipeline via
+  `bash eval/run_basketball_goalacc.sh <VIDEO_DIR> <QA_SOURCE> <MODEL_PATH>`.
+  Requires a fine-tuned LLaVA-Qwen checkpoint (~15 GB, user-supplied via
+  `MODEL_PATH`) and the LLaVA-NeXT conda env (`llava_requirements.txt`
+  inside `eval/`).
 
 ## Install
 

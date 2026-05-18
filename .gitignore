@@ -33,10 +33,19 @@ runs/
 wandb/
 *.ckpt
 *.pt
+*.pth
+*.pth.tar
+*.safetensors
 *.parquet
 
 # Local scratch / backups (never ship)
 tmp/
+
+# Model checkpoints live under each task's local pretrained/ subdir
+# (e.g. svi_bench/tasks/t7_motion_conditioned_generation/eval/pretrained/).
+# Users download / copy the binaries locally — the *.pth*/*.safetensors
+# wildcards above already exclude them. The per-task pretrained/README.md
+# stays tracked so the README documenting what to drop in is preserved.
 
 # Secrets
 .env

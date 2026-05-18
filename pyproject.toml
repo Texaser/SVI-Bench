@@ -64,8 +64,11 @@ t4 = []
 t5 = ["scipy>=1.11"]
 t6 = []
 # T7 and T8 each bundle their own copy of the DiffSynth-Studio Wan2.1-Fun
-# slice (under svi_bench/tasks/<task>/diffsynth) and ship the same dep set.
+# slice (under svi_bench/tasks/<task>/diffsynth) for training/inference AND
+# the slim MixSort tracker slice (under svi_bench/tasks/<task>/eval) for
+# post-generation mIoU evaluation. They ship the same dep set.
 t7 = [
+    # Training / inference (Wan2.1-Fun)
     "torch>=2.0",
     "torchvision",
     "accelerate>=0.30",
@@ -80,6 +83,17 @@ t7 = [
     "ftfy",
     "pandas>=2.0",
     "pynvml",
+    # Evaluation (MixSort tracker + mIoU)
+    "opencv-python>=4.5",
+    "scipy>=1.10",
+    "loguru",
+    "timm>=0.6",
+    "tabulate",
+    "easydict",
+    "pyyaml",
+    "lap",
+    "cython_bbox",
+    "thop",
 ]
 t8 = [
     "torch>=2.0",
@@ -96,6 +110,16 @@ t8 = [
     "ftfy",
     "pandas>=2.0",
     "pynvml",
+    "opencv-python>=4.5",
+    "scipy>=1.10",
+    "loguru",
+    "timm>=0.6",
+    "tabulate",
+    "easydict",
+    "pyyaml",
+    "lap",
+    "cython_bbox",
+    "thop",
 ]
 # T9 bundles its own copy of the InternVideo2 fork under
 # svi_bench/tasks/t9_cross_corpus_agentic_reasoning/internvideo2/ (used only

@@ -50,14 +50,20 @@ texture bleeding) so generation operates on clean background inputs.
 
 ## Evaluation metrics
 
-Two metrics specified in the paper. **Note:** the scoring code is not yet
-bundled in this repo — the `inference/` scripts only generate the sample
-videos. Plug in your own metric pass over the output directory.
+Two metrics specified in the paper:
 
 - **Video mIoU** — spatiotemporal alignment between player trajectories in
-  the generated and reference videos.
+  the generated and reference videos. **Implementation bundled** at
+  [`eval/`](eval/) (slim copy of `MixSort`: YOLOX detector + MixFormer-ViT
+  tracker + holistic-video-mIoU). Run via
+  `bash eval/run_basketball.sh` or `bash eval/run_soccer.sh` after the
+  generation step.
 - **Temporal feature similarity** — SigLIP features from corresponding
   player regions across frames, measuring visual consistency.
+  **Implementation bundled** at [`eval/feature_sim.py`](eval/feature_sim.py)
+  (IoU-gated mode: tracker output → per-pair SigLIP2 cosine sim). Run
+  after the mIoU pipeline via `bash eval/run_basketball_featsim.sh
+  <STEP_DIR>` or `bash eval/run_soccer_featsim.sh <STEP_DIR>`.
 
 ## Install
 
