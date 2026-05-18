@@ -35,6 +35,9 @@ wandb/
 *.pt
 *.parquet
 
+# Local scratch / backups (never ship)
+tmp/
+
 # Secrets
 .env
 .env.local
