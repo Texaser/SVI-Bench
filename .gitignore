@@ -43,3 +43,4 @@ tmp/
 .env.local
 *.key
 context/
+tests/
