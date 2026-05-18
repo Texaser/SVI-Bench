@@ -1,0 +1,10 @@
+[TRUNCATED_MESSAGE]
+--- Maximum Length Limit Reached ---
+You have reached the maximum length limit.
+The response is truncated.
+
+[FINAL_MESSAGE]
+--- Final Step Reached ---
+Now you reach the final step.
+You are forbidden to call any tools.
+You must offer your final answer now.

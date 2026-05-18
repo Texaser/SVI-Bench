@@ -1,0 +1,65 @@
+name: "gpt5_oracle"
+description: "Architecture using GPT-5 and video/document tools."
+
+agent:
+  model_key: "gpt5"
+  prompt: "prompts/gpt5_system_prompt_react.txt"
+
+tools:
+  - "search_documents"
+  - "document_qa" 
+  - "video_qa_oracle"
+  - "search_videos"
+
+search_documents:
+  embedding_model: "m3" # Options: m3
+
+search_videos:
+  embedding_model: "m3" # Options: m3, internvideo2
+  embedding_source: "caption" # Options: video, caption
+
+document_qa:
+   model_key: "qwen3_vl"
+   prompt: "prompts/tools/document_qa.txt"
+
+video_qa:
+   model_key: "llava_next_video"
+   prompt: "prompts/tools/video_qa.txt"
+
+video_qa_oracle:
+   model_key: "qwen3_vl"
+   prompt: "prompts/tools/video_qa_oracle.txt"
+
+# ============================================
+# GPU Services Configuration for Batch Processing
+# NOTE: This section is ONLY used by slurm/start_services.slurm
+#       The interactive run_agent.py ignores this section.
+#       Model/port info is read from configs/models.yaml
+# ============================================
+services:
+  # Agent model (if local, not API-based)
+  # Uses agent.model_key above - GPT-5 is API-based, no local GPU needed
+  agent:
+    enabled: false
+    
+  # Tool models - keys match tool_models in configs/models.yaml
+  llava_next_video:  # Used by video_qa, video_qa_oracle
+    enabled: true
+    gpus: [1]
+    vllm_cfg:
+      max_model_len: 32768
+    
+  qwen3_vl:  # Used by document_qa
+    enabled: true
+    gpus: [2]
+    vllm_cfg:
+      max_model_len: 32768
+    
+  # Embedding models - keys match embedding_models in configs/models.yaml
+  internvideo2:  # Used by search_videos
+    enabled: true
+    gpus: [0]
+    port: 8097
+
+  m3:  # bge-m3, loaded in-process by workers
+    gpus: [3, 4]  # Round-robin by worker ID

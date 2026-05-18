@@ -1,10 +1,25 @@
-# Default eval config for T3 (t3_action_recognition).
-# Override on the CLI or by passing config= to evaluate.run().
-task: t3_action_recognition
-split: test
-prompt_template: "{question}"
+# Default eval config for T3 (Compositional Video Retrieval).
+# Override on the CLI (where supported) or by passing config= to evaluate.run().
+task: t3_compositional_video_retrieval
+
+# Which models to evaluate by default. Each id must appear in KNOWN_MODELS in
+# the task's evaluate.py. Use `--model all` on the CLI to override to every
+# known model.
+models: [internvideo2-1b-sports-full, internvideo2-1b-sports-partial]
+
+# Subset to iterate. Use [val] for cheap smoke; [val, test] for both.
+sports: [basketball, hockey, soccer]
+splits: [test]
+
+# Where the dataset materializes locally. null = auto-detect <repo>/data/t3,
+# then HF cache. Override via T3_ROOT env var or local_data_root= kwarg.
+local_data_root: null
+
+# Metric reporting (the eval always computes the full set).
 metrics:
-  - accuracy
-generation:
-  temperature: 0.0
-  max_tokens: 256
+  - recall_at_k
+  - median_rank
+recall_ks: [1, 5, 10, 50, 100, 200, 300, 400, 500]
+
+# Save full per-tier / per-composition / per-hn-bin JSON to disk.
+save_results: false

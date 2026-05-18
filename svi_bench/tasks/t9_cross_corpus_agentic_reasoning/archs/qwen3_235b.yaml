@@ -1,0 +1,56 @@
+name: "qwen3_235b"
+description: "Architecture using Qwen3-235B-A22B-FP8 (local, A6000x8) and video/document tools."
+
+agent:
+  model_key: "qwen3_235b"
+  prompt: "prompts/qwen_system_prompt_react.txt"
+
+tools:
+  - "search_documents"
+  - "document_qa"
+  - "video_qa"
+  - "search_videos"
+
+search_documents:
+  embedding_model: "m3"
+
+search_videos:
+  embedding_model: "internvideo2"
+  embedding_source: "video"
+
+document_qa:
+  model_key: "qwen3_vl"
+  prompt: "prompts/tools/document_qa.txt"
+
+video_qa:
+  model_key: "llava_next_video"
+  prompt: "prompts/tools/video_qa.txt"
+
+video_qa_oracle:
+  model_key: "qwen3_vl"
+  prompt: "prompts/tools/video_qa_oracle.txt"
+
+# ============================================
+# GPU Services Configuration
+# Agent runs on A6000x8 node (all GPUs, TP=4 PP=2)
+# Tools run on separate A6000x8 node using qwen3_235b_tools arch
+# ============================================
+services:
+  agent:
+    enabled: true
+    gpus: [0, 1, 2, 3, 4, 5, 6, 7]
+    tensor_parallel_size: 4
+    pipeline_parallel_size: 2
+    vllm_cfg:
+      max_model_len: 40960
+      enable_prefix_caching: true
+
+  # Tool models disabled — run on separate node with qwen3_235b_tools arch
+  llava_next_video:
+    enabled: false
+  qwen3_vl:
+    enabled: false
+  internvideo2:
+    enabled: false
+  m3:
+    gpus: []

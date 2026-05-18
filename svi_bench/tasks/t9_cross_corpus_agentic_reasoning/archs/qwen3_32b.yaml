@@ -1,0 +1,67 @@
+name: "qwen3_32b"
+description: "Architecture using Qwen3-30B-A3B text-only (local) and video/document tools."
+
+agent:
+  model_key: "qwen3_32b"
+  prompt: "prompts/qwen_system_prompt_react.txt"
+
+tools:
+  - "search_documents"
+  - "document_qa"
+  - "video_qa"
+  - "search_videos"
+
+search_documents:
+  embedding_model: "m3" # Options: m3
+
+search_videos:
+  embedding_model: "internvideo2" # Options: m3, internvideo2
+  embedding_source: "video" # Options: video, caption
+
+document_qa:
+   model_key: "qwen3_vl"
+   prompt: "prompts/tools/document_qa.txt"
+
+video_qa:
+   model_key: "llava_next_video"
+   prompt: "prompts/tools/video_qa.txt"
+
+video_qa_oracle:
+   model_key: "qwen3_vl"
+   prompt: "prompts/tools/video_qa_oracle.txt"
+
+# ============================================
+# GPU Services Configuration for Batch Processing
+# NOTE: This section is ONLY used by slurm/start_services.slurm
+#       Model/port info is read from configs/models.yaml
+# ============================================
+services:
+  # Agent - Qwen3-30B-A3B needs 2 GPUs (tensor parallel)
+  agent:
+    enabled: true
+    gpus: [6, 7]
+    tensor_parallel_size: 2
+    vllm_cfg:
+      max_model_len: 40960
+
+  # Tool models - keys match tool_models in configs/models.yaml
+  llava_next_video:  # Used by video_qa
+    enabled: true
+    gpus: [1]
+    vllm_cfg:
+      max_model_len: 32768
+
+  qwen3_vl:  # Used by document_qa
+    enabled: true
+    gpus: [2]
+    vllm_cfg:
+      max_model_len: 32768
+
+  # Embedding models
+  internvideo2:  # Used by search_videos
+    enabled: true
+    gpus: [5]
+    port: 8097
+
+  m3:  # bge-m3, loaded in-process by workers
+    gpus: [3, 4]  # Round-robin by worker ID

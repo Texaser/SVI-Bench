@@ -1,0 +1,55 @@
+name: "minimax_m2_5"
+description: "Architecture using MiniMax-M2.5 (local, H100x4) and video/document tools."
+
+agent:
+  model_key: "minimax_m2_5"
+  prompt: "prompts/qwen_system_prompt_react.txt"
+
+tools:
+  - "search_documents"
+  - "document_qa"
+  - "video_qa"
+  - "search_videos"
+
+search_documents:
+  embedding_model: "m3"
+
+search_videos:
+  embedding_model: "internvideo2"
+  embedding_source: "video"
+
+document_qa:
+  model_key: "qwen3_vl"
+  prompt: "prompts/tools/document_qa.txt"
+
+video_qa:
+  model_key: "llava_next_video"
+  prompt: "prompts/tools/video_qa.txt"
+
+video_qa_oracle:
+  model_key: "qwen3_vl"
+  prompt: "prompts/tools/video_qa_oracle.txt"
+
+# ============================================
+# GPU Services Configuration
+# Agent runs on H100x4 node (separate from tools)
+# Tools run on A6000x8 node using minimax_m2_5_tools arch
+# ============================================
+services:
+  agent:
+    enabled: true
+    gpus: [0, 1, 2, 3]
+    tensor_parallel_size: 4
+    vllm_cfg:
+      trust_remote_code: true
+      enable_expert_parallel: true
+
+  # Tool models disabled — run on separate node with minimax_m2_5_tools arch
+  llava_next_video:
+    enabled: false
+  qwen3_vl:
+    enabled: false
+  internvideo2:
+    enabled: false
+  m3:
+    gpus: []

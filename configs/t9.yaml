@@ -1,10 +1,8 @@
-# Default eval config for T9 (t9_placeholder).
-# Override on the CLI or by passing config= to evaluate.run().
-task: t9_placeholder
-split: test
-prompt_template: "{question}"
-metrics:
-  - accuracy
-generation:
-  temperature: 0.0
-  max_tokens: 256
+# Default eval config for T9 (Cross-Corpus Agentic Reasoning). Override on
+# the CLI (`svi-bench evaluate --task t9 --model X`) or by passing
+# `config=` to `evaluate.run()`.
+task: t9_cross_corpus_agentic_reasoning
+archs: [gpt5]           # use "all" to run every entry in KNOWN_ARCHS
+split: val              # one of: train, val, test, all
+datasets: [basketball, hockey, soccer]
+num_workers: 1

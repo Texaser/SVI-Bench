@@ -34,7 +34,32 @@ dependencies = [
 [project.optional-dependencies]
 t1 = []
 t2 = []
-t3 = ["decord>=0.6", "torchvision>=0.17"]
+# T3 bundles its own copy of the InternVideo2 fork under
+# svi_bench/tasks/t3_compositional_video_retrieval/internvideo2/. flash-attn is
+# omitted (CUDA-version-pinned, brittle to install); users add it manually if
+# they want the optimized attention path.
+t3 = [
+    # Pinned to dvr's known-working stack (same reasoning as [t9] below).
+    "torch==2.9.0",
+    "torchvision==0.24.0",
+    "torchaudio==2.9.0",
+    "decord>=0.6",
+    "transformers==4.57.6",
+    "einops>=0.7",
+    "timm>=1.0",
+    "pandas>=2.0",
+    "wandb>=0.16",
+    "deepspeed>=0.13",
+    "scipy>=1.11",
+    "Pillow>=10.0",
+    "av>=11.0",
+    "opencv-python>=4.8",
+    "imageio>=2.31",
+    "librosa>=0.10",
+    "easydict>=1.10",
+    "termcolor>=2.4",
+    "fvcore>=0.1.5",
+]
 t4 = []
 t5 = ["scipy>=1.11"]
 t6 = []
@@ -72,7 +97,55 @@ t8 = [
     "pandas>=2.0",
     "pynvml",
 ]
-t9 = ["gymnasium>=0.29"]
+# T9 bundles its own copy of the InternVideo2 fork under
+# svi_bench/tasks/t9_cross_corpus_agentic_reasoning/internvideo2/ (used only
+# for video embedding extraction via demo/utils.py:setup_internvideo2).
+# The agent itself runs through qwen-agent + OpenAI/Gemini SDKs.
+t9 = [
+    # Core T9 agent + retrieval stack
+    "qwen-agent>=0.0.10",
+    "openai>=1.30",
+    "elasticsearch>=8.0,<9.0",
+    "json5>=0.9",
+    "requests>=2.30",
+    "tiktoken>=0.7",
+    # RAG layer used by the document + video tools
+    "llama-index-core>=0.10",
+    "llama-index-vector-stores-elasticsearch>=0.2",
+    "llama-index-embeddings-huggingface>=0.2",
+    # InternVideo2 embedding server (tools/serve_internvideo2.py, launched by start_services.py)
+    "flask>=2.0",
+    # Local vLLM service stack (scripts/start_services.py spawns `python -m
+    # vllm.entrypoints.openai.api_server` for tool models + non-API agents).
+    # sentencepiece + protobuf are runtime deps of the HF tokenizers used by
+    # Qwen / MiniMax / similar models — only loaded inside transformers
+    # internals, so they don't show up in `import` audits.
+    # Pinned to dvr's known-working stack (T9 was developed against these).
+    # `torch>=2.9` etc. let pip resolve to torch 2.11+cu130 / transformers 5.x
+    # which broke on hosts with CUDA 12.4 drivers and on the vendored
+    # InternVideo2 BERT imports.
+    "vllm==0.13.0",
+    "accelerate>=0.30",
+    "sentencepiece>=0.2",
+    "protobuf>=4.0",
+    "torch==2.9.0",
+    "torchvision==0.24.0",
+    "torchaudio==2.9.0",
+    "transformers==4.57.6",
+    "einops>=0.7",
+    "timm>=1.0",
+    "decord>=0.6",
+    "Pillow>=10.0",
+    "av>=11.0",
+    "opencv-python>=4.8",
+    "imageio>=2.31",
+    "librosa>=0.10",
+    "easydict>=1.10",
+    "termcolor>=2.4",
+    "fvcore>=0.1.5",
+    "scipy>=1.11",
+    "pandas>=2.0",
+]
 all = [
     "svi-bench[t1,t2,t3,t4,t5,t6,t7,t8,t9]",
 ]

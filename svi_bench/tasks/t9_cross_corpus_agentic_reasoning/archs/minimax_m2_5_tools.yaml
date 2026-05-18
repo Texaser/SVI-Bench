@@ -1,0 +1,59 @@
+name: "minimax_m2_5_tools"
+description: "Tool services node for MiniMax-M2.5 setup. Runs on A6000x8 separate from agent."
+
+agent:
+  model_key: "minimax_m2_5"
+  prompt: "prompts/qwen_system_prompt_react.txt"
+
+tools:
+  - "search_documents"
+  - "document_qa"
+  - "video_qa"
+  - "search_videos"
+
+search_documents:
+  embedding_model: "m3"
+
+search_videos:
+  embedding_model: "internvideo2"
+  embedding_source: "video"
+
+document_qa:
+  model_key: "qwen3_vl"
+  prompt: "prompts/tools/document_qa.txt"
+
+video_qa:
+  model_key: "llava_next_video"
+  prompt: "prompts/tools/video_qa.txt"
+
+video_qa_oracle:
+  model_key: "qwen3_vl"
+  prompt: "prompts/tools/video_qa_oracle.txt"
+
+# ============================================
+# GPU Services Configuration — TOOLS ONLY
+# Agent disabled (runs on separate H100 node)
+# ============================================
+services:
+  agent:
+    enabled: false
+
+  llava_next_video:
+    enabled: true
+    gpus: [1]
+    vllm_cfg:
+      max_model_len: 32768
+
+  qwen3_vl:
+    enabled: true
+    gpus: [2]
+    vllm_cfg:
+      max_model_len: 32768
+
+  internvideo2:
+    enabled: true
+    gpus: [5]
+    port: 8097
+
+  m3:
+    gpus: [3, 4]

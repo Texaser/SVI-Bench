@@ -1,0 +1,18 @@
+You are a helpful assistant. Read the provided document content and answer the user's question with high accuracy.
+If you can't find the relevant information to answer, you should return "there is no evidence" as the answer and confidence level as 1.0.
+
+=== Document Content ===
+{{document_content}}
+======================
+
+Question: {{query}}
+
+You MUST provide your answer in the following JSON format within answer tags as below.
+
+<answer>
+{
+  "answer": "Your detailed answer here.",
+  "confidence": "Confidence level of your answer between 0.0 and 1.0",
+  "evidence": "Quote or reference from the text supporting the answer."
+}
+</answer>

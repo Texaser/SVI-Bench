@@ -76,6 +76,23 @@ svi-bench/
 Each `tasks/t<N>_*/` directory has its own `README.md` covering setup,
 expected results, and contributor notes.
 
+## Status of each task
+
+| Task | Status | Notes |
+|---|---|---|
+| T1 | stub | placeholder |
+| T2 | stub | placeholder |
+| **T3** | **integrated** | retrieval eval against cached embeddings; see [`svi_bench/tasks/t3_compositional_video_retrieval/README.md`](svi_bench/tasks/t3_compositional_video_retrieval/README.md) |
+| T4 | stub | placeholder |
+| T5 | stub | placeholder |
+| T6 | stub | placeholder |
+| **T7** | **integrated** | bundled DiffSynth slice + LoRA training |
+| **T8** | **integrated** | bundled DiffSynth slice + LoRA training |
+| T9 | stub | placeholder |
+
+T3, T7, T8 are reference integrations. T1, T2, T4, T5, T6, T9 stubs follow
+the same shape and await contributor ports.
+
 ## Adding a new task
 
 1. Create `svi_bench/tasks/t<N>_<slug>/` with `evaluate.py`, `baseline.py`,

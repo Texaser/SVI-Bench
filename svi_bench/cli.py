@@ -4,6 +4,7 @@ Subcommands:
   svi-bench evaluate --task <slug|all> --model <name>
   svi-bench download --tasks <slug...>
   svi-bench list
+  svi-bench models
 """
 
 from __future__ import annotations
@@ -42,6 +43,22 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_models(_: argparse.Namespace) -> int:
+    """List registered model providers.
+
+    The CLI does not interpret ``--model`` — each task decides how to use
+    (or ignore) the value. See ``svi_bench/core/models.py`` for the
+    name-prefix routing rules used by ``get_model()`` and for adding new
+    providers; see each task's README for whether the arg is used.
+    """
+    from svi_bench.core.models import _REGISTRY
+
+    print("Registered providers:")
+    for name in sorted(_REGISTRY):
+        print(f"  {name}")
+    return 0
+
+
 def _cmd_download(args: argparse.Namespace) -> int:
     from svi_bench.core.data import load_task
 
@@ -67,6 +84,9 @@ def main(argv: list[str] | None = None) -> int:
 
     p_ls = sub.add_parser("list", help="list registered tasks")
     p_ls.set_defaults(func=_cmd_list)
+
+    p_models = sub.add_parser("models", help="list registered model providers and name-prefix routing")
+    p_models.set_defaults(func=_cmd_models)
 
     args = parser.parse_args(argv)
     return args.func(args)

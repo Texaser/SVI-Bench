@@ -1,0 +1,419 @@
+# Tool Definitions
+# This file defines tool parameters, descriptions, and examples.
+
+search_documents:
+  description: |
+    Performs hybrid search (Semantic + Lexical) on document database.
+    Note that the results show only the search highlights in the documents, not the full documents.
+    Only the top-{document_search_top_k} documents are retrieved at max.
+  parameters:
+    - name: query
+      type: string
+      description: The search query. For filter options, use the other parameters. Empty string with filters are supported.
+      required: true
+    - name: game_ids
+      type: array
+      items:
+        type: string
+      description: 'Optional list of game IDs (e.g. ["401738"]).'
+      required: false
+    - name: doc_type
+      type: string
+      description: 'Filter by type: espn_report, game_stat_player, game_stat_team, season_stat_player, season_stat_team.'
+      required: false
+    - name: doc_ids
+      type: array
+      items:
+        type: string
+      description: 'Optional list of IDs. Game docs: {game_id}_{doc_type} (e.g. ["401738_espn_report"]). Season entity docs: {entity_type}_{entity_id}_{season}_{doc_type} (e.g. ["player_10037_21-22_season_stat_player"]).'
+      required: false
+    - name: teams
+      type: array
+      items:
+        type: string
+      description: 'List of canonical team names (e.g. ["Portland Trail Blazers"]). Matches documents containing ANY of the listed teams (OR logic).'
+      required: false
+    - name: players
+      type: array
+      items:
+        type: string
+      description: 'List of full player names (e.g. ["Stephen Curry"]). Matches documents containing ANY of the listed players (OR logic). Supported doc types: game_stat_player, season_stat_player.'
+      required: false
+    - name: season
+      type: integer
+      description: 'Filter by season year (e.g. 2019). Supported doc types: game_stat_player, game_stat_team, season_stat_player, season_stat_team.'
+      required: false
+    - name: date
+      type: string
+      description: 'Filter by game date. Exact: "2019-04-28", range: "2019-04-01..2019-04-30", after: "2019-04-01..", before: "..2019-04-30". Supported doc types: game_stat_player, game_stat_team.'
+      required: false
+  example: |
+    --- doc_type: espn_report ---
+    Input:
+    {"query": "Stephen Curry 35 points fourth quarter", "doc_type": "espn_report"}
+    Output:
+    [
+      {
+        "doc_id": "617912_espn_report",
+        "score": {"rrf": 0.85, "semantic": 0.72, "bm25": 0.91},
+        "metadata": {
+          "game_id": "617912",
+          "sport": "basketball",
+          "doc_type": "espn_report",
+          "teams": ["Portland Trail Blazers", "Golden State Warriors"]
+        },
+        "highlights": "Stephen Curry scored 35 points as the Golden State Warriors held off the Portland Trail Blazers 116-112. Curry had 12 points in the fourth quarter..."
+      }
+    ]
+
+    --- doc_type: game_stat_player ---
+    Input:
+    {"query": "Trae Young points assists", "doc_type": "game_stat_player", "players": ["Trae Young"], "season": 2019}
+    Output:
+    [
+      {
+        "doc_id": "399772_game_stat_player",
+        "score": {"rrf": 0.92, "semantic": 0.68, "bm25": 0.85},
+        "metadata": {
+          "game_id": "399772",
+          "sport": "basketball",
+          "doc_type": "game_stat_player",
+          "teams": ["Atlanta Hawks", "Dallas Mavericks"],
+          "date": "2018-10-24",
+          "season": 2019,
+          "season_type": "regular-season",
+          "home_team": "Atlanta Hawks",
+          "away_team": "Dallas Mavericks"
+        },
+        "highlights": "Trae Young: 17 points, 4 rebounds, 8 assists, 2 turnovers, 5 field goals made, 12 field goals attempted, 3 free throws made, 4 free throws attempted..."
+      }
+    ]
+
+    --- doc_type: game_stat_team ---
+    Input:
+    {"query": "team rebounds turnovers", "doc_type": "game_stat_team", "teams": ["Atlanta Hawks"], "date": "2018-10-24"}
+    Output:
+    [
+      {
+        "doc_id": "399772_game_stat_team",
+        "score": {"rrf": 0.78, "semantic": 0.61, "bm25": 0.82},
+        "metadata": {
+          "game_id": "399772",
+          "sport": "basketball",
+          "doc_type": "game_stat_team",
+          "teams": ["Atlanta Hawks", "Dallas Mavericks"],
+          "date": "2018-10-24",
+          "season": 2019,
+          "season_type": "regular-season",
+          "home_team": "Atlanta Hawks",
+          "away_team": "Dallas Mavericks"
+        },
+        "highlights": "Atlanta Hawks: 111 points, 48 rebounds, 28 assists, 12 turnovers, 18 fouls, 42 field goals made, 88 field goals attempted..."
+      }
+    ]
+
+    --- doc_type: season_stat_player ---
+    Input:
+    {"query": "", "doc_type": "season_stat_player", "players": ["Trae Young"], "season": 2019}
+    Output:
+    [
+      {
+        "doc_id": "player_203895_18-19_season_stat_player",
+        "score": {"rrf": 0.75, "semantic": 0.64, "bm25": 0.79},
+        "metadata": {
+          "sport": "basketball",
+          "doc_type": "season_stat_player",
+          "entity_type": "player",
+          "entity_name": "Trae Young",
+          "teams": ["Atlanta Hawks"],
+          "season": 2019
+        },
+        "highlights": "Trae Young: 19.1 points, 3.7 rebounds, 8.1 assists per game, 6.8 field goals made, 15.2 field goals attempted, 3.5 free throws made, 4.1 free throws attempted..."
+      }
+    ]
+
+    --- doc_type: season_stat_team ---
+    Input:
+    {"query": "", "doc_type": "season_stat_team", "teams": ["Atlanta Hawks"], "season": 2019}
+    Output:
+    [
+      {
+        "doc_id": "team_3_18-19_season_stat_team",
+        "score": {"rrf": 0.71, "semantic": 0.58, "bm25": 0.74},
+        "metadata": {
+          "sport": "basketball",
+          "doc_type": "season_stat_team",
+          "entity_type": "team",
+          "entity_name": "Atlanta Hawks",
+          "teams": ["Atlanta Hawks"],
+          "season": 2019
+        },
+        "highlights": "Atlanta Hawks: 28.4 points, 10.1 rebounds, 9.8 assists per game, 10.2 field goals made, 21.1 field goals attempted, 5.8 free throws made, 7.2 free throws attempted..."
+      }
+    ]
+
+document_qa:
+  description: |
+    Takes a list of documents and analyzes the given documents one by one by reading the full content of each document.
+    Note that the QA model processes each document independently.
+    So, it does not know about the other documents. Be careful of this when formulating your question.
+  parameters:
+    - name: doc_ids
+      type: array
+      items:
+        type: string
+      description: 'List of document IDs. Game docs: {game_id}_{doc_type} (e.g. 401738_espn_report). Season entity docs: {entity_type}_{entity_id}_{season}_{doc_type} (e.g. player_10037_21-22_season_stat_player).'
+      required: true
+    - name: query
+      type: string
+      description: The specific question.
+      required: true
+  example: |
+    Input:
+    {"doc_ids": ["617912_espn_report"], "query": "How many points did Stephen Curry score and what were the key moments in the fourth quarter?"}
+
+    Output:
+    [
+      {
+        "doc_id": "617912_espn_report",
+        "answer": "Stephen Curry scored 35 points in total. In the fourth quarter, he scored 12 points including two crucial three-pointers in the final two minutes that sealed the victory for the Warriors.",
+        "confidence": 0.92,
+        "evidence": "Curry led the Warriors with 35 points... His two late three-pointers in the final minutes sealed the win."
+      }
+    ]
+
+search_videos:
+  description: |
+    Performs semantic search for video clips. Returns IDs and metadata.
+    Only the top-{video_search_top_k} clips are retrieved at max.
+  parameters:
+    - name: query
+      type: string
+      description: The search query. For filter options, use the other parameters. Empty string with filters are supported.
+      required: true
+    - name: game_ids
+      type: array
+      items:
+        type: string
+      description: 'Optional list of game IDs (e.g. ["401738"]).'
+      required: false
+    - name: period
+      type: integer
+      description: 'Optional period/quarter/half number (e.g., 1-4 for basketball, 1-3+ for hockey, 1-2 for soccer). The response uses "quarter" for basketball, "period" for hockey, "half" for soccer inside game_metadata.'
+      required: false
+    - name: teams
+      type: array
+      items:
+        type: string
+      description: 'List of canonical team names (e.g. ["Portland Trail Blazers"]). Matches clips containing ANY of the listed teams (OR logic).'
+      required: false
+    - name: players
+      type: array
+      items:
+        type: string
+      description: 'List of full player names (e.g. ["Maurice Harkless"]). Matches clips containing ANY of the listed players (OR logic).'
+      required: false
+    - name: video_ids
+      type: array
+      items:
+        type: string
+      description: 'Optional list of IDs in {game_id}_{window_id} format (e.g. ["401738_5"]).'
+      required: false
+    - name: temporal_boundary
+      type: string
+      description: 'Temporal boundary in actual VIDEO TIMESTAMPS in seconds (e.g. "100.5-120.0").'
+      required: false
+  example: |
+    Input:
+    {"query": "Stephen Curry three pointer fourth quarter", "game_ids": ["617912"], "period": 4, "players": ["Stephen Curry"]}
+
+    Output:
+    [
+      {
+        "clip_id": "617912_285",
+        "sport": "basketball",
+        "score": 0.86,
+        "game_metadata": {
+          "game_id": "617912",
+          "quarter": 4,
+          "teams": ["Portland Trail Blazers", "Golden State Warriors"],
+          "players": ["Stephen Curry", "Damian Lillard"]
+        },
+        "temporal_context": {
+          "video_timestamps": "600.0 - 615.0"
+        }
+      }
+    ]
+
+video_qa:
+  description: |
+    Takes a list of videos and analyzes the given videos one by one.
+    Note that the QA model processes each video clip independently.
+    So, it does not know about the other clips. Be careful of this when formulating your question.
+
+    **Usage Guidelines:**
+    For each tool call, ask questions from ONE category at a time (e.g., don't mix action recognition with player identification).
+    This ensures focused, accurate responses from the QA model.
+
+    **Question Categories and Example Templates:**
+
+    Basketball:
+    - Atomic Action Recognition: "What is the atomic action displayed in this video clip?"
+    - Action Sequence: "What is the sequence of actions that takes place in this video clip?"
+    - Contested Shot: "Determine whether the shot shown in the video is contested."
+    - Dribble Move: "What is the direction of the dribble move shown in this basketball clip?"
+    - Drive Direction: "Determine whether the drive shown in the video is to the left or to the right."
+    - Play Type: "What is the play type executed in this clip?"
+    - Shot Type: "What type of shot does the player use in this basketball clip?"
+    - Shooting Hand: "Which hand does the basketball player use for the shot in this video?"
+    - Spatial Position: "Which area on the court is the player positioned when the {action} occurs?"
+    - Player Name: "What is the name of the player who performs {action} in this video clip?"
+    - Player Number: "What is the jersey number of the player who performs {action} in this video clip?"
+    - Player Position: "What is the position of the player who performs {action} in this basketball clip?"
+    - Player Skill Level: "What is the {skill} skill level, on a scale of 5, of the player who performs {action}?"
+    - Current Score: "What is the current score of the game?"
+    - Remaining Time: "How much playing time is left in this {period} of the basketball game when {action} happens?"
+    - Shot Clock: "What is the remaining shot clock time when {action} happens in the video?"
+    - Which Quarter: "What is the current {period} of the game?"
+    - Which Teams: "What are the two teams playing?"
+
+    Hockey:
+    - Action Recognition: "What is the atomic action shown in this hockey video clip?"
+    - Action Sequence: "What is the sequence of actions taking place in this video clip?"
+    - Goalie Stance: "What is the goalie's stance in this hockey clip?"
+    - Shot Type: "What type of shot does the player use in this hockey clip?"
+    - Penalty Violation: "What is the type of violation in this hockey clip?"
+    - Zone: "From which zone of the rink does the {action} happen in this video?"
+    - Player Name: "What is the name of the player who performs {action} in this hockey clip?"
+    - Player Number: "What is the jersey number of the player who performs {action} in this hockey clip?"
+    - Current Score: "What is the current score of the game?"
+    - Which Period: "What is the current period of the hockey game?"
+    - Which Teams: "What are the two teams playing?"
+
+    Soccer:
+    - Action Recognition: "What is the action taking place in this soccer video?"
+    - Action Sequence: "What is the sequence of actions taking place in this video?"
+    - Attack Flank: "From which direction does this play develop?"
+    - Pass Accuracy: "Is the pass in this soccer video successful or not?"
+    - Pass Type: "What type of pass is made in this clip (cross, key pass, through ball, free kick cross, assist)?"
+    - Shot Body Part: "Which body part does the player use to take the shot in this clip?"
+    - Shot Placement: "Where in the goal does the shot land in this soccer clip?"
+    - Foul Type: "What type of foul is committed in this clip?"
+    - Set Piece Type: "What is the set piece type shown in this clip (corner, free kick, goal kick, throw-in, penalty)?"
+    - Player Name: "What is the name of the player who performs {action} in this soccer clip?"
+    - Current Score: "What is the current score of the game?"
+    - Current Time: "What is the approximate game time when {action} takes place?"
+    - Which Half: "Which half of the match is being played in this soccer clip?"
+    - Which Teams: "Which two teams are playing in this soccer clip?"
+  parameters:
+    - name: video_ids
+      type: array
+      items:
+        type: string
+      description: 'List of Video IDs. Use the format [{game_id}_{window_id}, ...] e.g., [401738_5].'
+      required: true
+    - name: query
+      type: string
+      description: Visual question.
+      required: true
+  example: |
+    Input:
+    {"video_ids": ["617912_285"], "query": "What type of shot does Stephen Curry make and from what location on the court?"}
+
+    Output:
+    [
+      {
+        "clip_id": "617912_285",
+        "answer": "Stephen Curry makes a three-point jumper from the right wing area. The shot appears to be a catch-and-shoot opportunity off a screen.",
+        "confidence": 0.85
+      }
+    ]
+
+video_qa_oracle:
+  description: |
+    Takes a list of videos and analyzes the given videos one by one.
+    Note that the QA model processes each video clip independently.
+    So, it does not know about the other clips. Be careful of this when formulating your question.
+
+    **Usage Guidelines:**
+    For each tool call, ask questions from ONE category at a time (e.g., don't mix action recognition with player identification).
+    This ensures focused, accurate responses from the QA model.
+
+    **Question Categories and Example Templates:**
+
+    Basketball:
+    - Atomic Action Recognition: "What is the atomic action displayed in this video clip?"
+    - Action Sequence: "What is the sequence of actions that takes place in this video clip?"
+    - Contested Shot: "Determine whether the shot shown in the video is contested."
+    - Dribble Move: "What is the direction of the dribble move shown in this basketball clip?"
+    - Drive Direction: "Determine whether the drive shown in the video is to the left or to the right."
+    - Play Type: "What is the play type executed in this clip?"
+    - Shot Type: "What type of shot does the player use in this basketball clip?"
+    - Shooting Hand: "Which hand does the basketball player use for the shot in this video?"
+    - Spatial Position: "Which area on the court is the player positioned when the {action} occurs?"
+    - Player Name: "What is the name of the player who performs {action} in this video clip?"
+    - Player Number: "What is the jersey number of the player who performs {action} in this video clip?"
+    - Player Position: "What is the position of the player who performs {action} in this basketball clip?"
+    - Player Skill Level: "What is the {skill} skill level, on a scale of 5, of the player who performs {action}?"
+    - Current Score: "What is the current score of the game?"
+    - Remaining Time: "How much playing time is left in this {period} of the basketball game when {action} happens?"
+    - Shot Clock: "What is the remaining shot clock time when {action} happens in the video?"
+    - Which Quarter: "What is the current {period} of the game?"
+    - Which Teams: "What are the two teams playing?"
+
+    Hockey:
+    - Action Recognition: "What is the atomic action shown in this hockey video clip?"
+    - Action Sequence: "What is the sequence of actions taking place in this video clip?"
+    - Goalie Stance: "What is the goalie's stance in this hockey clip?"
+    - Shot Type: "What type of shot does the player use in this hockey clip?"
+    - Penalty Violation: "What is the type of violation in this hockey clip?"
+    - Zone: "From which zone of the rink does the {action} happen in this video?"
+    - Player Name: "What is the name of the player who performs {action} in this hockey clip?"
+    - Player Number: "What is the jersey number of the player who performs {action} in this hockey clip?"
+    - Current Score: "What is the current score of the game?"
+    - Which Period: "What is the current period of the hockey game?"
+    - Which Teams: "What are the two teams playing?"
+
+    Soccer:
+    - Action Recognition: "What is the action taking place in this soccer video?"
+    - Action Sequence: "What is the sequence of actions taking place in this video?"
+    - Attack Flank: "From which direction does this play develop?"
+    - Pass Accuracy: "Is the pass in this soccer video successful or not?"
+    - Pass Type: "What type of pass is made in this clip (cross, key pass, through ball, free kick cross, assist)?"
+    - Shot Body Part: "Which body part does the player use to take the shot in this clip?"
+    - Shot Placement: "Where in the goal does the shot land in this soccer clip?"
+    - Foul Type: "What type of foul is committed in this clip?"
+    - Set Piece Type: "What is the set piece type shown in this clip (corner, free kick, goal kick, throw-in, penalty)?"
+    - Player Name: "What is the name of the player who performs {action} in this soccer clip?"
+    - Current Score: "What is the current score of the game?"
+    - Current Time: "What is the approximate game time when {action} takes place?"
+    - Which Half: "Which half of the match is being played in this soccer clip?"
+    - Which Teams: "Which two teams are playing in this soccer clip?"
+  parameters:
+    - name: video_ids
+      type: array
+      items:
+        type: string
+      description: 'List of Video IDs. Use the format [{game_id}_{window_id}, ...] e.g., [401738_5].'
+      required: true
+    - name: query
+      type: string
+      description: Question about events in the clip.
+      required: true
+  example: |
+    Input:
+    {"video_ids": ["617912_285", "617912_291"], "query": "For each clip, describe the shot attempt and its outcome."}
+
+    Output:
+    [
+      {
+        "clip_id": "617912_285",
+        "answer": "Stephen Curry receives a pass on the right wing, takes a contested three-point jumper, and makes the shot. The score updates to 108-104 for the Warriors.",
+        "confidence": 0.82
+      },
+      {
+        "clip_id": "617912_291",
+        "answer": "Draymond Green sets a screen for Curry at the top of the key. Curry pulls up for a three-pointer from the left side and drains it, extending the lead to 111-106.",
+        "confidence": 0.78
+      }
+    ]

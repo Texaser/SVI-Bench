@@ -1,0 +1,105 @@
+agent_models:
+
+  qwen3_32b:
+    type: "oai"
+    name: "Qwen/Qwen3-30B-A3B"
+    server: "http://localhost:8093/v1"
+    api_key: "EMPTY"
+    vllm_cfg:
+      max_model_len: 40960
+      enable_prefix_caching: true
+    generate_cfg:
+      max_input_tokens: 40000
+      temperature: 0
+      top_p: 0.95
+      max_tokens: 4096
+
+  qwen3_omni_30b:
+    type: "oai"
+    name: "Qwen/Qwen3-Omni-30B-A3B-Thinking"
+    server: "http://localhost:8093/v1"
+    api_key: "EMPTY"
+    vllm_cfg:
+      max_model_len: 40960
+      enable_prefix_caching: true
+      # rope_scale_factor: 4.0
+    generate_cfg:
+      max_input_tokens: 40000
+      temperature: 0
+      top_p: 0.95
+      max_tokens: 4096
+
+  gpt5:
+    type: "gpt"
+    api_version: "responses"  # Use "responses" for Responses API, "completions" (default) for Chat Completions
+    name: "gpt-5.2"
+    server: "https://api.openai.com/v1"
+    api_key: "ENV" # Use environment variable
+    generate_cfg:
+      temperature: 1
+      max_output_tokens: 4096
+      reasoning_effort: "medium"
+
+  minimax_m2_5:
+    type: "oai"
+    name: "MiniMaxAI/MiniMax-M2.5"
+    server: "http://localhost:8093/v1"
+    api_key: "EMPTY"
+    vllm_cfg:
+      max_model_len: 131072
+      trust_remote_code: true
+      enable_expert_parallel: true
+    generate_cfg:
+      max_input_tokens: 130000
+      temperature: 0.6
+      top_p: 0.95
+      max_tokens: 8192
+
+  qwen3_235b:
+    type: "oai"
+    name: "Qwen/Qwen3-235B-A22B-Thinking-2507-FP8"
+    server: "http://localhost:8093/v1"
+    api_key: "EMPTY"
+    vllm_cfg:
+      max_model_len: 40960
+      enable_prefix_caching: true
+    generate_cfg:
+      max_input_tokens: 40000
+      temperature: 0
+      top_p: 0.95
+      max_tokens: 4096
+
+tool_models:
+  llava_next_video:
+    type: "qwen_vl"
+    # Sports-finetuned LLaVA-Next-Video ckpt. Path is resolved relative to
+    # T9_ROOT at load time (see run_agent.py / run_batch.py).
+    name: "ckpts/llava_next_video_sports_100k_f16_full_ft_hf"
+    server: "http://localhost:8099/v1"
+    vllm_cfg:
+      max_model_len: 32768
+
+  qwen3_vl:
+    type: "qwen_vl"
+    name: "Qwen/Qwen3-VL-8B-Thinking"
+    server: "http://localhost:8095/v1"
+    api_key: "EMPTY"
+    vllm_cfg:
+      max_model_len: 32768
+    generate_cfg:
+      max_input_tokens: 32000
+
+embedding_models:
+  m3:
+    type: "bge_m3"
+    name: "BAAI/bge-m3"
+    dimension: 1024
+  
+  internvideo2:
+    type: "internvideo2"
+    # config_path is the vendored InternVideo2 eval config (next to the task
+    # module). model_path is resolved relative to T9_ROOT at load time.
+    config_path: "internvideo2/configs/config_sports_eval_ct_b.py"
+    model_path: "ckpts/internvideo2_sports.pth"
+    server: "http://localhost:8097"
+    dimension: 1024

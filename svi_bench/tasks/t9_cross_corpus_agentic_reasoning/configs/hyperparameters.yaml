@@ -1,0 +1,46 @@
+# Hyperparameters for the Agentic Search Pipeline
+
+react:
+  max_llm_calls: 30
+  pruning_token_limit: -1 # Soft limit for context pruning (disabled)
+  max_context_tokens: 150000  # Hard limit for context window, truncates last message when exceeded
+  verbosity_level: 2
+  retry_base_sleep: 2
+  max_retries: 5
+
+document_search:
+  top_k: 20
+  score_threshold: 0.0
+  highlight_max_length: 500
+  semantic_multiplier: 10
+  lexical_multiplier: 10
+  fusion_rank_multiplier: 5
+
+video_search:
+  top_k: 100
+  score_threshold: 0.0
+
+document_qa:
+  max_content_tokens: 32000
+
+video_qa:
+  max_content_tokens: 32000
+  video_num_frames: 16
+  video_resize: 336
+
+data:
+  enabled_datasets:
+    - basketball
+    - hockey
+    - soccer
+  enabled_sources:
+    - espn_report
+    - game_statistics
+    - season_statistics
+    - videos
+
+elasticsearch:
+  # Set this to your Elasticsearch host. The shipped default assumes ES runs
+  # on the same node as the worker; for multi-node setups, point this at the
+  # node where ES is actually running. Env var T9_ES_URL overrides at runtime.
+  url: "http://localhost:9200"

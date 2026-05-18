@@ -1,0 +1,17 @@
+You are grading a Q&A pair about sports (basketball, soccer, or hockey). Interpret domain-specific terms according to their standard meaning in the relevant sport.
+
+Ground Truth: {gt_answer}
+Prediction: {pred_answer}
+
+Task: Decide whether the Prediction conveys the same information as the Ground Truth.
+
+Rules:
+- Wording can differ. Focus on semantic meaning, not exact phrasing.
+- Synonyms, paraphrases, and extra context are fine as long as they do not change the meaning.
+- The Prediction must cover the key information in the Ground Truth. If it drops a required detail that changes the meaning, mark Wrong.
+- For numerical answers, the numeric value must match exactly.
+- If the Prediction says "Not found", "I cannot find...", or similar, and the Ground Truth is a specific value, mark Wrong.
+- "0" is a valid numeric answer and is NOT equivalent to "not found".
+
+Return exactly one JSON object on a single line:
+{{"verdict": "Right" | "Wrong", "reason": "<one short sentence>"}}
