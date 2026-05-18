@@ -44,3 +44,10 @@ tmp/
 *.key
 context/
 tests/
+
+svi_bench/tasks/t9_cross_corpus_agentic_reasoning/.cache/
+
+svi_bench/tasks/t9_cross_corpus_agentic_reasoning/.triton/
+
+svi_bench/tasks/t9_cross_corpus_agentic_reasoning/logs/
+
