@@ -23,11 +23,11 @@ from configs.data import *
 from configs.model import *
 # ========================= data ==========================
 # NOTE The train_file will not be used during the evaluation
-train_file = available_corpus["sports_ret_300k_train_v2_concept"]
+train_file = available_corpus["train_concept"]
 test_file = dict(
-    basketball_val=available_corpus["basketball_val_v2"],
-    hockey_val=available_corpus["hockey_val_v2"],
-    soccer_val=available_corpus["soccer_val_v2"],
+    basketball_val=available_corpus["basketball_val"],
+    hockey_val=available_corpus["hockey_val"],
+    soccer_val=available_corpus["soccer_val"],
 )
 
 test_types = ["basketball_val", "hockey_val", "soccer_val"]

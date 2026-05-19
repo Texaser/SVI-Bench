@@ -24,15 +24,13 @@ from configs.data import *
 from configs.model import *
 # ========================= data ==========================
 # NOTE The train_file will not be used during the evaluation
-train_file = available_corpus["sports_ret_300k_train_v2"]  #sports_ret_300k_train
+train_file = available_corpus["train"]
 test_file = dict(
-    basketball_test=available_corpus["basketball_test_v2"],
-    # basketball_val=available_corpus["basketball_val_v2"],
+    basketball_test=available_corpus["basketball_test"],
     )
 
 test_types = [
     "basketball_test",
-    # "basketball_val"
     ]
 
 
@@ -70,10 +68,10 @@ model = dict(
     vision_encoder=dict(
         # backbone
         name="pretrain_internvideo2_1b_patch14_224",
-        img_size=224, 
+        img_size=224,
         num_frames="${num_frames}",
         tubelet_size=1,
-        patch_size=14, 
+        patch_size=14,
         d_model=1408,
         clip_embed_dim=768,
         clip_teacher_embed_dim=3200,
@@ -109,9 +107,9 @@ model = dict(
 
 criterion = dict(
     loss_weight=dict(
-        vtc=1.0, 
-        mlm=0.0, 
-        vtm=0.0, 
+        vtc=1.0,
+        mlm=0.0,
+        vtm=0.0,
         mvm=0.0,
         uta=0.0,
     ),  # 0: disabled.

@@ -172,14 +172,14 @@ __T3_CLIPS = __resolve_t3_path("clips")
 
 # Train sets — "single" is one paraphrase per clip; "multi" is multiple paraphrases
 # per clip, used by the attribute-dropout ("concept") training regime.
-available_corpus["sports_ret_300k_train_v2"] = dict(
+available_corpus["train"] = dict(
     anno_path=__resolve_t3_path("data", "train", "train_single.json"),
     data_root=__T3_CLIPS,
     media_type="video",
     max_txt_l=200,
 )
 
-available_corpus["sports_ret_300k_train_v2_concept"] = dict(
+available_corpus["train_concept"] = dict(
     anno_path=__resolve_t3_path("data", "train", "train_multi.json"),
     data_root=__T3_CLIPS,
     media_type="video",
@@ -189,7 +189,7 @@ available_corpus["sports_ret_300k_train_v2_concept"] = dict(
 # Eval (val + test): one positive + 5,000 same-sport negatives per query.
 for __sport in ("basketball", "hockey", "soccer"):
     for __split in ("val", "test"):
-        available_corpus[f"{__sport}_{__split}_v2"] = dict(
+        available_corpus[f"{__sport}_{__split}"] = dict(
             anno_path=__resolve_t3_path("data", __split, f"{__sport}_{__split}.json"),
             data_root=__T3_CLIPS,
             media_type="video",
