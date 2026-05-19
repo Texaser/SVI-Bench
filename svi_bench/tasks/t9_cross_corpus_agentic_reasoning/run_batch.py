@@ -26,16 +26,15 @@ from _t9_root import (
     T9_ROOT_NOT_SET,
     resolve_t9_data_root as _resolve_t9_data_root,
     require_t9_data_root as _require_t9_data_root,
+    resolve_t9_results_dir as _resolve_t9_results_dir,
 )
 
 
 T9_DATA_ROOT = _resolve_t9_data_root()
 
-# Default experiments directory. Will be re-derived (with the loud check) at
-# runtime via ``_require_t9_data_root()`` inside main_as_function.
-EXPERIMENTS_DIR = (
-    os.path.join(T9_DATA_ROOT, "results") if T9_DATA_ROOT != T9_ROOT_NOT_SET else None
-)
+# Experiment results land next to the task code by default
+# (``<task_dir>/results/``); override with the ``T9_RESULTS`` env var.
+EXPERIMENTS_DIR = _resolve_t9_results_dir()
 
 # Import initialization functions from run_agent.py
 from run_agent import (
@@ -295,9 +294,9 @@ def setup_experiment(experiment_name: Optional[str], arch: str, questions_file: 
         experiment_name = f"batch_{arch}_{timestamp}"
     
     # Create experiment directory
-    exp_dir = os.path.join(EXPERIMENTS_DIR or os.path.join(_require_t9_data_root(), "results"), experiment_name)
+    exp_dir = os.path.join(EXPERIMENTS_DIR, experiment_name)
     os.makedirs(exp_dir, exist_ok=True)
-    
+
     # Create subdirectories
     os.makedirs(os.path.join(exp_dir, "configs"), exist_ok=True)
     os.makedirs(os.path.join(exp_dir, "logs"), exist_ok=True)
@@ -383,7 +382,7 @@ def initialize_pipeline(arch: str, sport: str = None) -> tuple:
     # Resolve paths to absolute
     path_keys = [
         'data_base_path', 'clip_embeddings_base_path', 'video_persist_dir',
-        'video_oracle_persist_dir', 'document_persist_dir', 'experiment_log_dir'
+        'video_oracle_persist_dir', 'document_persist_dir',
     ]
     _t9_root_runtime = _require_t9_data_root()
     for key in path_keys:
@@ -537,7 +536,7 @@ def main_as_function(args: argparse.Namespace) -> Dict:
         else:
             # Other workers use the same experiment directory
             if args.experiment_name:
-                exp_dir = os.path.join(EXPERIMENTS_DIR or os.path.join(_require_t9_data_root(), "results"), args.experiment_name)
+                exp_dir = os.path.join(EXPERIMENTS_DIR, args.experiment_name)
             else:
                 # Workers need experiment name when not worker 0
                 raise ValueError("Non-zero workers need --experiment-name or --experiment-dir")

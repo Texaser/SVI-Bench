@@ -20,6 +20,7 @@ from _t9_root import (
     T9_ROOT_NOT_SET,
     resolve_t9_data_root as _resolve_t9_data_root,
     require_t9_data_root as _require_t9_data_root,
+    resolve_t9_results_dir as _resolve_t9_results_dir,
 )
 
 
@@ -590,11 +591,8 @@ def main():
     def setup_experiment_logging(arch_name, config_map, prompt_path, final_prompt_content, function_list):
         import datetime, shutil
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        _t9_root_runtime = _require_t9_data_root()
-        log_root = config_map['paths'].get('experiment_log_dir', os.path.join(_t9_root_runtime, "results"))
-        if not os.path.isabs(log_root):
-             log_root = os.path.join(_t9_root_runtime, log_root)
-             
+        log_root = _resolve_t9_results_dir()
+
         exp_dir_name = f"{timestamp}_{arch_name}"
         exp_path = os.path.join(log_root, exp_dir_name)
         os.makedirs(exp_path, exist_ok=True)
@@ -654,7 +652,6 @@ def main():
         'video_persist_dir',
         'video_oracle_persist_dir',
         'document_persist_dir',
-        'experiment_log_dir'
     ]
 
     for key in path_keys:
@@ -669,8 +666,7 @@ def main():
     VIDEO_PERSIST_DIR = config['paths']['video_persist_dir']
     VIDEO_ORACLE_PERSIST_DIR = config['paths']['video_oracle_persist_dir']
     DOCUMENT_PERSIST_DIR = config['paths']['document_persist_dir']
-    EXPERIMENT_LOG_DIR = config['paths'].get('experiment_log_dir', 'experiments')
-             
+
     PROMPT_PATH = os.path.join(BASE_DIR, config['arch']['agent'].get('prompt'))
     system_prompt = load_prompt(PROMPT_PATH)
     

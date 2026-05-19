@@ -227,7 +227,8 @@ def run(
     ckpt_dir = root / "ckpts"
 
     if save_results and output_dir is None:
-        output_dir = pathlib.Path(os.environ.get("T3_OUTPUT_DIR", root / "results"))
+        default_results_dir = pathlib.Path(__file__).resolve().parent / "results"
+        output_dir = pathlib.Path(os.environ.get("T3_OUTPUT_DIR", default_results_dir))
         output_dir.mkdir(parents=True, exist_ok=True)
     elif output_dir is not None:
         output_dir = pathlib.Path(output_dir)

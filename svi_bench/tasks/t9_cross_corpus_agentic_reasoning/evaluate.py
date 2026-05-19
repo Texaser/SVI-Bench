@@ -215,12 +215,15 @@ def _inspect_run(run_dir: pathlib.Path, m: re.Match) -> RunInfo | None:
     )
 
 
-def _discover_runs(arch_id: str, t9_root: pathlib.Path) -> list[RunInfo]:
-    """Find every $T9_ROOT/results/{arch_id}_{sport}_{gpu}_{ts}/ dir.
+def _discover_runs(arch_id: str) -> list[RunInfo]:
+    """Find every results/{arch_id}_{sport}_{gpu}_{ts}/ dir.
 
     Returns runs sorted by timestamp (oldest first).
     """
-    results_root = t9_root / "results"
+    from svi_bench.tasks.t9_cross_corpus_agentic_reasoning._t9_root import (
+        resolve_t9_results_dir,
+    )
+    results_root = pathlib.Path(resolve_t9_results_dir())
     if not results_root.is_dir():
         return []
     runs: list[RunInfo] = []
@@ -390,11 +393,14 @@ def run(
     for arch_id, info in selected_archs:
         _check_required_env_for_arch(arch_id, info)
 
-        runs = _discover_runs(arch_id, root)
+        runs = _discover_runs(arch_id)
         if not runs:
+            from svi_bench.tasks.t9_cross_corpus_agentic_reasoning._t9_root import (
+                resolve_t9_results_dir,
+            )
             raise RuntimeError(
                 f"No completed runs found for arch={arch_id} under "
-                f"{root / 'results'}. Submit a batch via "
+                f"{resolve_t9_results_dir()}. Submit a batch via "
                 f"scripts/submit_experiment.sh first."
             )
 

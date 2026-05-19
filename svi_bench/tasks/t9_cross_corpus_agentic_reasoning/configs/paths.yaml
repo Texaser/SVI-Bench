@@ -1,13 +1,10 @@
 # Paths relative to T9_ROOT (the directory containing `data/`, `embeds/`,
-# `storage/`, `results/` — typically `<repo>/data/t9/` for an editable
-# install; override via the T9_ROOT env var). Joined at runtime by
-# run_agent.py / run_batch.py.
+# `storage/`) — typically `<repo>/data/t9/` for an editable install;
+# override via the T9_ROOT env var. Joined at runtime by run_agent.py /
+# run_batch.py.
 data_base_path: "data"
 clip_embeddings_base_path: "embeds/videos"
 
 video_persist_dir: "storage/videos"
 video_oracle_persist_dir: "storage/videos_oracle"
 document_persist_dir: "storage/documents"
-
-experiment_log_dir: "results"
-

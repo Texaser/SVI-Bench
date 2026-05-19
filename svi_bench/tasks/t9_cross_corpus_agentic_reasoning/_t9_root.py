@@ -42,3 +42,15 @@ def require_t9_data_root() -> str:
             "`svi-bench download --tasks t9` to populate <repo>/data/t9/."
         )
     return root
+
+
+def resolve_t9_results_dir() -> str:
+    """Return the directory where experiment results / logs are written.
+
+    Resolution order:
+      1. ``T9_RESULTS`` env var, if set.
+      2. ``<task_dir>/results/`` (next to this file).
+    """
+    if v := os.environ.get("T9_RESULTS"):
+        return v
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")

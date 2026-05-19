@@ -165,13 +165,11 @@ else
     EXPERIMENT_NAME="${ARCH}_${SPORT}_${GPU_CONFIG}_${TIMESTAMP}"
 fi
 
-# Create experiment directory structure under T9_ROOT/results/ — the canonical
-# location used by run_batch.py:setup_experiment (matches paths.yaml:experiment_log_dir).
-# Auto-detect T9_ROOT if not exported.
-if [ -z "${T9_ROOT:-}" ]; then
-    T9_ROOT="$(cd "$PIPELINE_DIR/../../.." && pwd)/data/t9"
-fi
-EXPERIMENT_DIR="$T9_ROOT/results/$EXPERIMENT_NAME"
+# Create experiment directory structure. Default location is the task-local
+# results/ folder (matches run_batch.py:EXPERIMENTS_DIR); override with the
+# T9_RESULTS env var.
+EXPERIMENT_ROOT="${T9_RESULTS:-$PIPELINE_DIR/results}"
+EXPERIMENT_DIR="$EXPERIMENT_ROOT/$EXPERIMENT_NAME"
 LOGS_DIR="$EXPERIMENT_DIR/logs"
 
 mkdir -p "$LOGS_DIR"
