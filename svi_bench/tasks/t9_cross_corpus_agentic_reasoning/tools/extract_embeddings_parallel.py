@@ -153,9 +153,7 @@ def main():
         try:
             with open(clip_paths_file, 'r') as fp:
                 clips_map = json.load(fp)
-                # Post-2026-05-16 cleanup, values are relative to the
-                # ``clips/`` dir holding clip_paths.json. Pre-cleanup values
-                # are absolute and honored verbatim.
+                # Values may be absolute or relative to the clips/ directory.
                 clip_dir = os.path.dirname(clip_paths_file)
                 for cid, cpath in clips_map.items():
                     if cid in seen_ids: continue

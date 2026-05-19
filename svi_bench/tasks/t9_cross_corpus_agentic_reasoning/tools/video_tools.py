@@ -115,9 +115,7 @@ def get_clip_path(clip_id: str, data_metadata: Dict = None) -> str:
         path = data.get(clip_id, "")
         if not path:
             return ""
-        # Post-2026-05-16 cleanup, clip_paths.json values are relative to the
-        # ``clips/`` dir the file lives in (e.g. ``Q1/clip_<id>_Q1.mp4``).
-        # Pre-cleanup values were absolute; honor them verbatim for back-compat.
+        # Paths may be absolute or relative to the clips/ directory; handle both.
         if os.path.isabs(path):
             return path
         return os.path.join(os.path.dirname(clip_paths_json), path)

@@ -360,9 +360,7 @@ def load_documents(data_metadata: Dict, enabled_sources: List[str] = None) -> Li
             entity_name = entity_info.get("entity_name", f"{entity_type} {entity_id}")
             team_name = entity_info.get("team_name")
 
-            # Determine which doc types to load. File names match doc_type
-            # one-to-one after the 2026-05-16 cleanup (former *_wo_detail
-            # variants are now the canonical files).
+            # Determine which doc types to load.
             if entity_type == "player":
                 entity_doc_map = {"season_stat_player": "season_stat_player"}
             else:  # team
@@ -452,9 +450,7 @@ def load_documents(data_metadata: Dict, enabled_sources: List[str] = None) -> Li
             for t in teams:
                 _CANONICAL_TEAMS.add(t)
 
-        # Per-game stat docs (without visual details, post the 2026-05-16
-        # cleanup that dropped the full-detail variants and renamed the
-        # _wo_detail variants to the clean names).
+        # Per-game stat documents.
         doc_type_map = {
             "espn_report": "espn_report",
             "game_stat_player": "game_stat_player",
