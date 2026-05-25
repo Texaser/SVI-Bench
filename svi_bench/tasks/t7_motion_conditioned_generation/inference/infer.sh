@@ -23,11 +23,10 @@ DATA_ROOT="${SVI_BENCH_DATA:-$REPO_ROOT/data}"
 
 SPORT="${SPORT:-basketball}"
 case "$SPORT" in
-    basketball) DEFAULT_NUM_GPUS=8 ;;
-    soccer)     DEFAULT_NUM_GPUS=4 ;;
+    basketball|soccer) ;;
     *) echo "Unknown SPORT=$SPORT (expected basketball|soccer)"; exit 1 ;;
 esac
-NUM_GPUS="${NUM_GPUS:-$DEFAULT_NUM_GPUS}"
+NUM_GPUS="${NUM_GPUS:-8}"
 SPORT_DIR="$DATA_ROOT/T7/$SPORT"
 
 # `from diffsynth import ...` resolves to TASK_DIR/diffsynth.

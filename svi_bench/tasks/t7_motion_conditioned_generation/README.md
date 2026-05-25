@@ -133,18 +133,19 @@ SPORT=soccer bash svi_bench/tasks/t7_motion_conditioned_generation/train.sh
 T7 covers two domains. The single `inference/infer.sh` entry loads the
 latest `step-*.safetensors` checkpoint under the LoRA output dir and
 generates video samples for every clip in the chosen sport's test set,
-sharded across GPUs. Pick the sport via the `SPORT` env var:
+sharded across 8 GPUs by default. Pick the sport via the `SPORT` env var:
 
 ```bash
-# Basketball (default 8 GPUs)
+# Basketball (default)
 SPORT=basketball bash svi_bench/tasks/t7_motion_conditioned_generation/inference/infer.sh
 
-# Soccer (default 4 GPUs)
+# Soccer
 SPORT=soccer     bash svi_bench/tasks/t7_motion_conditioned_generation/inference/infer.sh
 ```
 
-You can override the output directory by passing it as `$1`. To use a
-different data root, export `SVI_BENCH_DATA=/path/to/dir` before running.
+Override the output directory by passing it as `$1`, change the shard
+count via `NUM_GPUS=...`, or point at a different data root via
+`SVI_BENCH_DATA=/path/to/dir`.
 
 The unified CLI dispatches to `inference/infer.sh` (sport=basketball by default) and
 accepts `domain=soccer` via the config:
@@ -165,9 +166,8 @@ svi-bench evaluate --task t7 --model wan2.1-fun
   number of video clips at each save step as a sanity check.
 - [`inference/`](inference/) — multi-GPU inference pipeline that loads
   the trained LoRA and generates video samples:
-  - `infer.{sh,py}` — unified multi-GPU inference; pick the test set via
-    `SPORT={basketball,soccer}` (default basketball, 8 GPUs;
-    soccer defaults to 4 GPUs).
+  - `infer.{sh,py}` — unified multi-GPU inference (8 GPUs by default for
+    both sports); pick the test set via `SPORT={basketball,soccer}`.
   - `split_validation_set.py` — helper that shards a test-set listing
     into N per-GPU split files.
 - [`diffsynth/`](diffsynth/) — slimmed copy of the Wan2.1-Fun-related
