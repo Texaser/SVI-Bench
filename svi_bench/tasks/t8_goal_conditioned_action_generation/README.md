@@ -68,8 +68,7 @@ Three metrics specified in the paper:
   [`eval/llava/`](eval/llava/) package. Run after the mIoU pipeline via
   `bash eval/run_basketball_goalacc.sh <VIDEO_DIR> <QA_SOURCE> <MODEL_PATH>`.
   Requires a fine-tuned LLaVA-Qwen checkpoint (~15 GB, user-supplied via
-  `MODEL_PATH`) and the LLaVA-NeXT conda env (`llava_requirements.txt`
-  inside `eval/`).
+  `MODEL_PATH`).
 
 ## Install
 
@@ -77,8 +76,17 @@ Three metrics specified in the paper:
 pip install "svi-bench[t8]"
 ```
 
-Same dep set as T7 (torch / accelerate / peft / transformers / einops /
-modelscope / imageio / ...).
+A single `[t8]` env covers **train + inference + all three evals**
+(mIoU, feature similarity, goal accuracy). It bundles torch, accelerate,
+peft, transformers, einops, modelscope, imageio, plus the eval-only
+extras (yolox is vendored under `eval/`, LLaVA is vendored under
+`eval/llava/`, and `decord` / `pycocotools` are pulled in via `[t8]`).
+
+`eval/llava_requirements.txt` is kept around as a reference for the
+exact pin set that the LLaVA-Qwen authors developed against. You only
+need to fall back to it if the unified env causes loader / attention
+errors; in practice `flash-attn` is the one optional install you may
+want on top (it's CUDA-version-sensitive, so it's not in `[t8]`).
 
 ## Run
 

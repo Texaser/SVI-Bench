@@ -47,10 +47,15 @@ Results land at `${VIDEO_DIR}/feature_sim_task2/{summary.json, per_clip_metrics.
 
 ### 3. LLaVA goal accuracy
 
+Runs in the **same `[t8]` env** as steps 1-2 — `decord` and
+`pycocotools` (the only LLaVA-only runtime deps) are pulled in by the
+`[t8]` extras. `flash-attn` is optional: install it manually if your
+CUDA stack matches `flash-attn==2.5.7`; otherwise the vendored
+LLaVA-Qwen loader falls back to eager attention. The full pinned set
+from upstream LLaVA-NeXT is preserved in `llava_requirements.txt` for
+reference only.
+
 Needs:
-- A separate conda env with LLaVA-NeXT's deps installed (the king /
-  ltx envs used for steps 1-2 won't work; flash-attn + specific
-  transformers version are required). See `llava_requirements.txt`.
 - The fine-tuned LLaVA-Qwen checkpoint (~15 GB, **not bundled**).
   Path supplied via `MODEL_PATH` env var or 3rd positional arg.
 - The QA source dir — `Q*.json` files + pre-rendered bbox-overlay
@@ -58,8 +63,6 @@ Needs:
   dataset (see the task-level README).
 
 ```bash
-conda activate llava
-
 bash eval/run_basketball_goalacc.sh \
     /path/to/generated_videos_dir \
     /path/to/QA/llava_format/test_final \
@@ -99,8 +102,11 @@ Results land at `${VIDEO_DIR}/video_miou_task2_results/{summary.json,per_video_m
 - `llava/` — vendored LLaVA-NeXT package (74 .py / 2.7 MB, full copy).
   Used by `test_llavaov.py` for model loading, vision tower, conversation
   templates, etc.
-- `llava_requirements.txt` — pip requirements from upstream LLaVA-NeXT
-  for reproducing the conda env this metric needs.
+- `llava_requirements.txt` — upstream LLaVA-NeXT's pinned dep set, kept
+  as a reference only. The `[t8]` extras in `pyproject.toml` already
+  cover the runtime deps the bundled `llava/` slice actually imports
+  (`decord`, `pycocotools`, plus the transformers / torch stack shared
+  with training).
 
 ## Required external assets
 

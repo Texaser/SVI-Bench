@@ -1,6 +1,6 @@
 <!--
 This file is the template for the HuggingFace dataset repo's README.md
-(the "dataset card"). When publishing data to https://huggingface.co/datasets/svi-bench/svi-bench,
+(the "dataset card"). When publishing data to https://huggingface.co/datasets/MVP-Group/SVI-Bench,
 copy this into that repo's README.md. Do NOT serve it from this code repo at runtime.
 
 The YAML header below configures gated access. HF surfaces the prompt and
@@ -51,6 +51,9 @@ configs:
 
 # SVI-Bench
 
-Multi-task benchmark with per-task configs. See the
-[code repository](https://github.com/your-org/svi-bench) for evaluation
-scripts and baselines.
+Multi-task benchmark with per-task configs.
+
+- **Project page:** https://svi-bench.github.io/
+- **Code:** https://github.com/Texaser/SVI-Bench
+
+See the code repository for evaluation scripts and baselines.

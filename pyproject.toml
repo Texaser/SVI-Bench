@@ -96,6 +96,7 @@ t7 = [
     "thop",
 ]
 t8 = [
+    # Training / inference (Wan2.1-Fun)
     "torch>=2.0",
     "torchvision",
     "accelerate>=0.30",
@@ -110,6 +111,7 @@ t8 = [
     "ftfy",
     "pandas>=2.0",
     "pynvml",
+    # Eval mIoU (MixSort tracker + last-frame match)
     "opencv-python>=4.5",
     "scipy>=1.10",
     "loguru",
@@ -120,6 +122,16 @@ t8 = [
     "lap",
     "cython_bbox",
     "thop",
+    # Eval goal-accuracy (LLaVA-Qwen). The full pinned set from
+    # eval/llava_requirements.txt is kept as a reference for reproducing the
+    # exact dev env; the deps below are sufficient to run the bundled
+    # eval/llava/ slice against a fine-tuned LLaVA-Qwen checkpoint.
+    "decord>=0.6",
+    "pycocotools",
+    "Pillow>=10.0",
+    # flash-attn is optional — install separately if your CUDA stack matches
+    # the LLaVA pin (flash-attn==2.5.7); inference falls back to eager
+    # attention otherwise.
 ]
 # T9 bundles its own copy of the InternVideo2 fork under
 # svi_bench/tasks/t9_cross_corpus_agentic_reasoning/internvideo2/ (used only
@@ -183,8 +195,9 @@ dev = [
 svi-bench = "svi_bench.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/your-org/svi-bench"
-Dataset = "https://huggingface.co/datasets/svi-bench/svi-bench"
+Homepage = "https://svi-bench.github.io/"
+Repository = "https://github.com/Texaser/SVI-Bench"
+Dataset = "https://huggingface.co/datasets/MVP-Group/SVI-Bench"
 
 [tool.setuptools.packages.find]
 include = ["svi_bench*"]

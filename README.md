@@ -1,5 +1,8 @@
 # SVI-Bench
 
+**Project page:** https://svi-bench.github.io/  ·  **Dataset:**
+[MVP-Group/SVI-Bench](https://huggingface.co/datasets/MVP-Group/SVI-Bench)
+
 SVI-Bench is a multi-task benchmark for evaluating vision-language models on
 sports video understanding. It spans four pillars — Perception, Reasoning,
 Simulation, and Agency — across nine tasks, three sports (basketball, hockey,
