@@ -30,10 +30,14 @@ def log(msg: str) -> None:
 
 
 def find_tars(root: str):
-    """Yield absolute paths to every *.tar file under root."""
+    """Yield absolute paths to every *.tar file under root.
+
+    Skips PyTorch checkpoint files (legacy `*.pth.tar` naming convention)
+    — those are not actual tar archives.
+    """
     for dirpath, _, filenames in os.walk(root):
         for f in filenames:
-            if f.endswith(".tar"):
+            if f.endswith(".tar") and not f.endswith(".pth.tar"):
                 yield os.path.join(dirpath, f)
 
 

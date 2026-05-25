@@ -79,8 +79,8 @@ Additional artifacts pulled by `download_t7_t8.sh`:
 
 - `T8/llava_qa_checkpoint/` — fine-tuned LLaVA-Qwen QA model (~15 GB),
   used by goal accuracy.
-- `shared/tracker_weights/` — YOLOX + MixFormer-ViT sports tracker
-  (~1.2 GB, shared with T7), symlinked into `eval/pretrained/`.
+- `T8/tracker_weights/` — YOLOX + MixFormer-ViT sports tracker (~1.2 GB),
+  symlinked into `eval/pretrained/`.
 
 ## Train
 

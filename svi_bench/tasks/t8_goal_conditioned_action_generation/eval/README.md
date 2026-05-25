@@ -148,7 +148,7 @@ Results land at `${VIDEO_DIR}/video_miou_results/{summary.json,per_video_metrics
 All shipped on HF and pulled by `scripts/download_t7_t8.sh`:
 
 - **Tracker weights** (~1.2 GB) — `yolox_x_sports_train.pth.tar` + `MixFormer_sports_train.pth.tar`
-  land in `eval/pretrained/` (symlinked from `$SVI_BENCH_DATA/shared/tracker_weights/`).
+  land in `eval/pretrained/` (symlinked from `$SVI_BENCH_DATA/T8/tracker_weights/`).
 - **LLaVA-Qwen QA checkpoint** (~15 GB) — `$SVI_BENCH_DATA/T8/llava_qa_checkpoint/`.
 - **Anonymized master QA bank** — `$SVI_BENCH_DATA/T8/basketball/qa_test/Q*.json`.
 

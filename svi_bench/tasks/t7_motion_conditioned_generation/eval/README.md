@@ -90,7 +90,7 @@ All shipped on HF and pulled by `scripts/download_t7_t8.sh`:
 - **Tracker weights** (~1.2 GB) — `yolox_x_sports_train.pth.tar` (YOLOX
   detector) + `MixFormer_sports_train.pth.tar` (MixFormer-ViT tracker)
   land in `eval/pretrained/` (symlinked from
-  `$SVI_BENCH_DATA/shared/tracker_weights/`).
+  `$SVI_BENCH_DATA/T7/tracker_weights/`).
 - **GT bbox listings** — `$SVI_BENCH_DATA/T7/{basketball,soccer}/splits/test_100.txt`
   (the 100-clip eval subset; `test.txt` for the full split).
 
