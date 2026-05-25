@@ -23,6 +23,13 @@ echo 'xpack.security.enabled: false' >> elasticsearch-9.2.3/config/elasticsearch
 svi-bench download --tasks t9
 ```
 
+Large data (game archives, embeddings, ES indices) are shipped as `.tar`
+bundles. After downloading, extract them:
+
+```bash
+python3 scripts/extract_tars.py --root data/t9
+```
+
 The data lives under `<repo>/data/t9/`:
 
 ```
@@ -44,13 +51,17 @@ data/t9/
 
 ## Launch the environment
 
-Start Elasticsearch (shared by both modes below):
+Start Elasticsearch and ingest the data (one-time, shared by both modes below):
 
 ```bash
 elasticsearch-9.2.3/bin/elasticsearch -d
-elasticdump --input=$T9_ROOT/storage --output=http://localhost:9200
+python3 scripts/ingest.py
 curl http://localhost:9200/_cat/indices
 ```
+
+Ingestion populates the document and video search indices. This runs once;
+subsequent starts of `run_agent.py` / `run_batch.py` will detect the
+populated indices and skip re-ingestion.
 
 Then bring up the tool and orchestrator services.
 

@@ -21,10 +21,17 @@ pip install -e ".[t3]"     # from the SVI-Bench/ repo root
 svi-bench download --tasks t3
 ```
 
+Video clips are shipped as `.tar` bundles. After downloading, extract them:
+
+```bash
+python3 scripts/extract_tars.py --root data/t3/clips
+```
+
 Everything goes under `<repo>/data/t3/`:
 
 ```
 data/t3/
+├── clips/{sport}/{bucket}/*.mp4        # extracted from tars
 ├── data/{train,val,test}/*.json
 ├── compositions/{*.json, mappings/*.json}
 ├── embeds/embeds_{val|test}_{sport}_{full|partial}.pt

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-DATASET_ID = "svi-bench/svi-bench"
+DATASET_ID = "MVP-Group/SVI-Bench"
 
 
 def load_task(

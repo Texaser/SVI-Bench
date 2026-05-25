@@ -97,7 +97,7 @@ def _resolve_data_root(local_data_root: str | pathlib.Path | None) -> pathlib.Pa
     from huggingface_hub import snapshot_download
 
     cached = snapshot_download(
-        repo_id="svi-bench/svi-bench",
+        repo_id="MVP-Group/SVI-Bench",
         repo_type="dataset",
         allow_patterns=[f"{TASK}/*"],
     )
