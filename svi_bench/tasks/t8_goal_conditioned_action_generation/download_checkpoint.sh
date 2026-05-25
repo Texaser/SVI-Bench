@@ -5,7 +5,7 @@
 # Usage: bash download_checkpoint.sh
 #
 # After download, run inference:
-#   python inference/basketball.py checkpoints/T8/basketball/checkpoint.safetensors
+#   python inference/infer.py checkpoints/T8/basketball/checkpoint.safetensors
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

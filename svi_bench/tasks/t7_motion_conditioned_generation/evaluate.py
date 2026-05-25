@@ -43,11 +43,13 @@ def run(
     if domain not in DOMAINS:
         raise ValueError(f"unknown T7 domain {domain!r}; pick one of {DOMAINS}")
 
-    script = os.path.join(HERE, "inference", f"{domain}.sh")
+    script = os.path.join(HERE, "inference", "infer.sh")
     cmd = ["bash", script]
     if output_path:
         cmd.append(output_path)
-    proc = subprocess.run(cmd, check=False)
+    env = os.environ.copy()
+    env["SPORT"] = domain
+    proc = subprocess.run(cmd, check=False, env=env)
     return {
         "task": TASK,
         "domain": domain,

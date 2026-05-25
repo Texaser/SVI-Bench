@@ -93,18 +93,24 @@ def main():
         print("Usage: python Wan2.1-Fun-V1.1-1.3B-Control-bbox-background-validation.py <checkpoint_path>")
         sys.exit(1)
 
-    # Validation parameters from environment variables
+    # Validation parameters from environment variables. Defaults assume the
+    # SVI-Bench data layout produced by scripts/download_t7_t8.sh under
+    # $SVI_BENCH_DATA (default ./data). Set SPORT={basketball,soccer} to pick
+    # which T7 subset to infer over (default: basketball).
+    _DATA_ROOT = os.environ.get('SVI_BENCH_DATA', os.path.abspath('./data'))
+    _SPORT = os.environ.get('SPORT', 'basketball')
+    _DEFAULT_SPORT_DIR = os.path.join(_DATA_ROOT, 'T7', _SPORT)
     VALIDATION_BBOX_FOLDER = os.environ.get(
         'VALIDATION_BBOX_FOLDER',
-        '/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/soccer_set/val_5.txt'  # Use dedicated validation set
+        os.path.join(_DEFAULT_SPORT_DIR, 'splits', 'test_subset_100.bbox_paths.txt'),
     )
     VALIDATION_VIDEO_BASE = os.environ.get(
-        'VALIDATION_VIDEO_BASE', 
-        '/mnt/bum/hanyi/data/soccer_video_fps_15'  # Video files location
+        'VALIDATION_VIDEO_BASE',
+        os.path.join(_DEFAULT_SPORT_DIR, 'clips'),
     )
     VALIDATION_BACKGROUND_VIDEO_BASE = os.environ.get(
         'VALIDATION_BACKGROUND_VIDEO_BASE',
-        '/mnt/bum/hanyi/data/soccer_inpainting_video_final'  # Background video files location
+        os.path.join(_DEFAULT_SPORT_DIR, 'backgrounds'),
     )
     NUM_VALIDATION_SAMPLES = int(os.environ.get('NUM_VALIDATION_SAMPLES', '3'))
     VALIDATION_NUM_FRAMES = int(os.environ.get('VALIDATION_NUM_FRAMES', '81'))
@@ -217,16 +223,18 @@ def main():
         
         for idx, bbox_path in enumerate(sampled_bbox_files):
             try:
-                # Derive video path from bbox path
-                # If bbox_path is a full path (from txt file), extract relative path
-                # by finding the part after "basketball_mixsort_all_*" directory
+                # Derive video path from bbox path. Two layouts supported:
+                #   - SVI-Bench public: .../bboxes/{bucket}/{ID}.txt
+                #     → relative path = {bucket}/{ID}.txt (everything after "bboxes")
+                #   - Legacy mixsort:   .../*_mixsort_all_*/{league}/{game}/{name}.txt
+                #     → relative path = {league}/{game}/{name}.txt
                 bbox_path_normalized = os.path.normpath(bbox_path)
                 parts = bbox_path_normalized.split(os.sep)
-                
-                # Find the index of "basketball_mixsort_all_*" directory
+
+                # Find the index of the bbox-root marker ("bboxes" or "*mixsort_all*").
                 mixsort_idx = None
                 for i, part in enumerate(parts):
-                    if 'basketball_mixsort_all' in part:
+                    if part == 'bboxes' or 'mixsort_all' in part:
                         mixsort_idx = i
                         break
                 

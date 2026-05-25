@@ -96,7 +96,35 @@ bash download_checkpoint.sh   # → checkpoints/T8/basketball/checkpoint.safeten
 
 It's a LoRA adapter (rank 32) for `Wan2.1-Fun-V1.1-1.3B-Control`. Load via
 `--lora_checkpoint <path>` or pass the path as `argv[1]` to
-`inference/basketball.py`.
+`inference/infer.py`.
+
+### Download data
+
+T8's basketball clips / bboxes / inpainted backgrounds / splits / per-video
+captions are hosted on
+[`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench/tree/main/T8).
+Run the helper from the repo root to fetch and extract everything into
+`./data/T8/` (or set `SVI_BENCH_DATA` first to use a different location):
+
+```bash
+bash scripts/download_t7_t8.sh
+```
+
+After the download, the layout is:
+
+```
+$SVI_BENCH_DATA/T8/basketball/
+├── clips/{00..99}/{ID}.mp4               # original 5 s game clips
+├── bboxes/{00..99}/{ID}.txt              # per-frame player bboxes
+├── backgrounds/{00..99}/{ID}.mp4         # player-removed inpainted backgrounds
+├── splits/{train,val,test}_task2_final.txt    # one sample ID per line
+└── captions.json                          # id -> refined_instruction + player_specifications
+```
+
+`captions.json` is keyed by sample ID and contains only the two fields the
+trainer actually consumes (`refined_instruction`, `player_specifications`).
+`train.sh` / `inference/infer.sh` read this layout by default (via
+`SVI_BENCH_DATA`); no path editing required.
 
 ### Train
 
@@ -111,11 +139,11 @@ checkpoint under the LoRA output dir and generates video samples for the
 task2 basketball test set, sharded across 8 GPUs by default:
 
 ```bash
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/inference/basketball.sh
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/inference/infer.sh
 ```
 
-Pass a different output dir as `$1` to override the default. Edit the data
-paths inside the script to match your local layout.
+Pass a different output dir as `$1` to override the default. To use a
+different data root, export `SVI_BENCH_DATA=/path/to/dir` before running.
 
 The unified CLI is equivalent:
 
@@ -135,7 +163,7 @@ svi-bench evaluate --task t8 --model wan2.1-fun
   of samples each save step.
 - [`inference/`](inference/) — multi-GPU inference pipeline that loads
   the trained LoRA and generates video samples:
-  - `basketball.{sh,py}` — full task2 test-set run, default 8 GPUs.
+  - `infer.{sh,py}` — full task2 basketball test-set run, default 8 GPUs.
   - `split_validation_set.py` — helper that shards a test-set listing
     into N per-GPU split files.
 - [`diffsynth/`](diffsynth/) — slimmed copy of the Wan2.1-Fun-related
@@ -145,13 +173,26 @@ svi-bench evaluate --task t8 --model wan2.1-fun
 
 ## Data
 
-- Bbox folder: `train_task2_final.txt` (`--bbox_folder`)
-- Source video clips: 15 fps basketball clips for task2
-  (`--video_base_path`)
-- Background-inpainted clips: matching task2 versions
-  (`--background_video_folder`)
-- Polished per-video captions: `polished_captions_final.json`
-  (`--polished_captions`)
+Downloaded via `scripts/download_t7_t8.sh` from
+[`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench)
+into `$SVI_BENCH_DATA/T8/basketball/`.
+
+Each sample is identified by a zero-padded numeric ID (e.g. `0000000`).
+For each ID there are four artifacts:
+
+- `clips/{bucket}/{ID}.mp4` — original 5 s basketball clip (832×480, 15 fps)
+- `bboxes/{bucket}/{ID}.txt` — per-frame player bbox annotations
+- `backgrounds/{bucket}/{ID}.mp4` — player-removed inpainted background
+- `captions.json[{ID}]` — `{refined_instruction, player_specifications}`
+
+`bucket` is the first two digits of `ID // 741` — samples are sharded into
+100 directories of ≤741 files each to stay under HF per-folder limits.
+
+Splits live at `splits/{train,val,test}_task2_final.txt` (one ID per line),
+plus `test_task2_final_{100,1000}.txt` for the small/medium eval subsets.
+`scripts/build_split_bbox_list.py` converts these into the full-path bbox
+lists the dataset loader expects; `train.sh` / `inference/infer.sh`
+invoke it automatically the first time.
 
 ## Notes
 

@@ -1,7 +1,7 @@
 # T8 Evaluation — Last-Frame mIoU + SigLIP2 Feature Similarity + LLaVA Goal Accuracy
 
 End-to-end scoring pipeline for the task2 basketball videos produced by
-`inference/basketball.sh`:
+`inference/infer.sh`:
 
 1. Track every generated clip with **MixSort** (YOLOX-sportsmot detector
    + MixFormer-ViT tracker) to extract per-frame player bboxes.

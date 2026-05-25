@@ -92,35 +92,61 @@ bash download_checkpoint.sh soccer       # → checkpoints/T7/soccer/checkpoint.
 
 Each checkpoint is a LoRA adapter (rank 32) for `Wan2.1-Fun-V1.1-1.3B-Control`;
 load it via `--lora_checkpoint <path>` or pass the path as `argv[1]` to
-`inference/{basketball,soccer}.py`.
+`inference/infer.py`.
+
+### Download data
+
+T7's basketball and soccer videos / bboxes / inpainted backgrounds / splits
+are hosted on
+[`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench/tree/main/T7).
+Run the helper from the repo root to fetch and extract everything into
+`./data/T7/` (or set `SVI_BENCH_DATA` first to use a different location):
+
+```bash
+bash scripts/download_t7_t8.sh
+```
+
+After the download, the layout is:
+
+```
+$SVI_BENCH_DATA/T7/{soccer,basketball}/
+├── clips/{00..99}/{ID}.mp4           # original 5 s game clips (832×480, 15 fps)
+├── bboxes/{00..99}/{ID}.txt          # per-frame player bboxes
+├── backgrounds/{00..99}/{ID}.mp4     # player-removed inpainted backgrounds
+└── splits/{train,val,test}_final.txt # one sample ID per line
+```
+
+`train.sh` and the inference scripts read this layout by default (via
+`SVI_BENCH_DATA`); no path editing required.
 
 ### Train
 
-Edit the data paths at the top of `train.sh` first, then launch:
-
 ```bash
+# basketball (default)
 bash svi_bench/tasks/t7_motion_conditioned_generation/train.sh
+# soccer
+SPORT=soccer bash svi_bench/tasks/t7_motion_conditioned_generation/train.sh
 ```
 
 ### Inference
 
-T7 covers two domains. Each loads the latest `step-*.safetensors`
-checkpoint under the LoRA output dir and generates video samples for every
-clip in the corresponding test set, sharded across GPUs:
+T7 covers two domains. The single `inference/infer.sh` entry loads the
+latest `step-*.safetensors` checkpoint under the LoRA output dir and
+generates video samples for every clip in the chosen sport's test set,
+sharded across GPUs. Pick the sport via the `SPORT` env var:
 
 ```bash
 # Basketball (default 8 GPUs)
-bash svi_bench/tasks/t7_motion_conditioned_generation/inference/basketball.sh
+SPORT=basketball bash svi_bench/tasks/t7_motion_conditioned_generation/inference/infer.sh
 
 # Soccer (default 4 GPUs)
-bash svi_bench/tasks/t7_motion_conditioned_generation/inference/soccer.sh
+SPORT=soccer     bash svi_bench/tasks/t7_motion_conditioned_generation/inference/infer.sh
 ```
 
-You can override the output directory by passing it as `$1`. Edit the
-`TEST_SUBSET` / `VALIDATION_VIDEO_BASE` / `VALIDATION_BACKGROUND_VIDEO_BASE`
-lines inside each script to point at your data.
+You can override the output directory by passing it as `$1`. To use a
+different data root, export `SVI_BENCH_DATA=/path/to/dir` before running.
 
-The unified CLI dispatches to `inference/basketball.sh` by default and
+The unified CLI dispatches to `inference/infer.sh` (sport=basketball by default) and
 accepts `domain=soccer` via the config:
 
 ```bash
@@ -139,23 +165,41 @@ svi-bench evaluate --task t7 --model wan2.1-fun
   number of video clips at each save step as a sanity check.
 - [`inference/`](inference/) — multi-GPU inference pipeline that loads
   the trained LoRA and generates video samples:
-  - `basketball.{sh,py}` — full basketball test-set run, default 8 GPUs.
-  - `soccer.{sh,py}` — full soccer test-set run, default 4 GPUs.
+  - `infer.{sh,py}` — unified multi-GPU inference; pick the test set via
+    `SPORT={basketball,soccer}` (default basketball, 8 GPUs;
+    soccer defaults to 4 GPUs).
   - `split_validation_set.py` — helper that shards a test-set listing
     into N per-GPU split files.
 - [`diffsynth/`](diffsynth/) — slimmed copy of the Wan2.1-Fun-related
   closure from upstream DiffSynth-Studio. T8 ships an identical copy.
 - [`evaluate.py`](evaluate.py) — Python wrapper exposed via
-  `svi-bench evaluate --task t7`. Dispatches to `inference/<domain>.sh`.
+  `svi-bench evaluate --task t7`. Dispatches to `inference/infer.sh` with
+  the chosen sport.
 
 ## Data
 
-- Bbox folder: `train.txt` listing per-clip bbox `.npz` files (set via
-  `--bbox_folder` in `train.sh`)
-- Source video clips: 15 fps basketball footage (`--video_base_path`)
-- Background-inpainted video: matching clips with players masked out
-  (`--background_video_folder`)
-- Default conditioning prompt: `"a realistic basketball game video"`
+Downloaded via `scripts/download_t7_t8.sh` from
+[`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench)
+into `$SVI_BENCH_DATA/T7/{soccer,basketball}/`.
+
+Each sample is identified by a zero-padded numeric ID (e.g. `0000000`) that
+appears in `splits/` and as the basename of its three artifacts:
+
+- `clips/{bucket}/{ID}.mp4` — original 5 s game clip (832×480, 15 fps)
+- `bboxes/{bucket}/{ID}.txt` — per-frame player bbox annotations
+- `backgrounds/{bucket}/{ID}.mp4` — player-removed inpainted background
+
+`bucket` is the first two digits of `ID // 1668` (basketball) or
+`ID // 1236` (soccer) — i.e. samples are sharded into ≤100 directories of
+≤1700 files each to keep the HF repo under per-folder limits.
+
+Splits live at `splits/{train,val,test}_final.txt` (one ID per line). The
+shell helpers in `scripts/build_split_bbox_list.py` convert these into the
+full-path bbox lists the dataset loader expects; `train.sh` /
+`inference/infer.sh` invokes it automatically the first time.
+
+Default conditioning prompt: `"a realistic basketball game video"` (or
+`"a realistic soccer game video"` when `SPORT=soccer`).
 
 ## Notes
 

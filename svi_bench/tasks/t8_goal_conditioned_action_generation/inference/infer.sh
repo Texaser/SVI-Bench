@@ -5,25 +5,39 @@
 # captions and first/last-frame bbox conditioning, sharded across NUM_GPUS.
 #
 # Usage:
-#   bash inference/basketball.sh [output_path]
+#   bash inference/infer.sh [output_path]
 #
-# Edit TEST_SUBSET / POLISHED_CAPTIONS / VALIDATION_VIDEO_BASE /
-# VALIDATION_BACKGROUND_VIDEO_BASE below to point at your local data.
+# Data comes from HuggingFace (MVP-Group/SVI-Bench) via
+# scripts/download_t7_t8.sh and lives under $SVI_BENCH_DATA
+# (default: ./data at the repo root).
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TASK_DIR="$(cd "$HERE/.." && pwd)"
+REPO_ROOT="$(cd "$TASK_DIR/../../.." && pwd)"
+DATA_ROOT="${SVI_BENCH_DATA:-$REPO_ROOT/data}"
+SPORT_DIR="$DATA_ROOT/T8/basketball"
 
-# `from diffsynth import ...` in basketball.py resolves to TASK_DIR/diffsynth.
+# `from diffsynth import ...` in infer.py resolves to TASK_DIR/diffsynth.
 export PYTHONPATH="$TASK_DIR:${PYTHONPATH:-}"
 
 DEFAULT_OUTPUT_PATH="./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_task2"
 OUTPUT_PATH="${1:-$DEFAULT_OUTPUT_PATH}"
 
-VALIDATION_SCRIPT="$HERE/basketball.py"
-TEST_SUBSET="/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/basketball_set/test_task2_final_1000.txt"
-POLISHED_CAPTIONS_FILE="/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/polished_captions_final.json"
+VALIDATION_SCRIPT="$HERE/infer.py"
+
+# Build full bbox paths from the ID-only 1000-sample test split.
+TEST_IDS="$SPORT_DIR/splits/test_task2_final_1000.txt"
+TEST_SUBSET="$SPORT_DIR/splits/test_task2_final_1000.bbox_paths.txt"
+if [ ! -f "$TEST_SUBSET" ]; then
+    python3 "$REPO_ROOT/scripts/build_split_bbox_list.py" \
+        --ids "$TEST_IDS" \
+        --root "$SPORT_DIR/bboxes" \
+        --out "$TEST_SUBSET"
+fi
+
+POLISHED_CAPTIONS_FILE="$SPORT_DIR/captions.json"
 NUM_GPUS=8
 SPLIT_DIR="./validation_splits_task2"
 
@@ -71,8 +85,8 @@ python "$HERE/split_validation_set.py" \
 # color overlay mode.
 export VALIDATION_NUM_FRAMES=81
 export VALIDATION_TIME_DIVISION_FACTOR=1
-export VALIDATION_VIDEO_BASE="/mnt/bum/hanyi/data/basketball_fps_15_task2"
-export VALIDATION_BACKGROUND_VIDEO_BASE="/mnt/bum/hanyi/data/basketball_inpainting_video_task2"
+export VALIDATION_VIDEO_BASE="$SPORT_DIR/clips"
+export VALIDATION_BACKGROUND_VIDEO_BASE="$SPORT_DIR/backgrounds"
 export POLISHED_CAPTIONS="$POLISHED_CAPTIONS_FILE"
 export BBOX_CHANNELS=16
 export BACKGROUND_VIDEO_CHANNELS=8

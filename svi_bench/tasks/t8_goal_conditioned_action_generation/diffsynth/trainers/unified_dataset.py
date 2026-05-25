@@ -420,57 +420,60 @@ class LoadBBox:
 
 
 class PolishedCaptionsLookup:
-    """Loads polished captions JSONs and provides lookup by mixsort path.
+    """Loads polished captions JSONs and provides lookup by bbox path.
 
-    Builds a mapping from the relative path (shared between mixsort paths and JSON keys)
-    to the caption entry. For 22-23 season: relative path after "22-23/" in JSON key matches
-    relative path after "basketball_mixsort_all_22_23_season/" in mixsort path (with .mp4/.txt swap).
-    For 23-24 season: relative path after "clips/" matches after "basketball_mixsort_all_23_24_season/".
+    Supports two key layouts:
+      * SVI-Bench public layout: caption keys are sample IDs ("0000000"), and
+        bbox paths look like .../bboxes/{bucket}/{ID}.txt. Lookup is by ID.
+      * Legacy mixsort layout: keys are full clip paths containing "/22-23/" or
+        "/clips/"; bbox paths contain "basketball_mixsort_all_*". Lookup is by
+        the shared relative path (without extension).
     """
     def __init__(self, json_paths):
-        self.entries = {}  # relative_path (no ext) -> entry dict
+        self.entries = {}  # canonical_key -> entry dict
+        self.by_id = {}    # ID (e.g. "0000000") -> entry dict
         for json_path in json_paths:
             with open(json_path) as f:
                 data = json.load(f)
-            for mp4_key, entry in data.items():
-                # Extract the relative path that's shared with mixsort
-                if "/22-23/" in mp4_key:
-                    rel = mp4_key.split("22-23/", 1)[1]
-                elif "/clips/" in mp4_key:
-                    rel = mp4_key.split("clips/", 1)[1]
+            for key, entry in data.items():
+                # ID-keyed (SVI-Bench public): key is just digits like "0000000".
+                if key.isdigit() or (len(key) <= 12 and "/" not in key):
+                    self.by_id[key] = entry
+                    continue
+                # Legacy: key is a path
+                if "/22-23/" in key:
+                    rel = key.split("22-23/", 1)[1]
+                elif "/clips/" in key:
+                    rel = key.split("clips/", 1)[1]
                 else:
                     continue
-                # Store without extension as the canonical key
                 rel_no_ext = os.path.splitext(rel)[0]
                 self.entries[rel_no_ext] = entry
-        print(f"[PolishedCaptionsLookup] Loaded {len(self.entries)} entries from {len(json_paths)} files")
+        print(f"[PolishedCaptionsLookup] Loaded {len(self.entries)} legacy + {len(self.by_id)} ID-keyed entries from {len(json_paths)} files")
 
-    def get_entry(self, mixsort_path):
-        """Look up a polished caption entry by mixsort txt path.
+    def get_entry(self, bbox_path):
+        """Look up by bbox path; returns (prompt, player_specifications) or (None, None)."""
+        # Try ID-keyed (new layout) first: basename without extension
+        sample_id = os.path.splitext(os.path.basename(bbox_path))[0]
+        entry = self.by_id.get(sample_id)
 
-        Returns (prompt, player_specifications) or (None, None) if not found.
-        """
-        # Extract relative path from mixsort path
-        normalized = os.path.normpath(mixsort_path)
-        parts = normalized.split(os.sep)
-
-        # Find "basketball_mixsort_all_*" directory and take everything after it
-        mixsort_idx = None
-        for i, part in enumerate(parts):
-            if 'mixsort_all' in part:
-                mixsort_idx = i
-                break
-
-        if mixsort_idx is None:
-            return None, None
-
-        relative_parts = parts[mixsort_idx + 1:]
-        rel = os.path.join(*relative_parts) if relative_parts else ""
-        rel_no_ext = os.path.splitext(rel)[0]
-
-        entry = self.entries.get(rel_no_ext)
         if entry is None:
-            return None, None
+            # Fall back to legacy layout: find part after "basketball_mixsort_all_*"
+            normalized = os.path.normpath(bbox_path)
+            parts = normalized.split(os.sep)
+            mixsort_idx = None
+            for i, part in enumerate(parts):
+                if 'mixsort_all' in part:
+                    mixsort_idx = i
+                    break
+            if mixsort_idx is None:
+                return None, None
+            relative_parts = parts[mixsort_idx + 1:]
+            rel = os.path.join(*relative_parts) if relative_parts else ""
+            rel_no_ext = os.path.splitext(rel)[0]
+            entry = self.entries.get(rel_no_ext)
+            if entry is None:
+                return None, None
 
         # Prompt fallback: refined_instruction > instruction > gpt_caption > caption
         instruction = (entry.get("refined_instruction")
@@ -640,24 +643,21 @@ class BBoxFolderDataset(torch.utils.data.Dataset):
         
         # Generate video path by replacing bbox folder with video folder and changing extension
         if getattr(self, 'bbox_folder_is_file', False):
-            # If bbox_file is a full path (from txt file), extract relative path
-            # by finding the part after "mixsort_all_*" directory (supports both basketball and soccer)
+            # bbox_file is an absolute path read from a list. Extract relative path.
+            # Accept two layouts (SVI-Bench public ID-based vs legacy mixsort).
             bbox_path_normalized = os.path.normpath(bbox_file)
             parts = bbox_path_normalized.split(os.sep)
-            
-            # Find the index of "mixsort_all_*" directory (supports both basketball and soccer)
-            mixsort_idx = None
+
+            marker_idx = None
             for i, part in enumerate(parts):
-                if 'mixsort_all' in part:
-                    mixsort_idx = i
+                if part == 'bboxes' or 'mixsort_all' in part:
+                    marker_idx = i
                     break
-            
-            if mixsort_idx is not None:
-                # Extract relative path after mixsort directory
-                relative_parts = parts[mixsort_idx + 1:]
+
+            if marker_idx is not None:
+                relative_parts = parts[marker_idx + 1:]
                 relative_path = os.path.join(*relative_parts) if relative_parts else ""
             else:
-                # Fallback: use basename if we can't find mixsort directory
                 relative_path = os.path.basename(bbox_file)
         else:
             # Original logic: bbox_file is relative to bbox_folder_path

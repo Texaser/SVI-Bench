@@ -640,24 +640,27 @@ class BBoxFolderDataset(torch.utils.data.Dataset):
         
         # Generate video path by replacing bbox folder with video folder and changing extension
         if getattr(self, 'bbox_folder_is_file', False):
-            # If bbox_file is a full path (from txt file), extract relative path
-            # by finding the part after "mixsort_all_*" directory (supports both basketball and soccer)
+            # bbox_file is an absolute path read from a list. Extract a relative path
+            # we can join onto video_base_path / background_video_folder.
+            # We accept two layouts:
+            #   1. SVI-Bench public layout: .../bboxes/{bucket}/{ID}.txt
+            #      → relative = {bucket}/{ID}.txt
+            #   2. Legacy mixsort layout: .../basketball_mixsort_all_*/{league}/{game}/{name}.txt
+            #      → relative = {league}/{game}/{name}.txt (everything after the mixsort dir)
             bbox_path_normalized = os.path.normpath(bbox_file)
             parts = bbox_path_normalized.split(os.sep)
-            
-            # Find the index of "mixsort_all_*" directory (supports both basketball and soccer)
-            mixsort_idx = None
+
+            marker_idx = None
             for i, part in enumerate(parts):
-                if 'mixsort_all' in part:
-                    mixsort_idx = i
+                if part == 'bboxes' or 'mixsort_all' in part:
+                    marker_idx = i
                     break
-            
-            if mixsort_idx is not None:
-                # Extract relative path after mixsort directory
-                relative_parts = parts[mixsort_idx + 1:]
+
+            if marker_idx is not None:
+                relative_parts = parts[marker_idx + 1:]
                 relative_path = os.path.join(*relative_parts) if relative_parts else ""
             else:
-                # Fallback: use basename if we can't find mixsort directory
+                # Fallback: basename only (loses any bucket dir, but better than crashing)
                 relative_path = os.path.basename(bbox_file)
         else:
             # Original logic: bbox_file is relative to bbox_folder_path

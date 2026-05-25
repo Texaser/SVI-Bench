@@ -91,7 +91,7 @@ Not vendored; the user downloads / supplies separately:
   (pass via the 3rd positional arg of the wrapper).
 - MixFormer-ViT checkpoint — `miou_metric.py`'s tracker auto-discovers it
   from the path it expects; see upstream MixSort docs.
-- Generated test videos (from `inference/basketball.sh` / `soccer.sh`).
+- Generated test videos (from `inference/infer.sh` with the matching `SPORT`).
 - GT bbox listing (`test_subset.txt`, `test_subset_soccer.txt`).
 
 ## Slim provenance

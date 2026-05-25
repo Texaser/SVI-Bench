@@ -63,18 +63,21 @@ def main():
         print("Usage: python ...task2-final.py <checkpoint_path>")
         sys.exit(1)
 
-    # Validation parameters
+    # Validation parameters. Defaults assume the SVI-Bench data layout
+    # produced by scripts/download_t7_t8.sh under $SVI_BENCH_DATA (default ./data).
+    _DATA_ROOT = os.environ.get('SVI_BENCH_DATA', os.path.abspath('./data'))
+    _DEFAULT_T8 = os.path.join(_DATA_ROOT, 'T8', 'basketball')
     VALIDATION_BBOX_FOLDER = os.environ.get(
         'VALIDATION_BBOX_FOLDER',
-        '/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/basketball_set/test_task2_final.txt'
+        os.path.join(_DEFAULT_T8, 'splits', 'test_task2_final_1000.bbox_paths.txt'),
     )
     VALIDATION_VIDEO_BASE = os.environ.get(
         'VALIDATION_VIDEO_BASE',
-        '/mnt/bum/hanyi/data/basketball_fps_15_task2'
+        os.path.join(_DEFAULT_T8, 'clips'),
     )
     VALIDATION_BACKGROUND_VIDEO_BASE = os.environ.get(
         'VALIDATION_BACKGROUND_VIDEO_BASE',
-        '/mnt/bum/hanyi/data/basketball_inpainting_video_task2'
+        os.path.join(_DEFAULT_T8, 'backgrounds'),
     )
     NUM_VALIDATION_SAMPLES = int(os.environ.get('NUM_VALIDATION_SAMPLES', '5000'))
     VALIDATION_NUM_FRAMES = int(os.environ.get('VALIDATION_NUM_FRAMES', '81'))
@@ -82,7 +85,7 @@ def main():
 
     POLISHED_CAPTIONS = os.environ.get(
         'POLISHED_CAPTIONS',
-        '/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/polished_captions_final.json'
+        os.path.join(_DEFAULT_T8, 'captions.json'),
     ).split(',')
 
     print(f"Loading LoRA checkpoint: {checkpoint_path}")
