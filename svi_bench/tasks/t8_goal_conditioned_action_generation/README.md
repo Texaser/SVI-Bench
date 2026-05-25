@@ -2,10 +2,6 @@
 
 ![T7 (top) and T8 (bottom)](../../../docs/figures/pillar3.png)
 
-SVI-Bench Pillar 3 (Strategic Simulation). Generate a multi-agent sports
-video that realizes a natural-language goal, given only start- and
-end-frame bounding boxes for each target player.
-
 ## Task
 
 Inputs:
