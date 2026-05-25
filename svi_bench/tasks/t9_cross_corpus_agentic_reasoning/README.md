@@ -5,7 +5,7 @@ T9 is the cross-corpus agentic reasoning task in SVI-Bench: an agent searches vi
 ## Install
 
 ```bash
-conda create -n svi-bench python=3.11 -y && conda activate svi-bench
+conda create -n svi-bench-t9 python=3.11 -y && conda activate svi-bench-t9
 pip install -e ".[t9]"
 export HF_HOME=/path/to/hf_cache   # edit this for the hf cache location
 python -c "from transformers import BertTokenizer; BertTokenizer.from_pretrained('bert-large-uncased')"

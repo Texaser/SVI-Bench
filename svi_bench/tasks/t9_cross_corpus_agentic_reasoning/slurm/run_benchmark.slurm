@@ -15,7 +15,7 @@ set -e
 # Configuration (set via environment or defaults)
 # ============================================
 PIPELINE_DIR="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-CONDA_ENV="${CONDA_ENV:-svi-bench}"
+CONDA_ENV="${CONDA_ENV:-svi-bench-t9}"
 
 # These should be set when submitting the job:
 #   QUESTIONS_FILE=$T9_ROOT/questions/hockey.json

@@ -28,7 +28,7 @@ if [ ! -f "$CONDA_PROFILE" ]; then
 fi
 
 source "$CONDA_PROFILE"
-conda activate "${CONDA_ENV:-svi-bench}"
+conda activate "${CONDA_ENV:-svi-bench-t9}"
 
 # Resolve task / repo / data roots from this script's location
 T9_TASK="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

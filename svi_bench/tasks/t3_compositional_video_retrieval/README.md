@@ -9,7 +9,7 @@ same-sport negatives. Metrics: R@K and median rank.
 ## 1. Install
 
 ```bash
-conda create -n svi-bench python=3.11 -y && conda activate svi-bench
+conda create -n svi-bench-t3 python=3.11 -y && conda activate svi-bench-t3
 pip install -e ".[t3]"     # from the SVI-Bench/ repo root
 ```
 

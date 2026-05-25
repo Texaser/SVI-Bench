@@ -16,7 +16,7 @@ set -e
 # Configuration
 # ============================================
 PIPELINE_DIR="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-CONDA_ENV="${CONDA_ENV:-svi-bench}"
+CONDA_ENV="${CONDA_ENV:-svi-bench-t9}"
 
 QUESTIONS_FILE="${QUESTIONS_FILE:-${T9_ROOT:-$PIPELINE_DIR/../../data/t9}/questions/hockey.json}"
 TOTAL_QUESTIONS="${TOTAL_QUESTIONS:-1000}"

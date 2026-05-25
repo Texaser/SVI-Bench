@@ -12,7 +12,7 @@
 set -e
 
 PIPELINE_DIR="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-CONDA_ENV="${CONDA_ENV:-svi-bench}"
+CONDA_ENV="${CONDA_ENV:-svi-bench-t9}"
 ARCH="${ARCH:-gpt5}"
 
 cd "$PIPELINE_DIR"
