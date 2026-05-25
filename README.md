@@ -27,6 +27,15 @@ Each task has its own directory under `svi_bench/tasks/` with a dedicated
 
 ## Quickstart (T7 generation demo)
 
+> If your CUDA driver is < 13, pre-install torch matching your driver before
+> the `svi-bench[...]` line (otherwise pip pulls the newest cu13-only wheel
+> and GPU is disabled):
+>
+> ```bash
+> # CUDA 12.1 example; swap cu121 for your stack
+> pip install "torch>=2.0,<2.10" --index-url https://download.pytorch.org/whl/cu121
+> ```
+
 ```bash
 git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
 pip install "svi-bench[t7]"
@@ -44,6 +53,9 @@ bash svi_bench/tasks/t7_motion_conditioned_generation/eval/run_basketball_featsi
 ```
 
 ## Quickstart (T8 generation demo)
+
+Same torch heads-up as T7 above — pre-install a CUDA-matching torch wheel
+if your driver is < 13.
 
 ```bash
 git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench

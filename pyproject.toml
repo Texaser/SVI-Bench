@@ -68,8 +68,10 @@ t6 = []
 # the slim MixSort tracker slice (under svi_bench/tasks/<task>/eval) for
 # post-generation mIoU evaluation. They ship the same dep set.
 t7 = [
-    # Training / inference (Wan2.1-Fun)
-    "torch>=2.0",
+    # Training / inference (Wan2.1-Fun). torch upper bound stays under the
+    # CUDA-13-only wheel line (2.10+); users on CUDA 12.x drivers should pin
+    # torch + its CUDA-matching wheel before pip install (see README).
+    "torch>=2.0,<2.10",
     "torchvision",
     "accelerate>=0.30",
     "peft>=0.11",
@@ -96,8 +98,8 @@ t7 = [
     "thop",
 ]
 t8 = [
-    # Training / inference (Wan2.1-Fun)
-    "torch>=2.0",
+    # Training / inference (Wan2.1-Fun). See [t7] note re torch upper bound.
+    "torch>=2.0,<2.10",
     "torchvision",
     "accelerate>=0.30",
     "peft>=0.11",
