@@ -28,8 +28,8 @@ OUTPUT_PATH="${1:-$DEFAULT_OUTPUT_PATH}"
 VALIDATION_SCRIPT="$HERE/infer.py"
 
 # Build full bbox paths from the ID-only 1000-sample test split.
-TEST_IDS="$SPORT_DIR/splits/test_task2_final_1000.txt"
-TEST_SUBSET="$SPORT_DIR/splits/test_task2_final_1000.bbox_paths.txt"
+TEST_IDS="$SPORT_DIR/splits/test_1000.txt"
+TEST_SUBSET="$SPORT_DIR/splits/test_1000.bbox_paths.txt"
 if [ ! -f "$TEST_SUBSET" ]; then
     python3 "$REPO_ROOT/scripts/build_split_bbox_list.py" \
         --ids "$TEST_IDS" \

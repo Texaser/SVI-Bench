@@ -10,9 +10,9 @@ Writes a list file where each line is an absolute path to a bbox txt.
 
 Usage:
   python3 build_split_bbox_list.py \
-    --ids   data/T7/basketball/splits/train_final.txt \
+    --ids   data/T7/basketball/splits/train.txt \
     --root  data/T7/basketball/bboxes \
-    --out   data/T7/basketball/splits/train_final.bbox_paths.txt
+    --out   data/T7/basketball/splits/train.bbox_paths.txt
 """
 from __future__ import annotations
 

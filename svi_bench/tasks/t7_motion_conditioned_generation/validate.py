@@ -99,7 +99,7 @@ def main():
     _DEFAULT_SPORT_DIR = os.path.join(_DATA_ROOT, 'T7', 'basketball')
     VALIDATION_BBOX_FOLDER = os.environ.get(
         'VALIDATION_BBOX_FOLDER',
-        os.path.join(_DEFAULT_SPORT_DIR, 'splits', 'val_final.bbox_paths.txt'),
+        os.path.join(_DEFAULT_SPORT_DIR, 'splits', 'val.bbox_paths.txt'),
     )
     VALIDATION_VIDEO_BASE = os.environ.get(
         'VALIDATION_VIDEO_BASE',

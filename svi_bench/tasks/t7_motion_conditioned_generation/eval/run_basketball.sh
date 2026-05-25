@@ -10,13 +10,18 @@
 #      output to produce the final holistic Video mIoU score.
 #
 # Usage:
-#   bash eval/run_basketball.sh [VIDEO_DIR] [GT_LIST] [CKPT]
+#   bash eval/run_basketball.sh <VIDEO_DIR> [GT_LIST] [CKPT]
 #
-# All three args are optional; sensible defaults below.
+# VIDEO_DIR is required. GT_LIST defaults to the 100-sample subset under the
+# HF-downloaded T7 layout.
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TASK_DIR="$(cd "$HERE/.." && pwd)"
+REPO_ROOT="$(cd "$TASK_DIR/../../.." && pwd)"
+DATA_ROOT="${SVI_BENCH_DATA:-$REPO_ROOT/data}"
+SPORT_DIR="$DATA_ROOT/T7/basketball"
 
 # `from yolox..` / `from miou_metric..` / `from MixViT lib..` all resolve here.
 export PYTHONPATH="$HERE:$HERE/MixViT:${PYTHONPATH:-}"
@@ -26,9 +31,14 @@ export PYTHONPATH="$HERE:$HERE/MixViT:${PYTHONPATH:-}"
 # tracker init) resolves to $HERE/pretrained/.
 cd "$HERE"
 
-VIDEO_DIR="${1:-/mnt/bum/hanyi/repo/MagicMotion/magicmotion_gen/final_output}"
-GT_LIST="${2:-/mnt/bum/hanyi/repo/ATI/test_subset_100.txt}"
+VIDEO_DIR="${1:-${VIDEO_DIR:-}}"
+GT_LIST="${2:-$SPORT_DIR/splits/test_subset_100.bbox_paths.txt}"
 CKPT="${3:-$HERE/pretrained/yolox_x_sports_train.pth.tar}"
+
+if [ -z "$VIDEO_DIR" ]; then
+    echo "Error: VIDEO_DIR (1st arg) required." >&2
+    exit 1
+fi
 
 EXP_FILE="$HERE/exps/example/mot/yolox_x_sportsmot.py"
 OUTPUT_DIR="${VIDEO_DIR}/eval_results"

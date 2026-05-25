@@ -6,6 +6,10 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TASK_DIR="$(cd "$HERE/.." && pwd)"
+REPO_ROOT="$(cd "$TASK_DIR/../../.." && pwd)"
+DATA_ROOT="${SVI_BENCH_DATA:-$REPO_ROOT/data}"
+SPORT_DIR="$DATA_ROOT/T7/soccer"
 export PYTHONPATH="$HERE:$HERE/MixViT:${PYTHONPATH:-}"
 
 # CD into the eval/ dir so `track.yaml`'s relative
@@ -13,9 +17,14 @@ export PYTHONPATH="$HERE:$HERE/MixViT:${PYTHONPATH:-}"
 # tracker init) resolves to $HERE/pretrained/.
 cd "$HERE"
 
-VIDEO_DIR="${1:-/mnt/bum/hanyi/repo/MagicMotion/magicmotion_gen_soccer/final_output}"
-GT_LIST="${2:-/mnt/bum/hanyi/repo/ATI/test_subset_soccer_100.txt}"
+VIDEO_DIR="${1:-${VIDEO_DIR:-}}"
+GT_LIST="${2:-$SPORT_DIR/splits/test_subset_100.bbox_paths.txt}"
 CKPT="${3:-$HERE/pretrained/yolox_x_sports_train.pth.tar}"
+
+if [ -z "$VIDEO_DIR" ]; then
+    echo "Error: VIDEO_DIR (1st arg) required." >&2
+    exit 1
+fi
 
 EXP_FILE="$HERE/exps/example/mot/yolox_x_soccernet.py"
 OUTPUT_DIR="${VIDEO_DIR}/eval_results"

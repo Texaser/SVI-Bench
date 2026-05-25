@@ -19,9 +19,9 @@ export PYTHONPATH="$HERE:${PYTHONPATH:-}"
 SPORT="${SPORT:-basketball}"
 SPORT_DIR="$DATA_ROOT/T7/$SPORT"
 
-# Convert ID-only splits/train_final.txt -> full bbox paths the dataset loader expects.
-SPLIT_IDS="$SPORT_DIR/splits/train_final.txt"
-SPLIT_BBOX_LIST="$SPORT_DIR/splits/train_final.bbox_paths.txt"
+# Convert ID-only splits/train.txt -> full bbox paths the dataset loader expects.
+SPLIT_IDS="$SPORT_DIR/splits/train.txt"
+SPLIT_BBOX_LIST="$SPORT_DIR/splits/train.bbox_paths.txt"
 if [ ! -f "$SPLIT_BBOX_LIST" ]; then
   python3 "$REPO_ROOT/scripts/build_split_bbox_list.py" \
     --ids "$SPLIT_IDS" \

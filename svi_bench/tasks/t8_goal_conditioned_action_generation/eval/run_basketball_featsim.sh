@@ -1,24 +1,28 @@
 #!/usr/bin/env bash
 # T8 — basketball (task2) SigLIP2 last-frame feature similarity.
 #
-# Inputs needed (provided by the mIoU pipeline + polished captions):
+# Inputs needed (provided by the mIoU pipeline + captions):
 #   $VIDEO_DIR             flat dir of generated <clip>.mp4 (or <clip>/generated.mp4)
-#   $GT_LIST               test_task2_final_*.txt with mixsort bbox paths
-#   $POLISHED_CAPTIONS     polished_captions_final.json
+#   $GT_LIST               test_*.bbox_paths.txt with mixsort bbox paths
+#   $CAPTIONS              captions.json (HF-shipped, per-clip end_bbox + caption metadata)
 #   $EVAL_RESULTS_DIR      MixSort tracking output (gpu*/{clip}/...)
 #
 # Usage:
-#   bash eval/run_basketball_featsim.sh [VIDEO_DIR] [GT_LIST] [POLISHED_CAPTIONS] [EVAL_RESULTS_DIR]
+#   bash eval/run_basketball_featsim.sh [VIDEO_DIR] [GT_LIST] [CAPTIONS] [EVAL_RESULTS_DIR]
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TASK_DIR="$(cd "$HERE/.." && pwd)"
+REPO_ROOT="$(cd "$TASK_DIR/../../.." && pwd)"
+DATA_ROOT="${SVI_BENCH_DATA:-$REPO_ROOT/data}"
+SPORT_DIR="$DATA_ROOT/T8/basketball"
 export PYTHONPATH="$HERE:${PYTHONPATH:-}"
 cd "$HERE"
 
 VIDEO_DIR="${1:-${VIDEO_DIR:-}}"
-GT_LIST="${2:-/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/basketball_set/test_task2_final_1000.txt}"
-POLISHED_CAPTIONS="${3:-/mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/polished_captions_final.json}"
+GT_LIST="${2:-$SPORT_DIR/splits/test_1000.bbox_paths.txt}"
+CAPTIONS="${3:-$SPORT_DIR/captions.json}"
 EVAL_RESULTS_DIR="${4:-${VIDEO_DIR}/eval_results}"
 OUTPUT_DIR="${OUTPUT_DIR:-${VIDEO_DIR}/feature_sim_task2}"
 NUM_GPUS="${NUM_GPUS:-8}"
@@ -33,7 +37,7 @@ echo "T8 Basketball Last-Frame Feature Similarity (SigLIP2)"
 echo "============================================================"
 echo "VIDEO_DIR:         $VIDEO_DIR"
 echo "GT_LIST:           $GT_LIST"
-echo "POLISHED_CAPTIONS: $POLISHED_CAPTIONS"
+echo "CAPTIONS:          $CAPTIONS"
 echo "EVAL_RESULTS_DIR:  $EVAL_RESULTS_DIR"
 echo "OUTPUT_DIR:        $OUTPUT_DIR"
 echo "NUM_GPUS:          $NUM_GPUS"
@@ -51,7 +55,7 @@ for GPU_ID in $(seq 0 $((NUM_GPUS - 1))); do
     CUDA_VISIBLE_DEVICES=$GPU_ID python "$HERE/feature_sim.py" \
         --video_dir "$VIDEO_DIR" \
         --gt_list "$SPLIT_FILE" \
-        --captions_json "$POLISHED_CAPTIONS" \
+        --captions_json "$CAPTIONS" \
         --eval_results_dir "$EVAL_RESULTS_DIR" \
         --sport basketball \
         --output_dir "$OUTPUT_DIR" \

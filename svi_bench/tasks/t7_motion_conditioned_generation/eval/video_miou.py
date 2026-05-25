@@ -13,19 +13,12 @@ and doesn't allow bad frames to be diluted by many good frames.
 
 No GPU needed — pure bbox computation.
 
-Usage:
-    cd /mnt/bum/hanyi/repo/MixSort
-
-    # Generated videos (needs tracking results from eval_generated_videos.py)
-    python tools/video_miou.py \
-        --video_dir /mnt/bum/hanyi/repo/ATI/samples/outputs \
-        --gt_list /mnt/bum/hanyi/repo/ATI/test_subset_100.txt \
-        --eval_results_dir /mnt/bum/hanyi/repo/ATI/samples/outputs/eval_results
-
-    # GT original videos (uses GT bboxes as both pred and GT)
-    python tools/video_miou.py \
-        --video_dir /mnt/bum/hanyi/repo/MixSort/gt_videos_basketball \
-        --gt_list /mnt/bum/hanyi/repo/sports_detection/.../test_subset.txt
+Usage (invoked by eval/run_basketball.sh / run_soccer.sh after the tracker
+step; you typically don't run this by hand):
+    python eval/video_miou.py \
+        --video_dir /path/to/your/generated/videos \
+        --gt_list $SVI_BENCH_DATA/T7/basketball/splits/test_subset_100.bbox_paths.txt \
+        --eval_results_dir <video_dir>/eval_results
 """
 
 import argparse

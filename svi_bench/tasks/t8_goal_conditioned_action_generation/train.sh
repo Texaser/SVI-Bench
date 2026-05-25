@@ -19,8 +19,8 @@ export PYTHONPATH="$HERE:${PYTHONPATH:-}"
 SPORT_DIR="$DATA_ROOT/T8/basketball"
 
 # Convert ID-only train split -> full bbox paths
-SPLIT_IDS="$SPORT_DIR/splits/train_task2_final.txt"
-SPLIT_BBOX_LIST="$SPORT_DIR/splits/train_task2_final.bbox_paths.txt"
+SPLIT_IDS="$SPORT_DIR/splits/train.txt"
+SPLIT_BBOX_LIST="$SPORT_DIR/splits/train.bbox_paths.txt"
 if [ ! -f "$SPLIT_BBOX_LIST" ]; then
   python3 "$REPO_ROOT/scripts/build_split_bbox_list.py" \
     --ids "$SPLIT_IDS" \

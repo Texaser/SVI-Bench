@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 # T8 — basketball goal accuracy via fine-tuned LLaVA-Qwen video-language QA.
 #
-# Pipeline assumption: the QA source dir already has per-QA-type Q*.json
-# files + the pre-rendered bbox-overlay videos that the JSONs reference.
-# The dataset team produces those — see the per-task README for the HF
-# dataset path.
+# Pipeline:
+#   1. Filter the anonymized master QA at $QA_MASTER (downloaded from
+#      MVP-Group/SVI-Bench:T8/basketball/qa_test/) to keep only entries
+#      whose anonymized clip ID has a matching <anon_id>.mp4 under VIDEO_DIR.
+#   2. Render a red bbox-overlay on frame 0 of each kept generated video
+#      using the start_bbox supplied in the master QA. These overlay copies
+#      land in $PREPARED_DIR/rendered_videos/.
+#   3. Write per-question-type Q*.json under $PREPARED_DIR/qa_json/ with
+#      `video` paths pointing at the rendered overlays.
+#   4. Loop over those Q*.json files and run test_llavaov.py for each
+#      (multi-GPU fan-out happens inside test_llavaov.py).
+#
+# Steps 1-3 are skipped if $PREPARED_DIR/qa_json/ already has Q*.json files.
 #
 # Usage:
-#   bash eval/run_basketball_goalacc.sh \
-#       <VIDEO_DIR>     -- flat dir of generated <clip>.mp4 (your method's outputs)
-#       <QA_SOURCE>     -- dir containing Q*.json files (and a copy of the
-#                          rendered bbox-overlay videos the JSONs point at)
-#       <MODEL_PATH>    -- fine-tuned LLaVA-Qwen checkpoint dir
-#                          (e.g. .../basketball_bbox_qa_f16_full_ft_h100/checkpoint-15500)
+#   bash eval/run_basketball_goalacc.sh <VIDEO_DIR> [QA_MASTER] [MODEL_PATH]
 #
-# Or set them as env vars (VIDEO_DIR / QA_SOURCE / MODEL_PATH) and call
-# the script with no positional args.
+# QA_MASTER and MODEL_PATH default to $SVI_BENCH_DATA/T8/{basketball/qa_test,llava_qa_checkpoint},
+# i.e. the layout produced by scripts/download_t7_t8.sh.
 #
 # Output: $OUTPUT_DIR/<qa_type>/qa_eval_f${EVAL_FRAMES}_results.json
 # Each file's `overall.accuracy` is the per-QA-type goal accuracy; we
@@ -24,31 +28,55 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TASK_DIR="$(cd "$HERE/.." && pwd)"
+REPO_ROOT="$(cd "$TASK_DIR/../../.." && pwd)"
+DATA_ROOT="${SVI_BENCH_DATA:-$REPO_ROOT/data}"
 export PYTHONPATH="$HERE:${PYTHONPATH:-}"
 cd "$HERE"
 
 VIDEO_DIR="${1:-${VIDEO_DIR:-}}"
-QA_SOURCE="${2:-${QA_SOURCE:-}}"
-MODEL_PATH="${3:-${MODEL_PATH:-}}"
+QA_MASTER="${2:-${QA_MASTER:-$DATA_ROOT/T8/basketball/qa_test}}"
+MODEL_PATH="${3:-${MODEL_PATH:-$DATA_ROOT/T8/llava_qa_checkpoint}}"
+PREPARED_DIR="${PREPARED_DIR:-${VIDEO_DIR}/qa_prepared}"
+QA_SOURCE="${PREPARED_DIR}/qa_json"
 OUTPUT_DIR="${OUTPUT_DIR:-${VIDEO_DIR}/goal_accuracy_results}"
 
 MODEL_NAME="${MODEL_NAME:-llava_qwen}"
 EVAL_FRAMES="${EVAL_FRAMES:-16}"
 
-if [ -z "$VIDEO_DIR" ] || [ -z "$QA_SOURCE" ] || [ -z "$MODEL_PATH" ]; then
-    echo "Error: VIDEO_DIR / QA_SOURCE / MODEL_PATH all required (positional 1-3 or env vars)." >&2
+if [ -z "$VIDEO_DIR" ]; then
+    echo "Error: VIDEO_DIR required (positional 1 or env var)." >&2
     echo "Example:" >&2
-    echo "  bash eval/run_basketball_goalacc.sh \\" >&2
-    echo "       /path/to/generated_videos \\" >&2
-    echo "       /path/to/QA/llava_format/test_final \\" >&2
-    echo "       /path/to/basketball_bbox_qa_f16_full_ft/checkpoint-15500" >&2
+    echo "  bash eval/run_basketball_goalacc.sh /path/to/generated_videos" >&2
+    echo "" >&2
+    echo "QA_MASTER and MODEL_PATH default to \$SVI_BENCH_DATA/T8/..." >&2
+    echo "(downloaded by scripts/download_t7_t8.sh). Override via positional" >&2
+    echo "args 2-3 or env vars if your layout differs." >&2
+    exit 1
+fi
+
+if [ ! -d "$QA_MASTER" ]; then
+    echo "Error: QA_MASTER does not exist: $QA_MASTER" >&2
+    echo "Run scripts/download_t7_t8.sh to fetch the T8 QA master set." >&2
     exit 1
 fi
 
 if [ ! -d "$MODEL_PATH" ]; then
     echo "Error: MODEL_PATH does not exist: $MODEL_PATH" >&2
-    echo "Fine-tuned LLaVA-Qwen checkpoint (~15 GB) is not bundled — see eval/pretrained/README.md." >&2
+    echo "Run scripts/download_t7_t8.sh to fetch the fine-tuned LLaVA-Qwen checkpoint" >&2
+    echo "(~15 GB, under T8/llava_qa_checkpoint/ on MVP-Group/SVI-Bench)." >&2
     exit 1
+fi
+
+# Prepare method-specific QA bundle (filter master + render bbox overlays)
+# only if it hasn't been produced yet for this VIDEO_DIR.
+if [ ! -d "$QA_SOURCE" ] || [ -z "$(ls -A "$QA_SOURCE" 2>/dev/null)" ]; then
+    echo "Preparing method-specific QA bundle at $PREPARED_DIR ..."
+    python "$HERE/prepare_qa_for_method.py" \
+        --video_dir "$VIDEO_DIR" \
+        --qa_dir    "$QA_MASTER" \
+        --output_dir "$PREPARED_DIR" \
+        --skip_existing
 fi
 
 mkdir -p "$OUTPUT_DIR"

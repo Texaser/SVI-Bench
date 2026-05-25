@@ -113,7 +113,7 @@ $SVI_BENCH_DATA/T7/{soccer,basketball}/
 ├── clips/{00..99}/{ID}.mp4           # original 5 s game clips (832×480, 15 fps)
 ├── bboxes/{00..99}/{ID}.txt          # per-frame player bboxes
 ├── backgrounds/{00..99}/{ID}.mp4     # player-removed inpainted backgrounds
-└── splits/{train,val,test}_final.txt # one sample ID per line
+└── splits/{train,val,test}.txt # one sample ID per line
 ```
 
 `train.sh` and the inference scripts read this layout by default (via
@@ -193,7 +193,7 @@ appears in `splits/` and as the basename of its three artifacts:
 `ID // 1236` (soccer) — i.e. samples are sharded into ≤100 directories of
 ≤1700 files each to keep the HF repo under per-folder limits.
 
-Splits live at `splits/{train,val,test}_final.txt` (one ID per line). The
+Splits live at `splits/{train,val,test}.txt` (one ID per line). The
 shell helpers in `scripts/build_split_bbox_list.py` convert these into the
 full-path bbox lists the dataset loader expects; `train.sh` /
 `inference/infer.sh` invokes it automatically the first time.

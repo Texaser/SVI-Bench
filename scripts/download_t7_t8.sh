@@ -4,10 +4,11 @@
 #
 # Final layout (under $SVI_BENCH_DATA, default: ./data/):
 #   data/T7/{soccer,basketball}/{clips,bboxes,backgrounds}/{00..99}/{ID}.{mp4,txt}
-#   data/T7/{soccer,basketball}/splits/{train,val,test}_final.txt   (IDs only)
+#   data/T7/{soccer,basketball}/splits/{train,val,test}.txt   (IDs only)
 #   data/T8/basketball/{clips,bboxes,backgrounds}/{00..99}/{ID}.{mp4,txt}
-#   data/T8/basketball/splits/{train,val,test}_task2_final.txt      (IDs only)
+#   data/T8/basketball/splits/{train,val,test}.txt                  (IDs only)
 #   data/T8/basketball/captions.json                                (id -> refined_instruction + player_specifications)
+#   data/T8/llava_qa_checkpoint/                                    (fine-tuned LLaVA-Qwen QA model, ~15 GB)
 
 set -euo pipefail
 

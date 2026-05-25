@@ -52,7 +52,12 @@ import torch
 import torch.nn.functional as F
 from loguru import logger
 
-DATA_ROOT = "/mnt/bum/hanyi/data/"
+# Legacy DATA_ROOT, used only for the pre-anonymization input layout where
+# bbox files lived in a different parallel tree from the video files. The
+# anonymized layout shipped on HF (clips/<bucket>/<id>.mp4 next to
+# bboxes/<bucket>/<id>.txt) is the common case and is detected first inside
+# `bbox_path_to_video_path`.
+DATA_ROOT = os.environ.get("SVI_LEGACY_DATA_ROOT", "")
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +102,17 @@ def make_parser():
 # ---------------------------------------------------------------------------
 
 def bbox_path_to_video_path(bbox_path, sport):
+    # Anonymized SVI-Bench layout (the common case after running
+    # scripts/download_t7_t8.sh): bbox at .../bboxes/<bucket>/<id>.txt
+    # has its mp4 sibling at .../clips/<bucket>/<id>.mp4.
+    if "/bboxes/" in bbox_path:
+        return re.sub(r"\.txt$", ".mp4", bbox_path.replace("/bboxes/", "/clips/", 1))
+
+    # Pre-anonymization legacy layout: bbox files lived under
+    # $DATA_ROOT/<sport>_mixsort_all*/... and videos under
+    # $DATA_ROOT/<sport>_fps_15/...
+    if not DATA_ROOT:
+        return None
     rel = bbox_path.replace(DATA_ROOT, "")
     if sport == "soccer":
         rel = rel.replace("soccer_mixsort_all_filtered_10/", "soccer_video_fps_15/", 1)

@@ -46,7 +46,7 @@ Curated basketball video clips paired with structured goal specifications
 derived from annotated actions, covering diverse goal-conditioned behaviors:
 completing plays at designated locations, executing specific moves, and
 interaction-aware scenarios. Per-video prompts are stored in
-`polished_captions_final.json` (one entry per clip); start/end bbox
+`captions.json` (one entry per clip); start/end bbox
 constraints come from the same bbox listings used by T7.
 
 ## Evaluation metrics
@@ -62,13 +62,18 @@ Three metrics specified in the paper:
   (last-frame IoU-gated SigLIP2 cosine sim). Run after the mIoU
   pipeline via `bash eval/run_basketball_featsim.sh <VIDEO_DIR>`.
 - **Goal accuracy** — fraction judged successful by a fine-tuned
-  video-language QA model that asks whether the generated video achieves
-  the specified objective. **Implementation bundled** at
+  video-language QA model. The benchmark ships an anonymized **master QA
+  bank** (8 question types, 8720 QA pairs covering 4994/5000 test clips)
+  at `T8/basketball/qa_test/` on
+  [`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench),
+  plus the fine-tuned LLaVA-Qwen checkpoint (~15 GB) at
+  `T8/llava_qa_checkpoint/`. `scripts/download_t7_t8.sh` fetches both.
+  Run after the mIoU pipeline via
+  `bash eval/run_basketball_goalacc.sh <VIDEO_DIR>`; the wrapper
+  filters the master QA to clips you generated, renders the red-bbox
+  overlay frames, and dispatches to
   [`eval/test_llavaov.py`](eval/test_llavaov.py) + the vendored
-  [`eval/llava/`](eval/llava/) package. Run after the mIoU pipeline via
-  `bash eval/run_basketball_goalacc.sh <VIDEO_DIR> <QA_SOURCE> <MODEL_PATH>`.
-  Requires a fine-tuned LLaVA-Qwen checkpoint (~15 GB, user-supplied via
-  `MODEL_PATH`).
+  [`eval/llava/`](eval/llava/) package for QA inference.
 
 ## Install
 
@@ -125,7 +130,7 @@ $SVI_BENCH_DATA/T8/basketball/
 ├── clips/{00..99}/{ID}.mp4               # original 5 s game clips
 ├── bboxes/{00..99}/{ID}.txt              # per-frame player bboxes
 ├── backgrounds/{00..99}/{ID}.mp4         # player-removed inpainted backgrounds
-├── splits/{train,val,test}_task2_final.txt    # one sample ID per line
+├── splits/{train,val,test}.txt                # one sample ID per line
 └── captions.json                          # id -> refined_instruction + player_specifications
 ```
 
@@ -196,8 +201,8 @@ For each ID there are four artifacts:
 `bucket` is the first two digits of `ID // 741` — samples are sharded into
 100 directories of ≤741 files each to stay under HF per-folder limits.
 
-Splits live at `splits/{train,val,test}_task2_final.txt` (one ID per line),
-plus `test_task2_final_{100,1000}.txt` for the small/medium eval subsets.
+Splits live at `splits/{train,val,test}.txt` (one ID per line),
+plus `test_{100,1000}.txt` for the small/medium eval subsets.
 `scripts/build_split_bbox_list.py` converts these into the full-path bbox
 lists the dataset loader expects; `train.sh` / `inference/infer.sh`
 invoke it automatically the first time.

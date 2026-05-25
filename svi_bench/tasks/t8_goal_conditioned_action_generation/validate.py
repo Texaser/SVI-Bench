@@ -66,7 +66,7 @@ def main():
     _DEFAULT_T8 = os.path.join(_DATA_ROOT, 'T8', 'basketball')
     VALIDATION_BBOX_FOLDER = os.environ.get(
         'VALIDATION_BBOX_FOLDER',
-        os.path.join(_DEFAULT_T8, 'splits', 'val_task2_final.bbox_paths.txt'),
+        os.path.join(_DEFAULT_T8, 'splits', 'val.bbox_paths.txt'),
     )
     VALIDATION_VIDEO_BASE = os.environ.get(
         'VALIDATION_VIDEO_BASE',

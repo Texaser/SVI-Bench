@@ -36,7 +36,12 @@ import torch
 import torch.nn.functional as F
 from loguru import logger
 
-DATA_ROOT = "/mnt/bum/hanyi/data/"
+# Legacy DATA_ROOT, used only for the pre-anonymization input layout where
+# bbox files lived in a different parallel tree from the video files. The
+# anonymized layout shipped on HF (clips/<bucket>/<id>.mp4 next to
+# bboxes/<bucket>/<id>.txt) is the common case and is detected first inside
+# `bbox_path_to_video_path`.
+DATA_ROOT = os.environ.get("SVI_LEGACY_DATA_ROOT", "")
 LAST_FRAME = 80
 
 
@@ -45,9 +50,9 @@ def make_parser():
     p.add_argument("--video_dir", default=None,
                    help="Dir containing generated .mp4 files (flat or subdir/generated.mp4)")
     p.add_argument("--gt_list", default=None,
-                   help="test_task2_final_*.txt with mixsort bbox paths")
+                   help="test_*.bbox_paths.txt with mixsort bbox paths")
     p.add_argument("--captions_json", default=None,
-                   help="polished_captions_final.json")
+                   help="captions.json (HF-shipped, per-clip end_bbox + caption metadata)")
     p.add_argument("--eval_results_dir", default=None,
                    help="MixSort tracking results dir (gpu*/{clip}/...)")
     p.add_argument("--sport", default="basketball", choices=["basketball", "soccer"])
@@ -69,6 +74,15 @@ def make_parser():
 # ---------------------------------------------------------------------------
 
 def bbox_path_to_video_path(bbox_path, sport):
+    # Anonymized SVI-Bench layout (the common case after running
+    # scripts/download_t7_t8.sh): bbox at .../bboxes/<bucket>/<id>.txt
+    # has its mp4 sibling at .../clips/<bucket>/<id>.mp4.
+    if "/bboxes/" in bbox_path:
+        return re.sub(r"\.txt$", ".mp4", bbox_path.replace("/bboxes/", "/clips/", 1))
+
+    # Pre-anonymization legacy layout.
+    if not DATA_ROOT:
+        return None
     rel = bbox_path.replace(DATA_ROOT, "")
     if sport == "basketball":
         sub_rel = None

@@ -1,27 +1,17 @@
 """
-Batch mIoU evaluation for ATI / MagicMotion generated videos.
+Batch mIoU evaluation worker.
 
 Evaluates a flat directory of generated .mp4 files against GT bounding boxes.
-Runs MixSort tracking on each video and computes mIoU.
+Runs MixSort tracking on each video and computes mIoU. Invoked by
+`eval/run_basketball.sh` (one process per GPU).
 
 Usage:
-    cd /mnt/bum/hanyi/repo/MixSort
-
-    # Evaluate ATI outputs
-    python tools/eval_generated_videos.py \
-        --video_dir /mnt/bum/hanyi/repo/ATI/samples/outputs \
-        --gt_list /mnt/bum/hanyi/repo/ATI/test_subset_100.txt \
-        --exp_file exps/example/mot/yolox_x_sportsmot.py \
-        --ckpt pretrained/yolox_x_sports_train.pth.tar \
-        --output_dir eval_results/ati
-
-    # Evaluate MagicMotion outputs
-    python tools/eval_generated_videos.py \
-        --video_dir /mnt/bum/hanyi/repo/MagicMotion/magicmotion_gen/final_output \
-        --gt_list /mnt/bum/hanyi/repo/ATI/test_subset_100.txt \
-        --exp_file exps/example/mot/yolox_x_sportsmot.py \
-        --ckpt pretrained/yolox_x_sports_train.pth.tar \
-        --output_dir eval_results/magicmotion
+    python eval/eval_generated_videos.py \
+        --video_dir /path/to/your/generated/videos \
+        --gt_list $SVI_BENCH_DATA/T8/basketball/splits/test_1000.bbox_paths.txt \
+        --exp_file eval/exps/example/mot/yolox_x_sportsmot.py \
+        --ckpt eval/pretrained/yolox_x_sports_train.pth.tar \
+        --output_dir <video_dir>/eval_results
 """
 
 import argparse

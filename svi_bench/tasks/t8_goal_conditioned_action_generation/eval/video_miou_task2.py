@@ -2,18 +2,16 @@
 Task2 Last-Frame mIoU metric.
 
 Only evaluates on the LAST frame (frame 80) for the target players
-specified in polished_captions player_specifications (end_bbox).
+specified in captions.json player_specifications (end_bbox).
 
-GT comes from polished_captions_final.json end_bbox (normalized [0,1]).
+GT comes from captions.json end_bbox (normalized [0,1]).
 Pred comes from MixSort tracking results on generated videos.
 
 Usage:
-    cd /mnt/bum/hanyi/repo/MixSort
-
-    python tools/video_miou_task2.py \
+    python eval/video_miou_task2.py \
         --video_dir /path/to/generated/videos \
-        --gt_list /mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/basketball_set/test_task2_final_100.txt \
-        --captions_json /mnt/bum/hanyi/repo/sports_detection/segment-anything-2-real-time/polished_captions_final.json \
+        --gt_list $SVI_BENCH_DATA/T8/basketball/splits/test_100.bbox_paths.txt \
+        --captions_json $SVI_BENCH_DATA/T8/basketball/captions.json \
         --eval_results_dir /path/to/eval_results
 """
 
@@ -36,9 +34,9 @@ def make_parser():
     parser = argparse.ArgumentParser("Task2 Last-Frame mIoU")
     parser.add_argument("--video_dir", required=True, type=str)
     parser.add_argument("--gt_list", required=True, type=str,
-                        help="test_task2_final_100.txt with mixsort bbox paths")
+                        help="test_*.bbox_paths.txt with mixsort bbox paths")
     parser.add_argument("--captions_json", required=True, type=str,
-                        help="polished_captions_final.json")
+                        help="captions.json (HF-shipped, per-clip end_bbox + metadata)")
     parser.add_argument("--eval_results_dir", type=str, default=None,
                         help="MixSort tracking results dir. If None, uses GT as pred.")
     parser.add_argument("--iou_threshold", type=float, default=0.5)
