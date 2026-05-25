@@ -92,30 +92,27 @@ echo "MODEL_NAME:   $MODEL_NAME"
 echo "EVAL_FRAMES:  $EVAL_FRAMES"
 echo ""
 
-# Iterate over QA-type JSONs (Q1*.json, Q2*.json, ...). test_llavaov.py
-# internally fans out across visible GPUs via torch.multiprocessing, so
-# we run one QA-type at a time sequentially.
-SHOPT_COUNT=0
-for json_file in "${QA_SOURCE}"/Q*.json; do
-    [ -f "$json_file" ] || continue
-    SHOPT_COUNT=$((SHOPT_COUNT + 1))
-    json_name=$(basename "${json_file}" .json)
-    echo ">>> [$SHOPT_COUNT] ${json_name}"
-
-    python "$HERE/test_llavaov.py" \
-        --model_name "${MODEL_NAME}" \
-        --model_path "${MODEL_PATH}" \
-        --test_json_path "${json_file}" \
-        --results_dir "${OUTPUT_DIR}/${json_name}" \
-        --eval_type qa \
-        --eval_frames "${EVAL_FRAMES}" \
-        --max_samples 0
-done
-
-if [ "$SHOPT_COUNT" -eq 0 ]; then
+# Pass all Q*.json files in a single test_llavaov.py invocation so the
+# fine-tuned LLaVA-Qwen checkpoint loads once per GPU instead of once per
+# question type. Per-Q*.json subdirs (qa_eval_f<frames>_{outputs,results}.json)
+# are written by the worker.
+shopt -s nullglob
+JSON_FILES=("${QA_SOURCE}"/Q*.json)
+shopt -u nullglob
+if [ ${#JSON_FILES[@]} -eq 0 ]; then
     echo "Error: no Q*.json files found in $QA_SOURCE" >&2
     exit 1
 fi
+
+echo ">>> Running ${#JSON_FILES[@]} QA files with one model load per GPU"
+python "$HERE/test_llavaov.py" \
+    --model_name "${MODEL_NAME}" \
+    --model_path "${MODEL_PATH}" \
+    --test_json_paths "${JSON_FILES[@]}" \
+    --results_dir "${OUTPUT_DIR}" \
+    --eval_type qa \
+    --eval_frames "${EVAL_FRAMES}" \
+    --max_samples 0
 
 # ============================================================
 # Summary + aggregation
