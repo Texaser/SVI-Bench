@@ -149,4 +149,4 @@ Results:
 | `eval/video_miou.py`, `eval/feature_sim.py`, `eval/eval_generated_videos.py` | metric workers |
 | `eval/yolox/`, `eval/MixViT/`, `eval/exps/`, `eval/llava/` | tracker + QA model code |
 | `diffsynth/` | Wan2.1-Fun pipeline |
-| `evaluate.py` | `svi-bench evaluate --task t8` CLI entry |
+| `infer.py` | `svi-bench evaluate --task t8` CLI entry (inference dispatcher) |
