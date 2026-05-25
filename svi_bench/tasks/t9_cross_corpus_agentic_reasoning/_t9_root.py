@@ -27,8 +27,11 @@ def resolve_t9_data_root() -> str:
     parent = os.path.dirname(os.path.abspath(__file__))
     while parent != "/" and not os.path.isfile(os.path.join(parent, "pyproject.toml")):
         parent = os.path.dirname(parent)
-    candidate = os.path.join(parent, "data", "t9")
-    return candidate if os.path.isdir(candidate) else T9_ROOT_NOT_SET
+    for name in ("T9", "t9"):
+        candidate = os.path.join(parent, "data", name)
+        if os.path.isdir(candidate):
+            return candidate
+    return T9_ROOT_NOT_SET
 
 
 def require_t9_data_root() -> str:

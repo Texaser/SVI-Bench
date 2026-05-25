@@ -20,20 +20,21 @@ echo 'xpack.security.enabled: false' >> elasticsearch-9.2.3/config/elasticsearch
 ## Data
 
 ```bash
-svi-bench download --tasks t9
+huggingface-cli download MVP-Group/SVI-Bench --repo-type dataset \
+    --include "T9/**" --local-dir data/
 ```
 
 Large data (game archives, embeddings, ES indices) are shipped as `.tar`
 bundles. After downloading, extract them:
 
 ```bash
-python3 scripts/extract_tars.py --root data/t9
+python3 scripts/extract_tars.py --root data/T9
 ```
 
-The data lives under `<repo>/data/t9/`:
+The data lives under `data/T9/`:
 
 ```
-data/t9/
+data/T9/
 ├── questions/
 │   ├── basketball.json
 │   ├── hockey.json
@@ -100,14 +101,14 @@ python scripts/start_services.py --arch <arch-id>
 
 ```bash
 export OPENAI_API_KEY=sk-...
-export T9_ROOT=/path/to/data/t9                                       # default: <repo>/data/t9
+export T9_ROOT=/path/to/data/T9                                       # default: <repo>/data/T9
 export T9_ES_URL=http://<es-host>:9200                                # default: http://localhost:9200
 export T9_TOOL_SERVER_HOST=<tools-host>                               # default: localhost
 export T9_AGENT_SERVER_HOST=<orchestrator-host>                       # default: localhost
 export CONDA_PROFILE=/path/to/miniconda3/etc/profile.d/conda.sh       # required for SLURM submission
 
 bash scripts/submit_experiment.sh <arch-id> \
-    --questions-file data/t9/questions/<sport>.json \
+    --questions-file data/T9/questions/<sport>.json \
     --sport <sport>
 ```
 

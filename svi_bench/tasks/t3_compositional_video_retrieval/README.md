@@ -18,19 +18,20 @@ pip install -e ".[t3]"     # from the SVI-Bench/ repo root
 ## 2. Data
 
 ```bash
-svi-bench download --tasks t3
+huggingface-cli download MVP-Group/SVI-Bench --repo-type dataset \
+    --include "T3/**" --local-dir data/
 ```
 
 Video clips are shipped as `.tar` bundles. After downloading, extract them:
 
 ```bash
-python3 scripts/extract_tars.py --root data/t3/clips
+python3 scripts/extract_tars.py --root data/T3/clips
 ```
 
-Everything goes under `<repo>/data/t3/`:
+Everything goes under `<repo>/data/T3/`:
 
 ```
-data/t3/
+data/T3/
 ├── clips/{sport}/{bucket}/*.mp4        # extracted from tars
 ├── data/{train,val,test}/*.json
 ├── compositions/{*.json, mappings/*.json}
@@ -49,7 +50,7 @@ Two steps: 1. **extract embeddings** 2. **run retrieval**
 ### 3.1 Extract embeddings
 
 For the provided baselines, embeddings are already at
-`data/t3/embeds/embeds_{val|test}_{sport}_{full|partial}.pt` from
+`data/T3/embeds/embeds_{val|test}_{sport}_{full|partial}.pt` from
 `svi-bench download`. Skip to 3.2.
 
 For your own checkpoint, point the eval scripts at it and choose a short
@@ -68,7 +69,7 @@ for sport in basketball hockey soccer; do
 done
 ```
 
-Embeddings are written to `data/t3/embeds/embeds_{split}_{sport}_${EVAL_SUFFIX}.pt`.
+Embeddings are written to `data/T3/embeds/embeds_{split}_{sport}_${EVAL_SUFFIX}.pt`.
 
 ### 3.2 Run retrieval
 
@@ -106,11 +107,11 @@ bash scripts/finetuning/1B/finetune_attribute_dropout.sh
 ```
 
 Both scripts run on SLURM with 8 GPUs on one node. Per-epoch checkpoints
-and `train.log` are written under `data/t3/results/finetune_<regime>/`.
+and `train.log` are written under `data/T3/results/finetune_<regime>/`.
 
 Per-epoch evaluation is off by default. To enable val-set R@K after every
 epoch (across all three sports), set `EVAL_DURING_TRAINING=1`.
 
 Your fine-tuned checkpoint is at
-`data/t3/results/finetune_<regime>/ckpt_latest.pth` when `save_latest=True`,
+`data/T3/results/finetune_<regime>/ckpt_latest.pth` when `save_latest=True`,
 otherwise `ckpt_NN.pth` per epoch. To evaluate it, follow §3.

@@ -101,19 +101,20 @@ def _resolve_data_root(local_data_root: str | pathlib.Path | None) -> pathlib.Pa
     here = pathlib.Path(__file__).resolve()
     for parent in here.parents:
         if (parent / "pyproject.toml").exists():
-            candidate = parent / "data" / "t9"
-            if candidate.exists():
-                return candidate
+            for name in ("T9", "t9"):
+                candidate = parent / "data" / name
+                if candidate.exists():
+                    return candidate
             break
 
     from huggingface_hub import snapshot_download
 
     cached = snapshot_download(
-        repo_id="svi-bench/svi-bench",
+        repo_id="MVP-Group/SVI-Bench",
         repo_type="dataset",
-        allow_patterns=[f"{TASK}/*"],
+        allow_patterns=["T9/**"],
     )
-    return pathlib.Path(cached) / TASK
+    return pathlib.Path(cached) / "T9"
 
 
 def _check_required_env_for_arch(arch_id: str, arch_info: dict[str, Any]) -> None:

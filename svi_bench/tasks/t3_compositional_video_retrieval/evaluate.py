@@ -89,9 +89,10 @@ def _resolve_data_root(local_data_root: str | pathlib.Path | None) -> pathlib.Pa
     here = pathlib.Path(__file__).resolve()
     for parent in here.parents:
         if (parent / "pyproject.toml").exists():
-            candidate = parent / "data" / "t3"
-            if candidate.exists():
-                return candidate
+            for name in ("T3", "t3"):
+                candidate = parent / "data" / name
+                if candidate.exists():
+                    return candidate
             break
 
     from huggingface_hub import snapshot_download
