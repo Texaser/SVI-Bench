@@ -18,6 +18,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import os
 import sys
 import tarfile
@@ -80,6 +81,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="extract even if --skip-extracted would skip")
     p.add_argument("--dry-run", action="store_true",
                    help="report what would happen without extracting/deleting")
+    p.add_argument("--workers", type=int, default=8,
+                   help="parallel worker count (default: 8)")
     args = p.parse_args(argv)
 
     root = os.path.abspath(args.root)
@@ -92,30 +95,30 @@ def main(argv: list[str] | None = None) -> int:
     if not tars:
         return 0
 
-    n_ok = 0
-    n_skip = 0
-    n_fail = 0
-    t0 = time.time()
-    for i, tar in enumerate(tars, start=1):
+    def _process(idx_tar):
+        i, tar = idx_tar
         rel = os.path.relpath(tar, root)
         size_mb = os.path.getsize(tar) / 1024**2
-        log(f"[{i}/{len(tars)}] {rel} ({size_mb:.1f} MB)")
-
         if args.skip_extracted and not args.force and already_extracted(tar):
-            log("  already extracted; skipping")
-            n_skip += 1
-            continue
-
+            return ("skip", i, rel, size_mb, None)
         if extract_one(tar, args.dry_run):
-            n_ok += 1
             if args.delete_after and not args.dry_run:
                 try:
                     os.remove(tar)
-                    log("  removed tar")
                 except OSError as e:
-                    log(f"  warn: couldn't rm tar: {e}")
-        else:
-            n_fail += 1
+                    return ("ok", i, rel, size_mb, f"warn: couldn't rm tar: {e}")
+            return ("ok", i, rel, size_mb, None)
+        return ("fail", i, rel, size_mb, None)
+
+    n_ok = n_skip = n_fail = 0
+    t0 = time.time()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
+        for status, i, rel, size_mb, msg in pool.map(_process, enumerate(tars, 1)):
+            tag = {"ok": "OK", "skip": "skip", "fail": "FAIL"}[status]
+            log(f"[{i}/{len(tars)}] {tag:<4} {rel} ({size_mb:.1f} MB)" + (f" -- {msg}" if msg else ""))
+            if status == "ok": n_ok += 1
+            elif status == "skip": n_skip += 1
+            else: n_fail += 1
 
     log(f"\n=== summary: ok={n_ok} skip={n_skip} fail={n_fail} (total {len(tars)}, {(time.time()-t0)/60:.1f} min) ===")
     return 0 if n_fail == 0 else 1

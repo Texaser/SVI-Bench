@@ -714,7 +714,7 @@ def wan_parser():
     parser.add_argument("--prompt", type=str, default="a realistic basketball game video", help="Default prompt for all videos.")
     parser.add_argument("--use_overlay_method", default=False, action="store_true", help="Use overlay method for bbox processing (single image per frame with all players) instead of separate method (one image per player per frame).")
     parser.add_argument("--bbox_color_mode", type=str, default="noise", choices=["noise", "color"], help="Rendering mode for bbox conditions: 'noise' (default, uses noise patterns with ID embeddings) or 'color' (uses distinct colors from matplotlib tab10 colormap).")
-    parser.add_argument("--polished_captions", type=str, nargs='+', default=None, help="Paths to polished captions JSON files for per-video prompts.")
+    parser.add_argument("--captions", type=str, nargs='+', default=None, help="Paths to captions JSON files for per-video prompts.")
     parser.add_argument("--bbox_first_last_only", default=False, action="store_true", help="Use only first/last frame bboxes from player_specifications.")
     return parser
 

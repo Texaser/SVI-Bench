@@ -80,9 +80,9 @@ def main():
     VALIDATION_NUM_FRAMES = int(os.environ.get('VALIDATION_NUM_FRAMES', '81'))
     VALIDATION_TIME_DIVISION_FACTOR = int(os.environ.get('VALIDATION_TIME_DIVISION_FACTOR', '1'))
 
-    # Polished captions JSON (id -> refined_instruction + player_specifications)
-    POLISHED_CAPTIONS = os.environ.get(
-        'POLISHED_CAPTIONS',
+    # Captions JSON (id -> refined_instruction + player_specifications)
+    CAPTIONS = os.environ.get(
+        'CAPTIONS',
         os.path.join(_DEFAULT_T8, 'captions.json'),
     ).split(',')
 
@@ -91,7 +91,7 @@ def main():
     print(f"Validation video base: {VALIDATION_VIDEO_BASE}")
     print(f"Validation background video base: {VALIDATION_BACKGROUND_VIDEO_BASE}")
     print(f"Number of validation samples: {NUM_VALIDATION_SAMPLES}")
-    print(f"Polished captions: {POLISHED_CAPTIONS}")
+    print(f"Captions: {CAPTIONS}")
 
     BBOX_CHANNELS = int(os.environ.get('BBOX_CHANNELS', '16'))
     BACKGROUND_VIDEO_CHANNELS = int(os.environ.get('BACKGROUND_VIDEO_CHANNELS', '8'))
@@ -102,7 +102,7 @@ def main():
     print(f"BBox color mode: {bbox_color_mode}, overlay: {use_overlay_method}")
 
     # Load polished captions lookup
-    captions_lookup = PolishedCaptionsLookup(POLISHED_CAPTIONS)
+    captions_lookup = PolishedCaptionsLookup(CAPTIONS)
     bbox_from_specs = LoadBBoxFromPlayerSpecs(VALIDATION_NUM_FRAMES)
 
     # Load pipeline

@@ -25,6 +25,28 @@ soccer), and multiple seasons.
 Each task has its own directory under `svi_bench/tasks/` with a dedicated
 `README.md` covering setup, data format, and evaluation instructions.
 
+## Quickstart (T7 generation demo)
+
+```bash
+git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
+pip install "svi-bench[t7]"
+bash scripts/download_t7_t8.sh                      # ~50 GB; T7+T8 data + tracker weights
+bash svi_bench/tasks/t7_motion_conditioned_generation/download_checkpoint.sh basketball
+
+# Inference (test_100 split, 8 GPUs)
+SPORT=basketball bash svi_bench/tasks/t7_motion_conditioned_generation/inference/infer.sh \
+    ./checkpoints/T7/basketball
+
+# Eval (Video mIoU + feature similarity)
+STEP_DIR=./checkpoints/T7/basketball/validation/step-<N>
+VALIDATION_DIR=$STEP_DIR bash svi_bench/tasks/t7_motion_conditioned_generation/eval/run_basketball.sh
+bash svi_bench/tasks/t7_motion_conditioned_generation/eval/run_basketball_featsim.sh $STEP_DIR
+```
+
+The same shape works for T8 (`svi-bench[t8]`, `inference/infer.sh`,
+`eval/run_basketball{,_featsim,_goalacc}.sh`). For other tasks, see the
+per-task README.
+
 ## Data
 
 Datasets are hosted on HuggingFace at

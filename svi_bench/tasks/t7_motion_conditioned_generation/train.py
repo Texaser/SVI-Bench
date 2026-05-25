@@ -122,10 +122,10 @@ if __name__ == "__main__":
         # Validate required parameters for folder-based dataset
         if not hasattr(args, 'video_base_path') or args.video_base_path is None:
             raise ValueError("video_base_path is required when using bbox_folder")
-        # Build polished captions lookup if provided
+        # Build captions lookup if provided
         polished_captions_lookup = None
-        if getattr(args, 'polished_captions', None):
-            polished_captions_lookup = PolishedCaptionsLookup(args.polished_captions)
+        if getattr(args, 'captions', None):
+            polished_captions_lookup = PolishedCaptionsLookup(args.captions)
 
         # Build LoadBBoxFromPlayerSpecs if bbox_first_last_only
         load_bbox_from_player_specs = None

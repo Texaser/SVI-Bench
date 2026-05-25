@@ -68,16 +68,15 @@ if [ ! -d "$MODEL_PATH" ]; then
     exit 1
 fi
 
-# Prepare method-specific QA bundle (filter master + render bbox overlays)
-# only if it hasn't been produced yet for this VIDEO_DIR.
-if [ ! -d "$QA_SOURCE" ] || [ -z "$(ls -A "$QA_SOURCE" 2>/dev/null)" ]; then
-    echo "Preparing method-specific QA bundle at $PREPARED_DIR ..."
-    python "$HERE/prepare_qa_for_method.py" \
-        --video_dir "$VIDEO_DIR" \
-        --qa_dir    "$QA_MASTER" \
-        --output_dir "$PREPARED_DIR" \
-        --skip_existing
-fi
+# Prepare method-specific QA bundle (filter master + render bbox overlays).
+# --skip_existing makes this idempotent: completed renders + Q*.json files
+# are reused on subsequent runs, so an interrupted prepare resumes cleanly.
+echo "Preparing method-specific QA bundle at $PREPARED_DIR ..."
+python "$HERE/prepare_qa_for_method.py" \
+    --video_dir "$VIDEO_DIR" \
+    --qa_dir    "$QA_MASTER" \
+    --output_dir "$PREPARED_DIR" \
+    --skip_existing
 
 mkdir -p "$OUTPUT_DIR"
 

@@ -36,7 +36,7 @@ accelerate launch "$HERE/train.py" \
   --bbox_folder "$SPLIT_BBOX_LIST" \
   --video_base_path "$SPORT_DIR/clips" \
   --background_video_folder "$SPORT_DIR/backgrounds" \
-  --polished_captions "$SPORT_DIR/captions.json" \
+  --captions "$SPORT_DIR/captions.json" \
   --bbox_channels 16 \
   --video_extension .mp4 \
   --height 480 \
