@@ -2,9 +2,9 @@
 
 ![T7 (top) and T8 (bottom)](../../../docs/figures/pillar3.png)
 
-SVI-Bench Pillar 3 (Strategic Simulation), sibling task to T7. T7 fixes
-the per-frame trajectory; T8 fixes only the endpoints and a textual goal,
-leaving the model to plan the intermediate action.
+SVI-Bench Pillar 3 (Strategic Simulation). Generate a multi-agent sports
+video that realizes a natural-language goal, given only start- and
+end-frame bounding boxes for each target player.
 
 ## Task
 
