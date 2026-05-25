@@ -446,8 +446,6 @@ def main():
                         "bbox_channels": BBOX_CHANNELS,
                         "bbox_color_mode": bbox_color_mode,  # Use color-coded rendering mode ("noise" or "color")
                         "use_overlay_method": use_overlay_method,
-                        "orig_video_width": orig_video_width,  # For bbox center-crop alignment
-                        "orig_video_height": orig_video_height,
                         "height": 480,
                         "width": 832,
                         "num_frames": VALIDATION_NUM_FRAMES,

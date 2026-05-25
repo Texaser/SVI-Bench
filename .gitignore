@@ -47,6 +47,11 @@ tmp/
 # wildcards above already exclude them. The per-task pretrained/README.md
 # stays tracked so the README documenting what to drop in is preserved.
 
+# Per-task ModelScope/HF download caches (populated at runtime)
+svi_bench/tasks/*/models/
+# Per-task LoRA checkpoint download dir (downloaded from MVP-Group/SVI-Bench)
+svi_bench/tasks/*/checkpoints/
+
 # Secrets
 .env
 .env.local

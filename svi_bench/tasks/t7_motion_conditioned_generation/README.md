@@ -77,6 +77,23 @@ DiffSynth-Studio slice bundled inside this task at [`diffsynth/`](diffsynth/).
 
 ## Run
 
+### Checkpoints
+
+Pre-trained LoRA checkpoints (basketball + soccer, ~84 MB each) are
+published on the HF dataset
+[`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench/tree/main/T7).
+Download into the task directory before running inference:
+
+```bash
+cd svi_bench/tasks/t7_motion_conditioned_generation
+bash download_checkpoint.sh basketball   # → checkpoints/T7/basketball/checkpoint.safetensors
+bash download_checkpoint.sh soccer       # → checkpoints/T7/soccer/checkpoint.safetensors
+```
+
+Each checkpoint is a LoRA adapter (rank 32) for `Wan2.1-Fun-V1.1-1.3B-Control`;
+load it via `--lora_checkpoint <path>` or pass the path as `argv[1]` to
+`inference/{basketball,soccer}.py`.
+
 ### Train
 
 Edit the data paths at the top of `train.sh` first, then launch:

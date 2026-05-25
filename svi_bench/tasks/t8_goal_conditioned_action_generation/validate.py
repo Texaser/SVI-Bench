@@ -291,8 +291,6 @@ def main():
                     "bbox_color_mode": bbox_color_mode,
                     "bbox_first_last_only": True,
                     "use_overlay_method": use_overlay_method,
-                    "orig_video_width": orig_video_width,  # For bbox center-crop alignment
-                    "orig_video_height": orig_video_height,
                     "height": 480,
                     "width": 832,
                     "num_frames": VALIDATION_NUM_FRAMES,

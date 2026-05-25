@@ -82,6 +82,22 @@ modelscope / imageio / ...).
 
 ## Run
 
+### Checkpoints
+
+Pre-trained T8 LoRA checkpoint (basketball, ~84 MB) is published on the HF
+dataset
+[`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench/tree/main/T8).
+Download into the task directory before running inference:
+
+```bash
+cd svi_bench/tasks/t8_goal_conditioned_action_generation
+bash download_checkpoint.sh   # → checkpoints/T8/basketball/checkpoint.safetensors
+```
+
+It's a LoRA adapter (rank 32) for `Wan2.1-Fun-V1.1-1.3B-Control`. Load via
+`--lora_checkpoint <path>` or pass the path as `argv[1]` to
+`inference/basketball.py`.
+
 ### Train
 
 ```bash
