@@ -420,73 +420,27 @@ class LoadBBox:
 
 
 class PolishedCaptionsLookup:
-    """Loads polished captions JSONs and provides lookup by mixsort path.
-
-    Builds a mapping from the relative path (shared between mixsort paths and JSON keys)
-    to the caption entry. For 22-23 season: relative path after "22-23/" in JSON key matches
-    relative path after "basketball_mixsort_all_22_23_season/" in mixsort path (with .mp4/.txt swap).
-    For 23-24 season: relative path after "clips/" matches after "basketball_mixsort_all_23_24_season/".
-    """
+    """Loads captions JSONs keyed by sample ID and looks up by bbox path."""
     def __init__(self, json_paths):
-        self.entries = {}  # relative_path (no ext) -> entry dict
+        self.by_id = {}
         for json_path in json_paths:
             with open(json_path) as f:
-                data = json.load(f)
-            for mp4_key, entry in data.items():
-                # Extract the relative path that's shared with mixsort
-                if "/22-23/" in mp4_key:
-                    rel = mp4_key.split("22-23/", 1)[1]
-                elif "/clips/" in mp4_key:
-                    rel = mp4_key.split("clips/", 1)[1]
-                else:
-                    continue
-                # Store without extension as the canonical key
-                rel_no_ext = os.path.splitext(rel)[0]
-                self.entries[rel_no_ext] = entry
-        print(f"[PolishedCaptionsLookup] Loaded {len(self.entries)} entries from {len(json_paths)} files")
+                self.by_id.update(json.load(f))
+        print(f"[PolishedCaptionsLookup] Loaded {len(self.by_id)} entries from {len(json_paths)} files")
 
-    def get_entry(self, mixsort_path):
-        """Look up a polished caption entry by mixsort txt path.
-
-        Returns (prompt, player_specifications) or (None, None) if not found.
-        """
-        # Extract relative path from mixsort path
-        normalized = os.path.normpath(mixsort_path)
-        parts = normalized.split(os.sep)
-
-        # Find "basketball_mixsort_all_*" directory and take everything after it
-        mixsort_idx = None
-        for i, part in enumerate(parts):
-            if 'mixsort_all' in part:
-                mixsort_idx = i
-                break
-
-        if mixsort_idx is None:
-            return None, None
-
-        relative_parts = parts[mixsort_idx + 1:]
-        rel = os.path.join(*relative_parts) if relative_parts else ""
-        rel_no_ext = os.path.splitext(rel)[0]
-
-        entry = self.entries.get(rel_no_ext)
+    def get_entry(self, bbox_path):
+        """Returns (prompt, player_specifications) or (None, None)."""
+        sample_id = os.path.splitext(os.path.basename(bbox_path))[0]
+        entry = self.by_id.get(sample_id)
         if entry is None:
             return None, None
 
-        # Prompt fallback: refined_instruction > instruction > gpt_caption > caption
-        instruction = (entry.get("refined_instruction")
-                       or entry.get("instruction")
-                       or entry.get("gpt_caption")
-                       or entry.get("caption")
-                       or "a realistic basketball game video")
-
+        instruction = entry.get("refined_instruction") or "a realistic basketball game video"
         player_specs = entry.get("player_specifications")
-
-        # Combine instruction + raw player_specifications JSON into prompt
         if player_specs:
             prompt = "Instructions: " + instruction + " Player_specifications: " + json.dumps(player_specs)
         else:
             prompt = "Instructions: " + instruction
-
         return prompt, player_specs
 
 
@@ -640,30 +594,11 @@ class BBoxFolderDataset(torch.utils.data.Dataset):
         
         # Generate video path by replacing bbox folder with video folder and changing extension
         if getattr(self, 'bbox_folder_is_file', False):
-            # bbox_file is an absolute path read from a list. Extract a relative path
-            # we can join onto video_base_path / background_video_folder.
-            # We accept two layouts:
-            #   1. SVI-Bench public layout: .../bboxes/{bucket}/{ID}.txt
-            #      → relative = {bucket}/{ID}.txt
-            #   2. Legacy mixsort layout: .../basketball_mixsort_all_*/{league}/{game}/{name}.txt
-            #      → relative = {league}/{game}/{name}.txt (everything after the mixsort dir)
-            bbox_path_normalized = os.path.normpath(bbox_file)
-            parts = bbox_path_normalized.split(os.sep)
-
-            marker_idx = None
-            for i, part in enumerate(parts):
-                if part == 'bboxes' or 'mixsort_all' in part:
-                    marker_idx = i
-                    break
-
-            if marker_idx is not None:
-                relative_parts = parts[marker_idx + 1:]
-                relative_path = os.path.join(*relative_parts) if relative_parts else ""
-            else:
-                # Fallback: basename only (loses any bucket dir, but better than crashing)
-                relative_path = os.path.basename(bbox_file)
+            # bbox_file is an absolute path: .../bboxes/{bucket}/{ID}.txt
+            parts = os.path.normpath(bbox_file).split(os.sep)
+            marker_idx = parts.index('bboxes')
+            relative_path = os.path.join(*parts[marker_idx + 1:])
         else:
-            # Original logic: bbox_file is relative to bbox_folder_path
             relative_path = os.path.relpath(bbox_file, self.bbox_folder_path)
         
         # Remove .npz or .txt extension and add video extension

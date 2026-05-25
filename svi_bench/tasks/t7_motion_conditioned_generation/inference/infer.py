@@ -223,32 +223,10 @@ def main():
         
         for idx, bbox_path in enumerate(sampled_bbox_files):
             try:
-                # Derive video path from bbox path. Two layouts supported:
-                #   - SVI-Bench public: .../bboxes/{bucket}/{ID}.txt
-                #     → relative path = {bucket}/{ID}.txt (everything after "bboxes")
-                #   - Legacy mixsort:   .../*_mixsort_all_*/{league}/{game}/{name}.txt
-                #     → relative path = {league}/{game}/{name}.txt
-                bbox_path_normalized = os.path.normpath(bbox_path)
-                parts = bbox_path_normalized.split(os.sep)
-
-                # Find the index of the bbox-root marker ("bboxes" or "*mixsort_all*").
-                mixsort_idx = None
-                for i, part in enumerate(parts):
-                    if part == 'bboxes' or 'mixsort_all' in part:
-                        mixsort_idx = i
-                        break
-                
-                if mixsort_idx is not None:
-                    # Extract relative path after mixsort directory
-                    relative_parts = parts[mixsort_idx + 1:]
-                    relative_path = os.path.join(*relative_parts) if relative_parts else ""
-                else:
-                    # Fallback: if VALIDATION_BBOX_FOLDER is a directory, use relpath
-                    if os.path.isdir(VALIDATION_BBOX_FOLDER):
-                        relative_path = os.path.relpath(bbox_path, VALIDATION_BBOX_FOLDER)
-                    else:
-                        # Last resort: use basename
-                        relative_path = os.path.basename(bbox_path)
+                # bbox_path: .../bboxes/{bucket}/{ID}.txt -> relative = {bucket}/{ID}.txt
+                parts = os.path.normpath(bbox_path).split(os.sep)
+                marker_idx = parts.index('bboxes')
+                relative_path = os.path.join(*parts[marker_idx + 1:])
                 
                 # Convert bbox path to video path
                 base_name = os.path.basename(relative_path)

@@ -420,76 +420,27 @@ class LoadBBox:
 
 
 class PolishedCaptionsLookup:
-    """Loads polished captions JSONs and provides lookup by bbox path.
-
-    Supports two key layouts:
-      * SVI-Bench public layout: caption keys are sample IDs ("0000000"), and
-        bbox paths look like .../bboxes/{bucket}/{ID}.txt. Lookup is by ID.
-      * Legacy mixsort layout: keys are full clip paths containing "/22-23/" or
-        "/clips/"; bbox paths contain "basketball_mixsort_all_*". Lookup is by
-        the shared relative path (without extension).
-    """
+    """Loads captions JSONs keyed by sample ID and looks up by bbox path."""
     def __init__(self, json_paths):
-        self.entries = {}  # canonical_key -> entry dict
-        self.by_id = {}    # ID (e.g. "0000000") -> entry dict
+        self.by_id = {}
         for json_path in json_paths:
             with open(json_path) as f:
-                data = json.load(f)
-            for key, entry in data.items():
-                # ID-keyed (SVI-Bench public): key is just digits like "0000000".
-                if key.isdigit() or (len(key) <= 12 and "/" not in key):
-                    self.by_id[key] = entry
-                    continue
-                # Legacy: key is a path
-                if "/22-23/" in key:
-                    rel = key.split("22-23/", 1)[1]
-                elif "/clips/" in key:
-                    rel = key.split("clips/", 1)[1]
-                else:
-                    continue
-                rel_no_ext = os.path.splitext(rel)[0]
-                self.entries[rel_no_ext] = entry
-        print(f"[PolishedCaptionsLookup] Loaded {len(self.entries)} legacy + {len(self.by_id)} ID-keyed entries from {len(json_paths)} files")
+                self.by_id.update(json.load(f))
+        print(f"[PolishedCaptionsLookup] Loaded {len(self.by_id)} entries from {len(json_paths)} files")
 
     def get_entry(self, bbox_path):
-        """Look up by bbox path; returns (prompt, player_specifications) or (None, None)."""
-        # Try ID-keyed (new layout) first: basename without extension
+        """Returns (prompt, player_specifications) or (None, None)."""
         sample_id = os.path.splitext(os.path.basename(bbox_path))[0]
         entry = self.by_id.get(sample_id)
-
         if entry is None:
-            # Fall back to legacy layout: find part after "basketball_mixsort_all_*"
-            normalized = os.path.normpath(bbox_path)
-            parts = normalized.split(os.sep)
-            mixsort_idx = None
-            for i, part in enumerate(parts):
-                if 'mixsort_all' in part:
-                    mixsort_idx = i
-                    break
-            if mixsort_idx is None:
-                return None, None
-            relative_parts = parts[mixsort_idx + 1:]
-            rel = os.path.join(*relative_parts) if relative_parts else ""
-            rel_no_ext = os.path.splitext(rel)[0]
-            entry = self.entries.get(rel_no_ext)
-            if entry is None:
-                return None, None
+            return None, None
 
-        # Prompt fallback: refined_instruction > instruction > gpt_caption > caption
-        instruction = (entry.get("refined_instruction")
-                       or entry.get("instruction")
-                       or entry.get("gpt_caption")
-                       or entry.get("caption")
-                       or "a realistic basketball game video")
-
+        instruction = entry.get("refined_instruction") or "a realistic basketball game video"
         player_specs = entry.get("player_specifications")
-
-        # Combine instruction + raw player_specifications JSON into prompt
         if player_specs:
             prompt = "Instructions: " + instruction + " Player_specifications: " + json.dumps(player_specs)
         else:
             prompt = "Instructions: " + instruction
-
         return prompt, player_specs
 
 
@@ -643,24 +594,11 @@ class BBoxFolderDataset(torch.utils.data.Dataset):
         
         # Generate video path by replacing bbox folder with video folder and changing extension
         if getattr(self, 'bbox_folder_is_file', False):
-            # bbox_file is an absolute path read from a list. Extract relative path.
-            # Accept two layouts (SVI-Bench public ID-based vs legacy mixsort).
-            bbox_path_normalized = os.path.normpath(bbox_file)
-            parts = bbox_path_normalized.split(os.sep)
-
-            marker_idx = None
-            for i, part in enumerate(parts):
-                if part == 'bboxes' or 'mixsort_all' in part:
-                    marker_idx = i
-                    break
-
-            if marker_idx is not None:
-                relative_parts = parts[marker_idx + 1:]
-                relative_path = os.path.join(*relative_parts) if relative_parts else ""
-            else:
-                relative_path = os.path.basename(bbox_file)
+            # bbox_file is an absolute path: .../bboxes/{bucket}/{ID}.txt
+            parts = os.path.normpath(bbox_file).split(os.sep)
+            marker_idx = parts.index('bboxes')
+            relative_path = os.path.join(*parts[marker_idx + 1:])
         else:
-            # Original logic: bbox_file is relative to bbox_folder_path
             relative_path = os.path.relpath(bbox_file, self.bbox_folder_path)
         
         # Remove .npz or .txt extension and add video extension

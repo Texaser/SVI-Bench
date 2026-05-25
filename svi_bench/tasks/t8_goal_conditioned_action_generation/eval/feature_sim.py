@@ -35,12 +35,6 @@ import torch
 import torch.nn.functional as F
 from loguru import logger
 
-# Legacy DATA_ROOT, used only for the pre-anonymization input layout where
-# bbox files lived in a different parallel tree from the video files. The
-# anonymized layout shipped on HF (clips/<bucket>/<id>.mp4 next to
-# bboxes/<bucket>/<id>.txt) is the common case and is detected first inside
-# `bbox_path_to_video_path`.
-DATA_ROOT = os.environ.get("SVI_LEGACY_DATA_ROOT", "")
 LAST_FRAME = 80
 
 
@@ -73,39 +67,8 @@ def make_parser():
 # ---------------------------------------------------------------------------
 
 def bbox_path_to_video_path(bbox_path, sport):
-    # Anonymized SVI-Bench layout (the common case after running
-    # scripts/download_t7_t8.sh): bbox at .../bboxes/<bucket>/<id>.txt
-    # has its mp4 sibling at .../clips/<bucket>/<id>.mp4.
-    if "/bboxes/" in bbox_path:
-        return re.sub(r"\.txt$", ".mp4", bbox_path.replace("/bboxes/", "/clips/", 1))
-
-    # Pre-anonymization legacy layout.
-    if not DATA_ROOT:
-        return None
-    rel = bbox_path.replace(DATA_ROOT, "")
-    if sport == "basketball":
-        sub_rel = None
-        for old in ("basketball_mixsort_all_22_23_season_filter_f_8/",
-                    "basketball_mixsort_all_23_24_season_filter_f_8/",
-                    "basketball_mixsort_all_22_23_season/",
-                    "basketball_mixsort_all_23_24_season/"):
-            if rel.startswith(old):
-                sub_rel = rel[len(old):]
-                break
-        if sub_rel is None:
-            return None
-        sub_rel_mp4 = re.sub(r"\.txt$", ".mp4", sub_rel)
-        for video_root in ("basketball_fps_15_task2",
-                           "basketball_fps_15",
-                           "basketball_fps_15_22_23_season",
-                           "basketball_fps_15_23_24_season"):
-            candidate = osp.join(DATA_ROOT, video_root, sub_rel_mp4)
-            if osp.exists(candidate):
-                return candidate
-        return osp.join(DATA_ROOT, "basketball_fps_15_task2", sub_rel_mp4)
-    elif sport == "soccer":
-        rel = rel.replace("soccer_mixsort_all_filtered_10/", "soccer_video_fps_15/", 1)
-    return osp.join(DATA_ROOT, re.sub(r"\.txt$", ".mp4", rel))
+    # bbox: .../bboxes/{bucket}/{ID}.txt -> mp4: .../clips/{bucket}/{ID}.mp4
+    return re.sub(r"\.txt$", ".mp4", bbox_path.replace("/bboxes/", "/clips/", 1))
 
 
 def build_gt_mapping(gt_list_path):
@@ -119,30 +82,14 @@ def build_gt_mapping(gt_list_path):
 
 
 def build_captions_lookup(json_path):
+    """Returns dict: sample_id -> entry (captions.json is keyed by anon ID)."""
     with open(json_path) as f:
-        data = json.load(f)
-    entries = {}
-    for mp4_key, entry in data.items():
-        if "/22-23/" in mp4_key:
-            rel = mp4_key.split("22-23/", 1)[1]
-        elif "/clips/" in mp4_key:
-            rel = mp4_key.split("clips/", 1)[1]
-        else:
-            continue
-        rel_no_ext = osp.splitext(rel)[0]
-        entries[rel_no_ext] = entry
-    return entries
+        return json.load(f)
 
 
-def mixsort_path_to_rel(mixsort_path):
-    normalized = osp.normpath(mixsort_path)
-    parts = normalized.split(os.sep)
-    for i, part in enumerate(parts):
-        if 'mixsort_all' in part:
-            relative_parts = parts[i + 1:]
-            rel = osp.join(*relative_parts) if relative_parts else ""
-            return osp.splitext(rel)[0]
-    return None
+def bbox_path_to_id(bbox_path):
+    """Return the anon sample ID from a bbox path (basename without extension)."""
+    return osp.splitext(osp.basename(bbox_path))[0]
 
 
 def _sanitize_name(name):
@@ -343,11 +290,7 @@ def main():
         if args.skip_existing and osp.exists(out_json):
             continue
 
-        rel_key = mixsort_path_to_rel(gt_bbox_path)
-        if rel_key is None:
-            failed.append(basename); continue
-
-        entry = captions.get(rel_key)
+        entry = captions.get(bbox_path_to_id(gt_bbox_path))
         if entry is None:
             failed.append(basename); continue
 

@@ -195,21 +195,10 @@ def main():
             # Build sparse bbox from player_specifications (first/last frame only)
             bbox_data = bbox_from_specs(player_specs, num_frames=VALIDATION_NUM_FRAMES)
 
-            # Derive video path from bbox path
-            bbox_path_normalized = os.path.normpath(bbox_path)
-            parts = bbox_path_normalized.split(os.sep)
-            mixsort_idx = None
-            for i, part in enumerate(parts):
-                if 'mixsort' in part or 'basketball_mixsort' in part:
-                    mixsort_idx = i
-                    break
-
-            if mixsort_idx is not None:
-                relative_parts = parts[mixsort_idx + 1:]
-                relative_path = os.path.join(*relative_parts) if relative_parts else ""
-            else:
-                relative_path = os.path.basename(bbox_path)
-
+            # bbox_path: .../bboxes/{bucket}/{ID}.txt -> relative = {bucket}/{ID}.txt
+            parts = os.path.normpath(bbox_path).split(os.sep)
+            marker_idx = parts.index('bboxes')
+            relative_path = os.path.join(*parts[marker_idx + 1:])
             video_relative = os.path.splitext(relative_path)[0] + '.mp4'
             video_path = os.path.join(VALIDATION_VIDEO_BASE, video_relative)
             background_video_path = os.path.join(VALIDATION_BACKGROUND_VIDEO_BASE, video_relative)

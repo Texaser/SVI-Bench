@@ -46,30 +46,14 @@ def make_parser():
 
 
 def build_captions_lookup(json_path):
+    """Returns dict: sample_id -> entry (captions.json is keyed by anon ID)."""
     with open(json_path) as f:
-        data = json.load(f)
-    entries = {}
-    for mp4_key, entry in data.items():
-        if "/22-23/" in mp4_key:
-            rel = mp4_key.split("22-23/", 1)[1]
-        elif "/clips/" in mp4_key:
-            rel = mp4_key.split("clips/", 1)[1]
-        else:
-            continue
-        rel_no_ext = osp.splitext(rel)[0]
-        entries[rel_no_ext] = entry
-    return entries
+        return json.load(f)
 
 
-def mixsort_path_to_rel(mixsort_path):
-    normalized = osp.normpath(mixsort_path)
-    parts = normalized.split(os.sep)
-    for i, part in enumerate(parts):
-        if 'mixsort_all' in part:
-            relative_parts = parts[i + 1:]
-            rel = osp.join(*relative_parts) if relative_parts else ""
-            return osp.splitext(rel)[0]
-    return None
+def bbox_path_to_id(bbox_path):
+    """Return the anon sample ID from a bbox path (basename without extension)."""
+    return osp.splitext(osp.basename(bbox_path))[0]
 
 
 def build_gt_mapping(gt_list_path):
@@ -218,13 +202,7 @@ def main():
     failed = []
 
     for idx, (basename, gt_bbox_path) in enumerate(matched):
-        # Get GT end_bbox from polished captions
-        rel_key = mixsort_path_to_rel(gt_bbox_path)
-        if rel_key is None:
-            failed.append(basename)
-            continue
-
-        entry = entries.get(rel_key)
+        entry = entries.get(bbox_path_to_id(gt_bbox_path))
         if entry is None:
             failed.append(basename)
             continue

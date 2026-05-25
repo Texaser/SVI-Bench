@@ -52,14 +52,6 @@ import torch
 import torch.nn.functional as F
 from loguru import logger
 
-# Legacy DATA_ROOT, used only for the pre-anonymization input layout where
-# bbox files lived in a different parallel tree from the video files. The
-# anonymized layout shipped on HF (clips/<bucket>/<id>.mp4 next to
-# bboxes/<bucket>/<id>.txt) is the common case and is detected first inside
-# `bbox_path_to_video_path`.
-DATA_ROOT = os.environ.get("SVI_LEGACY_DATA_ROOT", "")
-
-
 # ---------------------------------------------------------------------------
 # Argument parsing
 # ---------------------------------------------------------------------------
@@ -102,31 +94,8 @@ def make_parser():
 # ---------------------------------------------------------------------------
 
 def bbox_path_to_video_path(bbox_path, sport):
-    # Anonymized SVI-Bench layout (the common case after running
-    # scripts/download_t7_t8.sh): bbox at .../bboxes/<bucket>/<id>.txt
-    # has its mp4 sibling at .../clips/<bucket>/<id>.mp4.
-    if "/bboxes/" in bbox_path:
-        return re.sub(r"\.txt$", ".mp4", bbox_path.replace("/bboxes/", "/clips/", 1))
-
-    # Pre-anonymization legacy layout: bbox files lived under
-    # $DATA_ROOT/<sport>_mixsort_all*/... and videos under
-    # $DATA_ROOT/<sport>_fps_15/...
-    if not DATA_ROOT:
-        return None
-    rel = bbox_path.replace(DATA_ROOT, "")
-    if sport == "soccer":
-        rel = rel.replace("soccer_mixsort_all_filtered_10/", "soccer_video_fps_15/", 1)
-    elif sport == "basketball":
-        for old in ("basketball_mixsort_all_22_23_season_filter_f_8/",
-                    "basketball_mixsort_all_23_24_season_filter_f_8/",
-                    "basketball_mixsort_all_22_23_season/",
-                    "basketball_mixsort_all_23_24_season/"):
-            if rel.startswith(old):
-                rel = rel.replace(old, "basketball_fps_15/", 1)
-                break
-        else:
-            return None
-    return osp.join(DATA_ROOT, re.sub(r"\.txt$", ".mp4", rel))
+    # bbox: .../bboxes/{bucket}/{ID}.txt -> mp4: .../clips/{bucket}/{ID}.mp4
+    return re.sub(r"\.txt$", ".mp4", bbox_path.replace("/bboxes/", "/clips/", 1))
 
 
 def build_gt_mapping(gt_list_path):

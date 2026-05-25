@@ -214,30 +214,10 @@ def main():
         
         for idx, bbox_path in enumerate(sampled_bbox_files):
             try:
-                # Derive video path from bbox path
-                # If bbox_path is a full path (from txt file), extract relative path
-                # by finding the part after "basketball_mixsort_all_*" directory
-                bbox_path_normalized = os.path.normpath(bbox_path)
-                parts = bbox_path_normalized.split(os.sep)
-                
-                # Find the index of "basketball_mixsort_all_*" directory
-                mixsort_idx = None
-                for i, part in enumerate(parts):
-                    if 'basketball_mixsort_all' in part:
-                        mixsort_idx = i
-                        break
-                
-                if mixsort_idx is not None:
-                    # Extract relative path after mixsort directory
-                    relative_parts = parts[mixsort_idx + 1:]
-                    relative_path = os.path.join(*relative_parts) if relative_parts else ""
-                else:
-                    # Fallback: if VALIDATION_BBOX_FOLDER is a directory, use relpath
-                    if os.path.isdir(VALIDATION_BBOX_FOLDER):
-                        relative_path = os.path.relpath(bbox_path, VALIDATION_BBOX_FOLDER)
-                    else:
-                        # Last resort: use basename
-                        relative_path = os.path.basename(bbox_path)
+                # bbox_path: .../bboxes/{bucket}/{ID}.txt -> relative = {bucket}/{ID}.txt
+                parts = os.path.normpath(bbox_path).split(os.sep)
+                marker_idx = parts.index('bboxes')
+                relative_path = os.path.join(*parts[marker_idx + 1:])
                 
                 # Convert bbox path to video path
                 base_name = os.path.basename(relative_path)
