@@ -124,4 +124,4 @@ $STEP_DIR/feature_sim/summary.json
 | `inference/infer.sh` | multi-GPU inference dispatcher |
 | `eval/run_{basketball,soccer}.sh` | tracker + Video mIoU |
 | `eval/run_{basketball,soccer}_featsim.sh` | feature similarity |
-| `infer.py` | `svi-bench evaluate --task t7` CLI entry |
+| `run.py` | `svi-bench evaluate --task t7` CLI entry (dispatches to `inference/infer.sh`) |

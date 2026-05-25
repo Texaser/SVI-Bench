@@ -29,12 +29,11 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
     results: dict[str, Any] = {}
     for full in targets:
         # Lazy import — only the requested task's deps are touched.
-        # Generation tasks (T7/T8) expose `infer.py` (the CLI hook is an
-        # inference dispatcher, not a metric runner). Eval tasks expose
-        # `evaluate.py`.
+        # Generation tasks (T7/T8) expose `run.py` (an inference dispatcher).
+        # Eval tasks expose `evaluate.py`.
         mod = None
         last_err = None
-        for entry in ("infer", "evaluate"):
+        for entry in ("run", "evaluate"):
             try:
                 mod = importlib.import_module(f"svi_bench.tasks.{full}.{entry}")
                 break

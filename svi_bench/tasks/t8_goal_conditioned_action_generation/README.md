@@ -156,4 +156,4 @@ $VIDEO_DIR/goal_accuracy_results/summary.json     # per-type + micro + macro
 | `eval/run_basketball.sh` | tracker + last-frame mIoU |
 | `eval/run_basketball_featsim.sh` | feature similarity |
 | `eval/run_basketball_goalacc.sh` | goal-accuracy QA |
-| `infer.py` | `svi-bench evaluate --task t8` CLI entry |
+| `run.py` | `svi-bench evaluate --task t8` CLI entry (dispatches to `inference/infer.sh`) |
