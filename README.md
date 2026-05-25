@@ -43,9 +43,26 @@ VALIDATION_DIR=$STEP_DIR bash svi_bench/tasks/t7_motion_conditioned_generation/e
 bash svi_bench/tasks/t7_motion_conditioned_generation/eval/run_basketball_featsim.sh $STEP_DIR
 ```
 
-The same shape works for T8 (`svi-bench[t8]`, `inference/infer.sh`,
-`eval/run_basketball{,_featsim,_goalacc}.sh`). For other tasks, see the
-per-task README.
+## Quickstart (T8 generation demo)
+
+```bash
+git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
+pip install "svi-bench[t8]"
+bash scripts/download_t7_t8.sh                      # ~65 GB; T7+T8 data, tracker weights, LLaVA-Qwen checkpoint
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/download_checkpoint.sh
+
+# Inference (test_1000 split, 8 GPUs)
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/inference/infer.sh \
+    ./checkpoints/T8/basketball
+
+# Eval (last-frame mIoU + feature similarity + goal accuracy)
+VIDEO_DIR=./checkpoints/T8/basketball/validation/step-<N>
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/eval/run_basketball.sh         $VIDEO_DIR
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/eval/run_basketball_featsim.sh $VIDEO_DIR
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/eval/run_basketball_goalacc.sh $VIDEO_DIR
+```
+
+For other tasks, see the per-task README.
 
 ## Data
 
