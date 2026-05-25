@@ -8,7 +8,7 @@ Runs MixSort tracking on each video and computes mIoU. Invoked by
 Usage:
     python eval/eval_generated_videos.py \
         --video_dir /path/to/your/generated/videos \
-        --gt_list $SVI_BENCH_DATA/T7/basketball/splits/test_subset_100.bbox_paths.txt \
+        --gt_list $SVI_BENCH_DATA/T7/basketball/splits/test_100.bbox_paths.txt \
         --exp_file eval/exps/example/mot/yolox_x_sportsmot.py \
         --ckpt eval/pretrained/yolox_x_sports_train.pth.tar \
         --output_dir <video_dir>/eval_results

@@ -213,7 +213,7 @@ invoke it automatically the first time.
 - Default training hyperparameters: 5 epochs, lr 1e-4, save every 2000 steps
 - `train.sh` resumes from a step-8000 T7 checkpoint by default — adjust
   `--lora_checkpoint` if your run path differs.
-- Output dir: `./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_task2`
+- Output dir: `./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_t8`
 ## Vendored DiffSynth-Studio slice
 
 `diffsynth/` is a slimmed copy of upstream

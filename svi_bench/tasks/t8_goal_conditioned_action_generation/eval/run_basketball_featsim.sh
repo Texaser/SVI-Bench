@@ -24,7 +24,7 @@ VIDEO_DIR="${1:-${VIDEO_DIR:-}}"
 GT_LIST="${2:-$SPORT_DIR/splits/test_1000.bbox_paths.txt}"
 CAPTIONS="${3:-$SPORT_DIR/captions.json}"
 EVAL_RESULTS_DIR="${4:-${VIDEO_DIR}/eval_results}"
-OUTPUT_DIR="${OUTPUT_DIR:-${VIDEO_DIR}/feature_sim_task2}"
+OUTPUT_DIR="${OUTPUT_DIR:-${VIDEO_DIR}/feature_sim}"
 NUM_GPUS="${NUM_GPUS:-8}"
 
 if [ -z "$VIDEO_DIR" ]; then

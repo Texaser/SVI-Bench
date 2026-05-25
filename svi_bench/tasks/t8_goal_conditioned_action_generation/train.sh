@@ -47,7 +47,7 @@ accelerate launch "$HERE/train.py" \
   --learning_rate 1e-4 \
   --num_epochs 5 \
   --remove_prefix_in_ckpt "pipe.dit." \
-  --output_path "./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_task2" \
+  --output_path "./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_t8" \
   --lora_base_model "dit" \
   --lora_target_modules "q,k,v,o,ffn.0,ffn.2" \
   --lora_rank 32 \

@@ -8,7 +8,7 @@ GT comes from captions.json end_bbox (normalized [0,1]).
 Pred comes from MixSort tracking results on generated videos.
 
 Usage:
-    python eval/video_miou_task2.py \
+    python eval/video_miou.py \
         --video_dir /path/to/generated/videos \
         --gt_list $SVI_BENCH_DATA/T8/basketball/splits/test_100.bbox_paths.txt \
         --captions_json $SVI_BENCH_DATA/T8/basketball/captions.json \
@@ -191,7 +191,7 @@ def compute_last_frame_miou(pred_boxes_last, gt_boxes_last, iou_threshold):
 
 def main():
     args = make_parser().parse_args()
-    output_dir = args.output_dir or osp.join(args.video_dir, "video_miou_task2_results")
+    output_dir = args.output_dir or osp.join(args.video_dir, "video_miou_results")
     os.makedirs(output_dir, exist_ok=True)
 
     print(f"Loading polished captions from: {args.captions_json}")

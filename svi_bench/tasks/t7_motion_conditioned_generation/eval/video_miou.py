@@ -17,7 +17,7 @@ Usage (invoked by eval/run_basketball.sh / run_soccer.sh after the tracker
 step; you typically don't run this by hand):
     python eval/video_miou.py \
         --video_dir /path/to/your/generated/videos \
-        --gt_list $SVI_BENCH_DATA/T7/basketball/splits/test_subset_100.bbox_paths.txt \
+        --gt_list $SVI_BENCH_DATA/T7/basketball/splits/test_100.bbox_paths.txt \
         --eval_results_dir <video_dir>/eval_results
 """
 

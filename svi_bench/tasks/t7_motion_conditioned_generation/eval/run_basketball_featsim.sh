@@ -22,7 +22,7 @@ export PYTHONPATH="$HERE:${PYTHONPATH:-}"
 cd "$HERE"
 
 STEP_DIR="${1:-}"
-GT_LIST="${2:-$SPORT_DIR/splits/test_subset_100.bbox_paths.txt}"
+GT_LIST="${2:-$SPORT_DIR/splits/test_100.bbox_paths.txt}"
 RESULTS_DIR="${RESULTS_DIR:-${STEP_DIR}/miou_results_all}"
 OUTPUT_DIR="${OUTPUT_DIR:-${STEP_DIR}/feature_sim}"
 MODE="${MODE:-iou_gated}"

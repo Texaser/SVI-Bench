@@ -8,7 +8,7 @@
 #   1. Shard the GT bbox listing across NUM_GPUS GPUs.
 #   2. Each GPU runs eval_generated_videos.py — YOLOX sports-mot detector
 #      + MixSort tracker, on every clip in $VIDEO_DIR.
-#   3. After all GPUs finish, run video_miou_task2.py over the combined
+#   3. After all GPUs finish, run video_miou.py over the combined
 #      tracker output — computes last-frame mIoU against the end_bbox in
 #      captions.json.
 #
@@ -93,12 +93,12 @@ for pid in "${PIDS[@]}"; do wait "$pid" || echo "Warning: $pid exited non-zero";
 rm -rf "$SPLIT_DIR"
 
 echo ""
-echo ">>> Tracker done. Running video_miou_task2.py for last-frame mIoU..."
-python "$HERE/video_miou_task2.py" \
+echo ">>> Tracker done. Running video_miou.py for last-frame mIoU..."
+python "$HERE/video_miou.py" \
     --video_dir "$VIDEO_DIR" \
     --gt_list "$GT_LIST" \
     --captions_json "$CAPTIONS" \
     --eval_results_dir "$OUTPUT_DIR"
 
 echo ""
-echo ">>> Last-frame mIoU summary: $VIDEO_DIR/video_miou_task2_results/summary.json"
+echo ">>> Last-frame mIoU summary: $VIDEO_DIR/video_miou_results/summary.json"

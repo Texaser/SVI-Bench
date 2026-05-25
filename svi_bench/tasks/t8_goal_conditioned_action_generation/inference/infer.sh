@@ -22,7 +22,7 @@ SPORT_DIR="$DATA_ROOT/T8/basketball"
 # `from diffsynth import ...` in infer.py resolves to TASK_DIR/diffsynth.
 export PYTHONPATH="$TASK_DIR:${PYTHONPATH:-}"
 
-DEFAULT_OUTPUT_PATH="./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_task2"
+DEFAULT_OUTPUT_PATH="./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_t8"
 OUTPUT_PATH="${1:-$DEFAULT_OUTPUT_PATH}"
 
 VALIDATION_SCRIPT="$HERE/infer.py"

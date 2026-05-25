@@ -1,9 +1,8 @@
 """
-T8 SigLIP2 last-frame feature similarity — slim of upstream MixSort
-`feature_sim_task2.py`.
+T8 SigLIP2 last-frame feature similarity.
 
 Only evaluates the LAST frame (frame 80) for target players specified by
-`polished_captions player_specifications end_bbox`.
+the `player_specifications.end_bbox` field in `captions.json`.
 
 For each target player at frame 80:
   - Find the best-matching predicted bbox (from MixSort tracking) by IoU.

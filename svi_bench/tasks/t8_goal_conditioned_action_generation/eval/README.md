@@ -41,7 +41,7 @@ Re-uses the tracker output from step 1 (`${VIDEO_DIR}/eval_results`).
 bash eval/run_basketball_featsim.sh /path/to/generated_videos_dir
 ```
 
-Results land at `${VIDEO_DIR}/feature_sim_task2/{summary.json, per_clip_metrics.csv}`.
+Results land at `${VIDEO_DIR}/feature_sim/{summary.json, per_clip_metrics.csv}`.
 
 ### 3. LLaVA goal accuracy
 
@@ -92,7 +92,7 @@ var at it and the wrapper will auto-flatten symlinks:
 VALIDATION_DIR=.../validation/step-16000 bash eval/run_basketball.sh
 ```
 
-Results land at `${VIDEO_DIR}/video_miou_task2_results/{summary.json,per_video_metrics.csv}`.
+Results land at `${VIDEO_DIR}/video_miou_results/{summary.json,per_video_metrics.csv}`.
 
 ## Files
 
@@ -102,7 +102,9 @@ Results land at `${VIDEO_DIR}/video_miou_task2_results/{summary.json,per_video_m
 - `eval_generated_videos.py`, `miou_metric.py`, `yolox/`, `MixViT/`,
   `exps/` — identical role to T7's copies (per-task isolation duplicates
   the tracker stack).
-- `video_miou_task2.py` — last-frame mIoU scorer.
+- `video_miou.py` — last-frame mIoU scorer (T7's same-named file
+  computes holistic across-frame mIoU instead; the implementation
+  differs by metric definition).
 - `feature_sim.py` — SigLIP2-only last-frame IoU-gated feature similarity
   scorer (DINOv3 removed).
 - `run_basketball_goalacc.sh` — LLaVA-Qwen QA orchestration wrapper. Calls
@@ -133,7 +135,8 @@ for the checkpoint / data list. Also requires
 ## Slim provenance
 
 Same as T7's slice. The only differences in T8's `eval/`:
-- ships `video_miou_task2.py` instead of `video_miou.py`
+- `video_miou.py` computes last-frame (frame 80) mIoU instead of holistic
+  across-frame mIoU (T7's same-named file)
 - only `exps/example/mot/yolox_x_sportsmot.py` (no soccernet variant)
 - only `run_basketball.sh` (no soccer)
 

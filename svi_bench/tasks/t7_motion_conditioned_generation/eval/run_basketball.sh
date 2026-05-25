@@ -32,7 +32,7 @@ export PYTHONPATH="$HERE:$HERE/MixViT:${PYTHONPATH:-}"
 cd "$HERE"
 
 VIDEO_DIR="${1:-${VIDEO_DIR:-}}"
-GT_LIST="${2:-$SPORT_DIR/splits/test_subset_100.bbox_paths.txt}"
+GT_LIST="${2:-$SPORT_DIR/splits/test_100.bbox_paths.txt}"
 CKPT="${3:-$HERE/pretrained/yolox_x_sports_train.pth.tar}"
 
 if [ -z "$VIDEO_DIR" ]; then

@@ -38,8 +38,8 @@ OUTPUT_PATH="${1:-$DEFAULT_OUTPUT_PATH}"
 VALIDATION_SCRIPT="$HERE/infer.py"
 
 # Build full bbox paths from the ID-only test split, then use that for inference.
-TEST_IDS="$SPORT_DIR/splits/test_subset_100.txt"
-TEST_SUBSET="$SPORT_DIR/splits/test_subset_100.bbox_paths.txt"
+TEST_IDS="$SPORT_DIR/splits/test_100.txt"
+TEST_SUBSET="$SPORT_DIR/splits/test_100.bbox_paths.txt"
 if [ ! -f "$TEST_SUBSET" ]; then
     python3 "$REPO_ROOT/scripts/build_split_bbox_list.py" \
         --ids "$TEST_IDS" \
