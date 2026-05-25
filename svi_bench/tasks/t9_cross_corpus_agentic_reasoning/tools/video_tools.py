@@ -304,33 +304,49 @@ def _load_video_nodes_visual(data_metadata: Dict, clip_embeddings_base_path: str
         
         # Clip embeddings are in dataset-specific subdirectory
         clip_embeddings_path = os.path.join(clip_embeddings_base_path, sport)
-        
+
         # Load clip paths mapping (fast enough to do main thread or per game)
         clip_paths_map = {}
         if clip_paths_json and os.path.exists(clip_paths_json):
             with open(clip_paths_json, 'r') as f:
                 clip_paths_map = json.load(f)
-        
+
+        # Load embed-bucket mapping for sharded layout
+        # ({clip_embeddings_path}/_bucket_mapping.json maps "<clip_id>.npy" → "00".."99"
+        # so we can resolve the bucket directory at runtime). Returns None for a
+        # flat (unsharded) layout — caller falls back to the flat lookup.
+        bucket_map = None
+        bm_path = os.path.join(clip_embeddings_path, "_bucket_mapping.json")
+        if os.path.exists(bm_path):
+            with open(bm_path, 'r') as f:
+                bucket_map = json.load(f)
+
         if not os.path.exists(clips_metadata_path):
             continue
-            
-        tasks.append((game_id, sport, clips_metadata_path, clip_paths_map, clip_embeddings_path))
+
+        tasks.append((game_id, sport, clips_metadata_path, clip_paths_map, clip_embeddings_path, bucket_map))
 
     # Worker function
     def process_game(task):
-        game_id, sport, clips_metadata_path, clip_paths_map, clip_embeddings_path = task
+        game_id, sport, clips_metadata_path, clip_paths_map, clip_embeddings_path, bucket_map = task
         game_nodes = []
         try:
             with open(clips_metadata_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            
+
             windows = data.get("windows", {})
-            
+
             for window_key, window_data in windows.items():
                 clip_id = window_data.get("window_id")
-                
+
                 emb_filename = f"{clip_id}.npy"
-                emb_path = os.path.join(clip_embeddings_path, emb_filename)
+                if bucket_map is not None:
+                    bucket = bucket_map.get(emb_filename)
+                    if bucket is None:
+                        continue
+                    emb_path = os.path.join(clip_embeddings_path, bucket, emb_filename)
+                else:
+                    emb_path = os.path.join(clip_embeddings_path, emb_filename)
 
                 if not os.path.exists(emb_path):
                     continue

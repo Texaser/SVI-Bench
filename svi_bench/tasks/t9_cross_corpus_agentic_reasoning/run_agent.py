@@ -650,7 +650,6 @@ def main():
         'data_base_path',
         'clip_embeddings_base_path',
         'video_persist_dir',
-        'video_oracle_persist_dir',
         'document_persist_dir',
     ]
 
@@ -664,7 +663,6 @@ def main():
     DATA_BASE_PATH = config['paths']['data_base_path']
     CLIP_EMBEDDINGS_BASE_PATH = config['paths']['clip_embeddings_base_path']
     VIDEO_PERSIST_DIR = config['paths']['video_persist_dir']
-    VIDEO_ORACLE_PERSIST_DIR = config['paths']['video_oracle_persist_dir']
     DOCUMENT_PERSIST_DIR = config['paths']['document_persist_dir']
 
     PROMPT_PATH = os.path.join(BASE_DIR, config['arch']['agent'].get('prompt'))

@@ -382,7 +382,7 @@ def initialize_pipeline(arch: str, sport: str = None) -> tuple:
     # Resolve paths to absolute
     path_keys = [
         'data_base_path', 'clip_embeddings_base_path', 'video_persist_dir',
-        'video_oracle_persist_dir', 'document_persist_dir',
+        'document_persist_dir',
     ]
     _t9_root_runtime = _require_t9_data_root()
     for key in path_keys:

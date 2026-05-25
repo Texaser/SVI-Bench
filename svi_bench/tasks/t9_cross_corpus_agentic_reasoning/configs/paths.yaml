@@ -6,5 +6,4 @@ data_base_path: "data"
 clip_embeddings_base_path: "embeds/videos"
 
 video_persist_dir: "storage/videos"
-video_oracle_persist_dir: "storage/videos_oracle"
 document_persist_dir: "storage/documents"
