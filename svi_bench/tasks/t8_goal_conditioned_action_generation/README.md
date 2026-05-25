@@ -167,9 +167,6 @@ Each value has:
   semantic label that drives the goal-accuracy QA (Pick'n'Roll, 2+, 3-,
   Foul, etc.). `jersey_number` is the rendered jersey number for that
   player and is what `refined_instruction` refers to.
-- 68715 clips have 1 spec, 5131 have 2, 157 have 3 — the multi-spec ones
-  are interaction clips (e.g. "Player #3 makes a layup on a Pick'n'Roll
-  while Player #15 sets the screen" carries both players' targets).
 
 ### Train
 
