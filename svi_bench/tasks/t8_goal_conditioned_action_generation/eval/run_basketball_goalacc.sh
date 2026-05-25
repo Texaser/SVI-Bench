@@ -118,26 +118,64 @@ if [ "$SHOPT_COUNT" -eq 0 ]; then
 fi
 
 # ============================================================
-# Summary table
+# Summary + aggregation
+#
+# Writes $OUTPUT_DIR/summary.json with per-QA-type accuracies plus two
+# aggregate metrics:
+#   - micro_accuracy = sum(correct) / sum(total)         (entry-weighted)
+#   - macro_accuracy = mean of the per-type accuracies   (type-weighted)
+# Headline goal-accuracy reported by SVI-Bench is the micro average
+# (each QA entry contributes equally regardless of question type).
 # ============================================================
 echo ""
 echo "============================================================"
 echo "GOAL ACCURACY SUMMARY"
 echo "============================================================"
 
-for results_json in "${OUTPUT_DIR}"/*/qa_eval_f${EVAL_FRAMES}_results.json; do
-    [ -f "$results_json" ] || continue
-    qa_type=$(basename "$(dirname "$results_json")")
-    overall=$(python3 -c "
-import json, sys
-d = json.load(open('$results_json'))
-o = d['overall']
-print(f\"{o['accuracy']:.4f} ({o['correct']}/{o['total']})\")
-" 2>/dev/null) || overall="(parse error)"
-    printf "  %-35s %s\n" "$qa_type" "$overall"
-done
+python3 - "$OUTPUT_DIR" "$EVAL_FRAMES" <<'PY'
+import json, os, sys, glob
+
+output_dir, eval_frames = sys.argv[1], sys.argv[2]
+per_type = {}
+total_correct = total_count = 0
+for results_json in sorted(glob.glob(os.path.join(output_dir, "*", f"qa_eval_f{eval_frames}_results.json"))):
+    qa_type = os.path.basename(os.path.dirname(results_json))
+    try:
+        o = json.load(open(results_json))["overall"]
+    except Exception as e:
+        print(f"  {qa_type:<35} (parse error: {e})")
+        continue
+    acc, correct, total = o["accuracy"], o["correct"], o["total"]
+    per_type[qa_type] = {"accuracy": acc, "correct": correct, "total": total}
+    total_correct += correct
+    total_count   += total
+    print(f"  {qa_type:<35} {acc:.4f} ({correct}/{total})")
+
+if not per_type:
+    print("  (no Q*.json results found)")
+    sys.exit(1)
+
+micro = total_correct / total_count if total_count else 0.0
+macro = sum(v["accuracy"] for v in per_type.values()) / len(per_type)
+print()
+print(f"  {'OVERALL (micro, entry-weighted)':<35} {micro:.4f} ({total_correct}/{total_count})")
+print(f"  {'OVERALL (macro, type-weighted)':<35} {macro:.4f} ({len(per_type)} question types)")
+
+summary = {
+    "per_type":       per_type,
+    "micro_accuracy": micro,
+    "macro_accuracy": macro,
+    "total_correct":  total_correct,
+    "total_count":    total_count,
+    "num_question_types": len(per_type),
+}
+with open(os.path.join(output_dir, "summary.json"), "w") as f:
+    json.dump(summary, f, indent=2)
+print(f"\n  Wrote {os.path.join(output_dir, 'summary.json')}")
+PY
 
 echo ""
 echo "============================================================"
 echo "Done. Per-QA-type JSONs in: $OUTPUT_DIR/"
+echo "Aggregate report:           $OUTPUT_DIR/summary.json"
 echo "============================================================"

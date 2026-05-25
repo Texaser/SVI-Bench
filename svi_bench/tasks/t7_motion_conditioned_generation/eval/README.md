@@ -85,14 +85,19 @@ to additionally report the no-tracker baseline ("gt_box" mode).
 
 ## Required external assets
 
-Not vendored; the user downloads / supplies separately:
+All shipped on HF and pulled by `scripts/download_t7_t8.sh`:
 
-- `yolox_x_sports_train.pth.tar` — YOLOX detector checkpoint
-  (pass via the 3rd positional arg of the wrapper).
-- MixFormer-ViT checkpoint — `miou_metric.py`'s tracker auto-discovers it
-  from the path it expects; see upstream MixSort docs.
-- Generated test videos (from `inference/infer.sh` with the matching `SPORT`).
-- GT bbox listing (`test_subset.txt`, `test_subset_soccer.txt`).
+- **Tracker weights** (~1.2 GB) — `yolox_x_sports_train.pth.tar` (YOLOX
+  detector) + `MixFormer_sports_train.pth.tar` (MixFormer-ViT tracker)
+  land in `eval/pretrained/` (symlinked from
+  `$SVI_BENCH_DATA/shared/tracker_weights/`).
+- **GT bbox listings** — `$SVI_BENCH_DATA/T7/{basketball,soccer}/splits/test_100.txt`
+  (the 100-clip eval subset; `test.txt` for the full split).
+
+You still bring your own:
+
+- **Generated test videos** — produced by `inference/infer.sh` with the
+  matching `SPORT={basketball,soccer}` against your fine-tuned LoRA.
 
 ## Slim provenance
 

@@ -139,6 +139,38 @@ trainer actually consumes (`refined_instruction`, `player_specifications`).
 `train.sh` / `inference/infer.sh` read this layout by default (via
 `SVI_BENCH_DATA`); no path editing required.
 
+**`captions.json` schema** — top-level keys are zero-padded sample IDs.
+Each value has:
+
+```jsonc
+{
+  "0000000": {
+    "refined_instruction": "Simulate Player #15 performing a Pick'n'Roll.",
+    "player_specifications": [
+      {
+        "jersey_number": "#15",
+        "action":        "Pick'n'Roll",
+        "start_bbox":    {"x1": 0.540, "y1": 0.403, "x2": 0.620, "y2": 0.651},
+        "end_bbox":      {"x1": 0.475, "y1": 0.456, "x2": 0.544, "y2": 0.695}
+      }
+    ]
+  }
+}
+```
+
+- `refined_instruction` — natural-language goal description used as the
+  generation prompt (post v2 caption refinement; preserves player-identity
+  labels and made/missed semantics).
+- `player_specifications` — 1-to-3 entries listing the **target players**
+  whose start/end bboxes the trainer / eval pipeline pins. Bbox coords are
+  normalized to [0, 1] (×width / ×height). `action` is the per-player
+  semantic label that drives the goal-accuracy QA (Pick'n'Roll, 2+, 3-,
+  Foul, etc.). `jersey_number` is the rendered jersey number for that
+  player and is what `refined_instruction` refers to.
+- 68715 clips have 1 spec, 5131 have 2, 157 have 3 — the multi-spec ones
+  are interaction clips (e.g. "Player #3 makes a layup on a Pick'n'Roll
+  while Player #15 sets the screen" carries both players' targets).
+
 ### Train
 
 ```bash

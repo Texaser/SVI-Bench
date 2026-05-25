@@ -81,8 +81,25 @@ your layout differs.
 `test_llavaov.py` internally fans out across visible GPUs via
 `torch.multiprocessing`; the wrapper just iterates Q*.json files
 sequentially. Results land at
-`${VIDEO_DIR}/goal_accuracy_results/<qa_type>/qa_eval_f16_results.json`,
-with a summary table printed at the end.
+
+```
+${VIDEO_DIR}/goal_accuracy_results/
+├── <qa_type>/qa_eval_f16_results.json   # per-question-type accuracy
+└── summary.json                          # per-type + micro + macro aggregate
+```
+
+`summary.json` contains:
+
+- `per_type[qa_type]`: `{accuracy, correct, total}` for each of the 8 QA types.
+- `micro_accuracy = sum(correct) / sum(total)` — **entry-weighted**, this is
+  the headline goal-accuracy number SVI-Bench reports. Each QA pair
+  contributes equally, so Q1 (1046 pairs in test_1000) dominates over the
+  smaller question types like Q3_dribble_move (22 pairs).
+- `macro_accuracy = mean(per_type.accuracy)` — **type-weighted**, each of
+  the 8 types contributes equally regardless of how many QA pairs it has.
+  Useful as a balanced view across question types.
+
+The terminal also prints the same table at the end of the wrapper run.
 
 If your generated videos are under DiffSynth's per-clip layout
 (`validation/step-N/<clip>/generated.mp4`), point `VALIDATION_DIR` env
@@ -128,7 +145,14 @@ Results land at `${VIDEO_DIR}/video_miou_results/{summary.json,per_video_metrics
 
 ## Required external assets
 
-Same as T7 — see [T7's `eval/README.md`](../../t7_motion_conditioned_generation/eval/README.md#required-external-assets)
+All shipped on HF and pulled by `scripts/download_t7_t8.sh`:
+
+- **Tracker weights** (~1.2 GB) — `yolox_x_sports_train.pth.tar` + `MixFormer_sports_train.pth.tar`
+  land in `eval/pretrained/` (symlinked from `$SVI_BENCH_DATA/shared/tracker_weights/`).
+- **LLaVA-Qwen QA checkpoint** (~15 GB) — `$SVI_BENCH_DATA/T8/llava_qa_checkpoint/`.
+- **Anonymized master QA bank** — `$SVI_BENCH_DATA/T8/basketball/qa_test/Q*.json`.
+
+See also [T7's `eval/README.md`](../../t7_motion_conditioned_generation/eval/README.md#required-external-assets)
 for the checkpoint / data list. Also requires
 `captions.json` (per-clip player target end_bboxes).
 
