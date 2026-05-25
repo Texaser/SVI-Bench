@@ -51,42 +51,6 @@ T8/tracker_weights/                            YOLOX + MixFormer-ViT
 T9/{data,ckpts,embeds,questions,storage}/      Cross-corpus agentic reasoning
 ```
 
-### T7 / T8 generation tasks
-
-Per sport, each clip carries three files:
-
-```
-clips/{bucket}/{ID}.mp4         5 s game clip, 832×480, 15 fps
-bboxes/{bucket}/{ID}.txt        per-frame player bboxes
-backgrounds/{bucket}/{ID}.mp4   player-removed background
-```
-
-Sample IDs (`{ID}`) are zero-padded integers; `{bucket}` is `ID // 1668`
-(T7 basketball), `ID // 1236` (T7 soccer), or `ID // 741` (T8 basketball).
-Buckets are shipped as `.tar` bundles to stay under HF per-folder limits.
-
-T7 splits: `T7/{basketball,soccer}/splits/{train,val,test,test_100}.txt`.
-T8 splits: `T8/basketball/splits/{train,val,test,test_{100,1000}}.txt`.
-
-T8 also ships:
-
-- `captions.json` — per-ID `{refined_instruction, player_specifications}`.
-- `qa_test/Q*.json` — multi-choice QA bank used by goal-accuracy eval.
-
-### Download
-
-The code repo provides a one-liner that snapshots T7 + T8 and unpacks the
-tar bundles:
-
-```bash
-git clone https://github.com/Texaser/SVI-Bench
-cd SVI-Bench
-pip install "svi-bench[t7,t8]"
-bash scripts/download_t7_t8.sh
-```
-
-For other tasks, see each task's README in the code repo.
-
 ## License
 
 CC BY-NC 4.0. Research and educational use only; no redistribution.
