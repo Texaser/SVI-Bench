@@ -20,7 +20,7 @@ action sequence that achieves the described objective.
 |---|---|
 | **Last-frame mIoU** | Bounding-box overlap between generated and target player positions at the last frame. |
 | **Last-frame feature similarity** | SigLIP2 cosine similarity between per-player crops at the last frame, IoU-gated by the tracker. |
-| **Goal accuracy** | Fraction of multiple-choice QA pairs (8 question types covering atomic action, play type, shot type, contested-ness, etc.) answered correctly by a fine-tuned LLaVA-Qwen video-language model run on the generated clip. Headline number is the entry-weighted (micro) accuracy. |
+| **Goal accuracy** | Fraction of multi-choice QA pairs about the generated clip answered correctly by a fine-tuned LLaVA-Qwen QA model. Headline is the entry-weighted (micro) accuracy across 8 question types. |
 
 ## Install
 
@@ -43,15 +43,24 @@ Layout under `$SVI_BENCH_DATA/T8/basketball/`:
 clips/{bucket}/{ID}.mp4         5 s game clip, 832×480, 15 fps
 bboxes/{bucket}/{ID}.txt        per-frame player bboxes
 backgrounds/{bucket}/{ID}.mp4   player-removed background
-splits/{train,val,test}.txt    one ID per line
-splits/test_{100,1000}.txt    100- and 1000-clip evaluation subsets
-captions.json                 ID -> {refined_instruction, player_specifications}
-qa_test/Q*.json               goal-accuracy question bank
+splits/{train,val,test}.txt     one ID per line
+splits/test_{100,1000}.txt      100- and 1000-clip evaluation subsets
+captions.json                   ID -> {refined_instruction, player_specifications}
+qa_test/Q*.json                 goal-accuracy question bank
 ```
 
 `ID` is a zero-padded integer; `bucket` is `ID // 741`.
 
-`captions.json` schema (top-level keys are sample IDs):
+Other artifacts pulled by `download_t7_t8.sh`:
+
+- `T8/llava_qa_checkpoint/` — fine-tuned LLaVA-Qwen QA model (~15 GB),
+  used by goal accuracy.
+- `T8/tracker_weights/` — YOLOX + MixFormer-ViT sports tracker (~1.2 GB),
+  symlinked into `eval/pretrained/`.
+
+### `captions.json` schema
+
+Top-level keys are sample IDs. Each value:
 
 ```jsonc
 {
@@ -70,22 +79,20 @@ qa_test/Q*.json               goal-accuracy question bank
 ```
 
 - `refined_instruction` — generation prompt.
-- `player_specifications` — target player(s) for this clip (one entry per
-  player). Bbox coordinates are normalized to [0, 1] (×width / ×height).
-  `action`, `jersey_number`, and the bboxes are referenced by the
-  evaluation pipeline.
+- `player_specifications` — target player(s); 1–3 entries. Bbox
+  coordinates are normalized to [0, 1] (×width / ×height). `action`,
+  `jersey_number`, and the bboxes are referenced by the eval pipeline.
 
-Additional artifacts pulled by `download_t7_t8.sh`:
-
-- `T8/llava_qa_checkpoint/` — fine-tuned LLaVA-Qwen QA model (~15 GB),
-  used by goal accuracy.
-- `T8/tracker_weights/` — YOLOX + MixFormer-ViT sports tracker (~1.2 GB),
-  symlinked into `eval/pretrained/`.
-
-## Train
+## Usage
 
 ```bash
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/train.sh
+HERE=svi_bench/tasks/t8_goal_conditioned_action_generation
+```
+
+### Train
+
+```bash
+bash $HERE/train.sh
 ```
 
 Defaults: 5 epochs, lr 1e-4, save every 2000 steps. LoRA rank 32 on the
@@ -93,60 +100,60 @@ DiT side. `train.sh` resumes from a T7 checkpoint via `--lora_checkpoint`.
 Outputs to
 `./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_t8/`.
 
-## Inference
+### Inference
 
 ```bash
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/inference/infer.sh
+bash $HERE/inference/infer.sh
 ```
 
-Picks up the latest `step-*.safetensors` checkpoint under the LoRA output
-dir and runs `test_1000` sharded across `NUM_GPUS=8`. Pass an alternate
-checkpoint dir as `$1`.
+Picks up the latest `step-*.safetensors` under the LoRA output dir and
+runs `test_1000` sharded across `NUM_GPUS=8`. Pass an alternate output
+dir as `$1`. Per-clip generated videos land at
+
+```
+<output_dir>/validation/step-<N>/<clip>/generated.mp4
+```
+
+The `<output_dir>/validation/step-<N>` path is `VIDEO_DIR` for the eval
+wrappers below.
 
 Pre-trained T8 LoRA checkpoint is on
 [`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench/tree/main/T8):
 
 ```bash
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/download_checkpoint.sh
+bash $HERE/download_checkpoint.sh
 ```
 
-## Evaluation
+### Evaluation
 
 ```bash
-HERE=svi_bench/tasks/t8_goal_conditioned_action_generation
+VIDEO_DIR=<output_dir>/validation/step-<N>
 
 # 1. Last-frame mIoU
-bash $HERE/eval/run_basketball.sh         <VIDEO_DIR>
+bash $HERE/eval/run_basketball.sh         $VIDEO_DIR
 
 # 2. Last-frame feature similarity (reuses tracker output from step 1)
-bash $HERE/eval/run_basketball_featsim.sh <VIDEO_DIR>
+bash $HERE/eval/run_basketball_featsim.sh $VIDEO_DIR
 
 # 3. Goal accuracy (LLaVA-Qwen QA)
-bash $HERE/eval/run_basketball_goalacc.sh <VIDEO_DIR>
+bash $HERE/eval/run_basketball_goalacc.sh $VIDEO_DIR
 ```
 
 Results:
 
 ```
-<VIDEO_DIR>/video_miou_results/summary.json
-<VIDEO_DIR>/feature_sim/summary.json
-<VIDEO_DIR>/goal_accuracy_results/summary.json    # per-type + micro + macro
+$VIDEO_DIR/video_miou_results/summary.json
+$VIDEO_DIR/feature_sim/summary.json
+$VIDEO_DIR/goal_accuracy_results/summary.json     # per-type + micro + macro
 ```
 
 ## Files
 
 | Path | Role |
 |---|---|
-| `train.sh`, `train.py` | training entry |
-| `inference/infer.{sh,py}` | multi-GPU inference dispatcher |
-| `inference/split_validation_set.py` | shards a split file across GPUs |
-| `validate.py` | in-training validation hook |
+| `train.sh` | training entry |
+| `inference/infer.sh` | multi-GPU inference dispatcher |
 | `eval/run_basketball.sh` | tracker + last-frame mIoU |
 | `eval/run_basketball_featsim.sh` | feature similarity |
-| `eval/run_basketball_goalacc.sh` | goal-accuracy QA wrapper |
-| `eval/prepare_qa_for_method.py` | filters QA bank for the user's videos (auto-invoked) |
-| `eval/test_llavaov.py` | QA inference worker |
-| `eval/video_miou.py`, `eval/feature_sim.py`, `eval/eval_generated_videos.py` | metric workers |
-| `eval/yolox/`, `eval/MixViT/`, `eval/exps/`, `eval/llava/` | tracker + QA model code |
-| `diffsynth/` | Wan2.1-Fun pipeline |
-| `infer.py` | `svi-bench evaluate --task t8` CLI entry (inference dispatcher) |
+| `eval/run_basketball_goalacc.sh` | goal-accuracy QA |
+| `infer.py` | `svi-bench evaluate --task t8` CLI entry |

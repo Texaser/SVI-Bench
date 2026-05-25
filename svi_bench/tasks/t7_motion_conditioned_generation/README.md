@@ -41,75 +41,87 @@ Layout under `$SVI_BENCH_DATA/T7/{basketball,soccer}/`:
 clips/{bucket}/{ID}.mp4         5 s game clip, 832×480, 15 fps
 bboxes/{bucket}/{ID}.txt        per-frame player bboxes
 backgrounds/{bucket}/{ID}.mp4   player-removed background
-splits/{train,val,test}.txt    one ID per line
+splits/{train,val,test}.txt     one ID per line
 splits/test_100.txt             100-clip evaluation subset
 ```
 
 `ID` is a zero-padded integer. `bucket` is `ID // 1668` (basketball) or
 `ID // 1236` (soccer).
 
-## Train
+## Usage
 
 ```bash
-SPORT=basketball bash svi_bench/tasks/t7_motion_conditioned_generation/train.sh
-SPORT=soccer     bash svi_bench/tasks/t7_motion_conditioned_generation/train.sh
+HERE=svi_bench/tasks/t7_motion_conditioned_generation
+```
+
+### Train
+
+```bash
+SPORT=basketball bash $HERE/train.sh
+SPORT=soccer     bash $HERE/train.sh
 ```
 
 Defaults: 3 epochs, lr 1e-4, save every 2000 steps. LoRA rank 32 on the
 DiT side (targets `q,k,v,o,ffn.0,ffn.2`). Outputs to
 `./models/train/Wan2.1-Fun-V1.1-1.3B-Control-lora_with_bboxs_color_background_81frames_${SPORT}/`.
 
-## Inference
+### Inference
 
 ```bash
-SPORT=basketball bash svi_bench/tasks/t7_motion_conditioned_generation/inference/infer.sh
-SPORT=soccer     bash svi_bench/tasks/t7_motion_conditioned_generation/inference/infer.sh
+SPORT=basketball bash $HERE/inference/infer.sh
+SPORT=soccer     bash $HERE/inference/infer.sh
 ```
 
-Picks up the latest `step-*.safetensors` checkpoint under the LoRA output
-dir and runs `test_100` sharded across `NUM_GPUS=8`. Pass an alternate
-checkpoint dir as `$1`.
+Picks up the latest `step-*.safetensors` under the LoRA output dir and
+runs `test_100` sharded across `NUM_GPUS=8`. Pass an alternate output dir
+as `$1`. Per-clip generated videos land at
+
+```
+<output_dir>/validation/step-<N>/<clip>/generated.mp4
+```
+
+The `<output_dir>/validation/step-<N>` path is the `STEP_DIR` consumed by
+the eval wrappers below.
 
 Pre-trained T7 LoRA checkpoints (basketball + soccer) are on
 [`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench/tree/main/T7):
 
 ```bash
-bash svi_bench/tasks/t7_motion_conditioned_generation/download_checkpoint.sh basketball
-bash svi_bench/tasks/t7_motion_conditioned_generation/download_checkpoint.sh soccer
+bash $HERE/download_checkpoint.sh basketball
+bash $HERE/download_checkpoint.sh soccer
 ```
 
-## Evaluation
+### Evaluation
 
 ```bash
-HERE=svi_bench/tasks/t7_motion_conditioned_generation
+STEP_DIR=<output_dir>/validation/step-<N>
 
 # 1. Video mIoU (tracker + holistic mIoU)
-bash $HERE/eval/run_basketball.sh   <VIDEO_DIR>
-bash $HERE/eval/run_soccer.sh       <VIDEO_DIR>
+VALIDATION_DIR=$STEP_DIR bash $HERE/eval/run_basketball.sh
+VALIDATION_DIR=$STEP_DIR bash $HERE/eval/run_soccer.sh
 
 # 2. Feature similarity (reuses tracker output from step 1)
-bash $HERE/eval/run_basketball_featsim.sh <STEP_DIR>
-bash $HERE/eval/run_soccer_featsim.sh     <STEP_DIR>
+bash $HERE/eval/run_basketball_featsim.sh $STEP_DIR
+bash $HERE/eval/run_soccer_featsim.sh     $STEP_DIR
 ```
+
+`VALIDATION_DIR` makes `run_*.sh` auto-flatten the per-clip `generated.mp4`
+files into a flat `<step_dir>/generated_flat/` before tracking. The
+featsim wrappers read the per-clip layout directly.
 
 Results:
 
 ```
-<VIDEO_DIR>/video_miou_results/summary.json
-<STEP_DIR>/feature_sim/summary.json
+$STEP_DIR/generated_flat/video_miou_results/summary.json
+$STEP_DIR/feature_sim/summary.json
 ```
 
 ## Files
 
 | Path | Role |
 |---|---|
-| `train.sh`, `train.py` | training entry |
-| `inference/infer.{sh,py}` | multi-GPU inference dispatcher |
-| `inference/split_validation_set.py` | shards a split file across GPUs |
-| `validate.py` | in-training validation hook |
+| `train.sh` | training entry |
+| `inference/infer.sh` | multi-GPU inference dispatcher |
 | `eval/run_{basketball,soccer}.sh` | tracker + Video mIoU |
 | `eval/run_{basketball,soccer}_featsim.sh` | feature similarity |
-| `eval/video_miou.py`, `eval/feature_sim.py`, `eval/eval_generated_videos.py` | metric workers |
-| `eval/yolox/`, `eval/MixViT/`, `eval/exps/` | tracker components |
-| `diffsynth/` | Wan2.1-Fun pipeline |
-| `infer.py` | `svi-bench evaluate --task t7` CLI entry (inference dispatcher) |
+| `infer.py` | `svi-bench evaluate --task t7` CLI entry |
