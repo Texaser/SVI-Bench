@@ -1,109 +1,55 @@
 # SVI-Bench
 
-A multi-task benchmark aggregating tasks T1–T9 into a single installable package
-with per-task dependency isolation.
+SVI-Bench is a multi-task benchmark for evaluating vision-language models on
+sports video understanding. It spans four pillars — Perception, Reasoning,
+Simulation, and Agency — across nine tasks, three sports (basketball, hockey,
+soccer), and multiple seasons.
 
-## Quick start
+## Tasks
 
-Install only the task(s) you care about:
+| Task | Pillar | Description |
+|------|--------|-------------|
+| T1 | Perception | Structured play-by-play description |
+| T2 | Perception | Fine-grained action QA |
+| T3 | Perception | Compositional video retrieval (R@K ranking) |
+| T4 | Reasoning | Strategic reasoning QA (free-text, LLM-as-judge) |
+| T5 | Reasoning | Outcome forecasting (multiple-choice) |
+| T6 | Reasoning | Long-form narrative synthesis (report generation) |
+| T7 | Simulation | Motion-conditioned video generation (LoRA fine-tune) |
+| T8 | Simulation | Goal-conditioned action generation (LoRA fine-tune) |
+| T9 | Agency | Cross-corpus agentic reasoning (search + QA) |
 
-```bash
-pip install "svi-bench[t3]"          # just T3's dependencies
-pip install "svi-bench[t3,t7]"       # T3 + T7
-pip install "svi-bench[all]"         # everything
-```
+Each task has its own directory under `svi_bench/tasks/` with a dedicated
+`README.md` covering setup, data format, and evaluation instructions.
 
-Run an evaluation:
-
-```bash
-# Evaluate GPT-4o on T3 only
-svi-bench evaluate --task t3 --model gpt-4o
-
-# Evaluate all available tasks
-svi-bench evaluate --task all --model gpt-4o
-```
-
-## Data access
+## Data
 
 Datasets are hosted on HuggingFace at
-[`svi-bench/svi-bench`](https://huggingface.co/datasets/svi-bench/svi-bench)
-with one config per task. Access is gated — you'll need to agree to the
-non-commercial / no-redistribution terms on the dataset page once, after which
-your HF token unlocks all configs:
-
-```python
-from datasets import load_dataset
-
-# Only T3 is downloaded
-ds = load_dataset("svi-bench/svi-bench", "t3_compositional_video_retrieval")
-
-# Or download everything
-ds = load_dataset("svi-bench/svi-bench", "all")
-```
-
-A convenience CLI wraps this for users who don't want the HF API:
-
-```bash
-svi-bench download --tasks t3 t7
-```
-
-The dataset card template (gated-access YAML header) lives at
-[`dataset_card.md`](dataset_card.md) — copy it into the HF dataset repo's
-`README.md` when publishing.
+[MVP-Group/SVI-Bench](https://huggingface.co/datasets/MVP-Group/SVI-Bench).
+Access is gated — agree to the terms on the dataset page once, then your HF
+token unlocks all data. Large data are shipped as `.tar` bundles. See each
+task's README for download and setup instructions.
 
 ## Repository layout
 
 ```
-svi-bench/
-├── pyproject.toml            # single package, optional deps per task
+SVI-Bench/
+├── pyproject.toml
 ├── svi_bench/
-│   ├── core/                 # shared utilities (data, metrics, models, config)
-│   ├── tasks/                # one subpackage per task, lazy-imported
-│   │   ├── t1_structured_play_description/
-│   │   ├── t2_fine_grained_action_qa/
-│   │   ├── t3_compositional_video_retrieval/
-│   │   ├── t4_strategic_reasoning_qa/
-│   │   ├── t5_outcome_forecasting/
-│   │   ├── t6_long_form_narrative_synthesis/
-│   │   ├── t7_motion_conditioned_generation/
-│   │   ├── t8_goal_conditioned_action_generation/
-│   │   └── t9_cross_corpus_agentic_reasoning/
-│   └── cli.py                # unified entry point
-├── configs/                  # YAML hyperparameters per task
-└── scripts/                  # helper scripts (download, etc.)
+│   ├── core/                 # shared utilities
+│   └── tasks/                # one subpackage per task
+│       ├── t1_structured_play_description/
+│       ├── t2_fine_grained_action_qa/
+│       ├── t3_compositional_video_retrieval/
+│       ├── t4_strategic_reasoning_qa/
+│       ├── t5_outcome_forecasting/
+│       ├── t6_long_form_narrative_synthesis/
+│       ├── t7_motion_conditioned_generation/
+│       ├── t8_goal_conditioned_action_generation/
+│       └── t9_cross_corpus_agentic_reasoning/
+├── configs/                  # YAML configs per task
+└── scripts/                  # helper scripts (download, extract_tars, etc.)
 ```
-
-Each `tasks/t<N>_*/` directory has its own `README.md` covering setup,
-expected results, and contributor notes.
-
-## Status of each task
-
-| Task | Status | Notes |
-|---|---|---|
-| T1 | stub | placeholder |
-| T2 | stub | placeholder |
-| **T3** | **integrated** | retrieval eval against cached embeddings; see [`svi_bench/tasks/t3_compositional_video_retrieval/README.md`](svi_bench/tasks/t3_compositional_video_retrieval/README.md) |
-| T4 | stub | placeholder |
-| T5 | stub | placeholder |
-| T6 | stub | placeholder |
-| **T7** | **integrated** | bundled DiffSynth slice + LoRA training |
-| **T8** | **integrated** | bundled DiffSynth slice + LoRA training |
-| T9 | stub | placeholder |
-
-T3, T7, T8 are reference integrations. T1, T2, T4, T5, T6, T9 stubs follow
-the same shape and await contributor ports.
-
-## Adding a new task
-
-1. Create `svi_bench/tasks/t<N>_<slug>/` with `evaluate.py`, `baseline.py`,
-   and a `README.md`.
-2. Add an optional-dependency group to `pyproject.toml` listing only the deps
-   *that task* needs.
-3. Use **lazy imports** inside functions for any heavy dep — the package must
-   import cleanly even when those deps are absent.
-4. Register the task in `svi_bench/tasks/__init__.py`.
-5. Add a YAML config under `configs/t<N>.yaml`.
-6. Upload data to the HF dataset repo as a new config.
 
 ## License
 
