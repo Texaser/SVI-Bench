@@ -68,15 +68,14 @@ bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh
 Layout under `$SVI_BENCH_DATA/T7/{basketball,soccer}/`:
 
 ```
-clips/{bucket}/{ID}.mp4         5 s game clip, 832×480, 15 fps
+clips/{bucket}/{ID}.mp4         game clip
 bboxes/{bucket}/{ID}.txt        per-frame player bboxes
 backgrounds/{bucket}/{ID}.mp4   player-removed background
 splits/{train,val,test}.txt     one ID per line
 splits/test_100.txt             100-clip evaluation subset
 ```
 
-`ID` is a zero-padded integer. `bucket` is `ID // 1668` (basketball) or
-`ID // 1236` (soccer).
+`ID` is a zero-padded integer. 
 
 ## Usage
 
