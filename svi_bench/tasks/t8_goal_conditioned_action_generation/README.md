@@ -91,16 +91,16 @@ Other artifacts pulled by `download_t7_t8.sh`:
 
 Top-level keys are sample IDs. Each value:
 
-```jsonc
+```json
 {
   "0000000": {
     "refined_instruction": "Simulate Player #15 performing a Pick'n'Roll.",
     "player_specifications": [
       {
         "jersey_number": "#15",
-        "action":        "Pick'n'Roll",
-        "start_bbox":    {"x1": 0.540, "y1": 0.403, "x2": 0.620, "y2": 0.651},
-        "end_bbox":      {"x1": 0.475, "y1": 0.456, "x2": 0.544, "y2": 0.695}
+        "start_bbox": {"x1": 0.540519, "y1": 0.403172, "x2": 0.620234, "y2": 0.651138},
+        "end_bbox": {"x1": 0.475335, "y1": 0.455800, "x2": 0.544082, "y2": 0.695225},
+        "action": "Pick'n'Roll"
       }
     ]
   }
