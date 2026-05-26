@@ -43,8 +43,8 @@ PY
 
 echo ""
 echo "Extracting tar bundles (deletes tars after success) ..."
-python3 "$HERE/extract_tars.py" --root "$DATA_ROOT/T7" --delete-after
-python3 "$HERE/extract_tars.py" --root "$DATA_ROOT/T8" --delete-after
+python3 "$REPO_ROOT/scripts/extract_tars.py" --root "$DATA_ROOT/T7" --delete-after
+python3 "$REPO_ROOT/scripts/extract_tars.py" --root "$DATA_ROOT/T8" --delete-after
 
 # Tracker weights came in with the T7/T8 snapshot above. They live next
 # to the eval scripts (track.yaml uses a relative `pretrained/...` path),

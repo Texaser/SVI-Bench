@@ -42,6 +42,7 @@ SVI-Bench/
 ├── pyproject.toml
 ├── README.md
 ├── LICENSE
+├── scripts/                  # benchmark-wide helpers (e.g. extract_tars.py)
 └── svi_bench/
     ├── core/                 # shared utilities (config loader, model registry)
     └── tasks/                # one self-contained subpackage per task
@@ -57,9 +58,7 @@ SVI-Bench/
 ```
 
 Each task dir holds its own `train.sh` / `inference/` / `eval/` / `scripts/`
-/ `configs/` / `figures/` as needed. T7 owns the cross-task helpers used
-by T7+T8 (`scripts/download_t7_t8.sh`, `scripts/build_split_bbox_list.py`,
-`scripts/extract_tars.py`) — sibling tasks reference them via the T7 path.
+/ `configs/` / `figures/` as needed.
 
 ## License
 

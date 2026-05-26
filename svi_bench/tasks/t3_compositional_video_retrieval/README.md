@@ -25,7 +25,7 @@ huggingface-cli download MVP-Group/SVI-Bench --repo-type dataset \
 Video clips are shipped as `.tar` bundles. After downloading, extract them:
 
 ```bash
-python3 svi_bench/tasks/t7_motion_conditioned_generation/scripts/extract_tars.py --root data/T3/clips
+python3 scripts/extract_tars.py --root data/T3/clips
 ```
 
 Everything goes under `<repo>/data/T3/`:
