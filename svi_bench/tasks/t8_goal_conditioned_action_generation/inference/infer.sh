@@ -48,26 +48,33 @@ echo "Output path: $OUTPUT_PATH"
 echo "Number of GPUs: $NUM_GPUS"
 echo ""
 
-if [ ! -d "$OUTPUT_PATH" ]; then
-    echo "Error: Output directory not found: $OUTPUT_PATH"
-    exit 1
-fi
-
-CHECKPOINTS=$(find "$OUTPUT_PATH" -name "step-*.safetensors" -type f 2>/dev/null)
-if [ -z "$CHECKPOINTS" ]; then
-    echo "Error: No checkpoint files found in $OUTPUT_PATH"
-    exit 1
-fi
-
-LATEST_CHECKPOINT=$(echo "$CHECKPOINTS" | while read -r ckpt; do
-    step_num=$(basename "$ckpt" | sed -n 's/step-\([0-9]*\)\.safetensors/\1/p')
-    if [ -n "$step_num" ]; then
-        printf "%06d %s\n" "$step_num" "$ckpt"
+# Accept either:
+#   (a) a single .safetensors file (pre-trained checkpoint from HF), or
+#   (b) a training output dir holding step-*.safetensors files (pick latest).
+if [ -f "$OUTPUT_PATH" ]; then
+    LATEST_CHECKPOINT="$OUTPUT_PATH"
+    OUTPUT_PATH=$(dirname "$LATEST_CHECKPOINT")
+elif [ -d "$OUTPUT_PATH" ]; then
+    CHECKPOINTS=$(find "$OUTPUT_PATH" -maxdepth 1 -name "step-*.safetensors" -type f 2>/dev/null)
+    if [ -n "$CHECKPOINTS" ]; then
+        LATEST_CHECKPOINT=$(echo "$CHECKPOINTS" | while read -r ckpt; do
+            step_num=$(basename "$ckpt" | sed -n 's/step-\([0-9]*\)\.safetensors/\1/p')
+            [ -n "$step_num" ] && printf "%06d %s\n" "$step_num" "$ckpt"
+        done | sort -rn | head -1 | awk '{print $2}')
+    elif [ -f "$OUTPUT_PATH/checkpoint.safetensors" ]; then
+        LATEST_CHECKPOINT="$OUTPUT_PATH/checkpoint.safetensors"
+    else
+        echo "Error: no step-*.safetensors or checkpoint.safetensors found in $OUTPUT_PATH" >&2
+        exit 1
     fi
-done | sort -rn | head -1 | awk '{print $2}')
+else
+    echo "Error: $OUTPUT_PATH is neither a file nor a directory" >&2
+    exit 1
+fi
 
 STEP_NUM=$(basename "$LATEST_CHECKPOINT" | sed -n 's/step-\([0-9]*\)\.safetensors/\1/p')
-echo "Latest checkpoint: $LATEST_CHECKPOINT (step $STEP_NUM)"
+[ -z "$STEP_NUM" ] && STEP_NUM="pretrained"
+echo "Checkpoint: $LATEST_CHECKPOINT (step $STEP_NUM)"
 
 if [ ! -f "$TEST_SUBSET" ]; then
     echo "Error: Test subset not found: $TEST_SUBSET"

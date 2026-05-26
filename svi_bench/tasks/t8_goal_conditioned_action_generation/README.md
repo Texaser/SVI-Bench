@@ -16,16 +16,19 @@
 ```bash
 git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
 pip install "svi-bench[t8]"
-bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh                                # ~65 GB; T7+T8 data, tracker weights, LLaVA-Qwen checkpoint
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/download_checkpoint.sh
 
 HERE=svi_bench/tasks/t8_goal_conditioned_action_generation
+T7=svi_bench/tasks/t7_motion_conditioned_generation
+CKPT=$HERE/checkpoints/T8/basketball/checkpoint.safetensors
+
+bash $T7/scripts/download_t7_t8.sh          # ~65 GB; T7+T8 data, tracker weights, LLaVA-Qwen checkpoint
+bash $HERE/download_checkpoint.sh
 
 # Inference (test_1000 split, 8 GPUs)
-bash $HERE/inference/infer.sh ./checkpoints/T8/basketball
+bash $HERE/inference/infer.sh $CKPT
 
 # Eval (last-frame mIoU + feature similarity + goal accuracy)
-VIDEO_DIR=./checkpoints/T8/basketball/validation/step-<N>
+VIDEO_DIR=$HERE/checkpoints/T8/basketball/validation/step-pretrained
 bash $HERE/eval/run_basketball.sh         $VIDEO_DIR
 bash $HERE/eval/run_basketball_featsim.sh $VIDEO_DIR
 bash $HERE/eval/run_basketball_goalacc.sh $VIDEO_DIR
@@ -130,27 +133,32 @@ Outputs to
 
 ### Inference
 
-```bash
-bash $HERE/inference/infer.sh
-```
-
-Picks up the latest `step-*.safetensors` under the LoRA output dir and
-runs `test_1000` sharded across `NUM_GPUS=8`. Pass an alternate output
-dir as `$1`. Per-clip generated videos land at
-
-```
-<output_dir>/validation/step-<N>/<clip>/generated.mp4
-```
-
-The `<output_dir>/validation/step-<N>` path is `VIDEO_DIR` for the eval
-wrappers below.
-
-Pre-trained T8 LoRA checkpoint is on
-[`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench/tree/main/T8):
+Pre-trained T8 LoRA checkpoint lives on
+[`MVP-Group/SVI-Bench`](https://huggingface.co/datasets/MVP-Group/SVI-Bench/tree/main/T8).
+Fetch it and run inference against it directly:
 
 ```bash
 bash $HERE/download_checkpoint.sh
+bash $HERE/inference/infer.sh $HERE/checkpoints/T8/basketball/checkpoint.safetensors
 ```
+
+To run against your own training output instead, point `$1` at the LoRA
+output dir; `infer.sh` picks the latest `step-*.safetensors`:
+
+```bash
+bash $HERE/inference/infer.sh ./models/train/<your-lora-dir>
+```
+
+Either form runs the `test_1000` split sharded across `NUM_GPUS=8`.
+Per-clip generated videos land at
+
+```
+<checkpoint_dir>/validation/step-<N>/<clip>/generated.mp4
+```
+
+`<checkpoint_dir>` is the directory containing the loaded checkpoint;
+`<N>` is the training step (`pretrained` for the HF checkpoint). That
+path is `VIDEO_DIR` for the eval wrappers below.
 
 ### Evaluation
 
