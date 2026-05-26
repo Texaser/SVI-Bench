@@ -72,7 +72,7 @@ bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh
 Layout under `$SVI_BENCH_DATA/T8/basketball/`:
 
 ```
-clips/{bucket}/{ID}.mp4         5 s game clip, 832×480, 15 fps
+clips/{bucket}/{ID}.mp4         game clip
 bboxes/{bucket}/{ID}.txt        per-frame player bboxes
 backgrounds/{bucket}/{ID}.mp4   player-removed background
 splits/{train,val,test}.txt     one ID per line
@@ -81,7 +81,7 @@ captions.json                   ID -> {refined_instruction, player_specification
 qa_test/Q*.json                 goal-accuracy question bank
 ```
 
-`ID` is a zero-padded integer; `bucket` is `ID // 741`.
+`ID` is a zero-padded integer;
 
 Other artifacts pulled by `download_t7_t8.sh`:
 
