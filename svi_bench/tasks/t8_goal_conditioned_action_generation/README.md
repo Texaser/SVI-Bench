@@ -107,10 +107,9 @@ Top-level keys are sample IDs. Each value:
 }
 ```
 
-- `refined_instruction` — generation prompt.
+- `refined_instruction` — goal instruction.
 - `player_specifications` — target player(s); 1–3 entries. Bbox
-  coordinates are normalized to [0, 1] (×width / ×height). `action`,
-  `jersey_number`, and the bboxes are referenced by the eval pipeline.
+  coordinates are normalized to [0, 1] (×width / ×height).
 
 ## Usage
 
