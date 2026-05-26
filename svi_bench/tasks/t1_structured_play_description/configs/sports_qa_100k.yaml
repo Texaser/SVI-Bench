@@ -1,0 +1,7 @@
+datasets:
+  - json_path: DATAS/LLaVA_Video/basketball_qa_train_100k.json
+    sampling_strategy: "all"
+  - json_path: DATAS/LLaVA_Video/soccer_qa_train_100k.json
+    sampling_strategy: "all"
+  - json_path: DATAS/LLaVA_Video/hockey_qa_train_100k.json
+    sampling_strategy: "all"
