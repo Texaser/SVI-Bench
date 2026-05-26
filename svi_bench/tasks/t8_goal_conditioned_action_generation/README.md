@@ -2,6 +2,35 @@
 
 ![T7 (top) and T8 (bottom)](../../../docs/figures/pillar3.png)
 
+## Quickstart
+
+> If your CUDA driver is < 13, pre-install a CUDA-matching torch wheel
+> first (otherwise pip pulls the newest cu13-only wheel and GPU is
+> disabled):
+>
+> ```bash
+> # CUDA 12.1 example; swap cu121 for your stack
+> pip install "torch>=2.0,<2.10" --index-url https://download.pytorch.org/whl/cu121
+> ```
+
+```bash
+git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
+pip install "svi-bench[t8]"
+bash scripts/download_t7_t8.sh                                # ~65 GB; T7+T8 data, tracker weights, LLaVA-Qwen checkpoint
+bash svi_bench/tasks/t8_goal_conditioned_action_generation/download_checkpoint.sh
+
+HERE=svi_bench/tasks/t8_goal_conditioned_action_generation
+
+# Inference (test_1000 split, 8 GPUs)
+bash $HERE/inference/infer.sh ./checkpoints/T8/basketball
+
+# Eval (last-frame mIoU + feature similarity + goal accuracy)
+VIDEO_DIR=./checkpoints/T8/basketball/validation/step-<N>
+bash $HERE/eval/run_basketball.sh         $VIDEO_DIR
+bash $HERE/eval/run_basketball_featsim.sh $VIDEO_DIR
+bash $HERE/eval/run_basketball_goalacc.sh $VIDEO_DIR
+```
+
 ## Task
 
 Inputs:

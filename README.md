@@ -24,57 +24,8 @@ soccer), and multiple seasons.
 
 Each task has its own directory under `svi_bench/tasks/` with a dedicated
 `README.md` covering setup, data format, and evaluation instructions.
-
-## Quickstart (T7 generation demo)
-
-> If your CUDA driver is < 13, pre-install torch matching your driver before
-> the `svi-bench[...]` line (otherwise pip pulls the newest cu13-only wheel
-> and GPU is disabled):
->
-> ```bash
-> # CUDA 12.1 example; swap cu121 for your stack
-> pip install "torch>=2.0,<2.10" --index-url https://download.pytorch.org/whl/cu121
-> ```
-
-```bash
-git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
-pip install "svi-bench[t7]"
-bash scripts/download_t7_t8.sh                      # ~50 GB; T7+T8 data + tracker weights
-bash svi_bench/tasks/t7_motion_conditioned_generation/download_checkpoint.sh basketball
-
-# Inference (test_100 split, 8 GPUs)
-SPORT=basketball bash svi_bench/tasks/t7_motion_conditioned_generation/inference/infer.sh \
-    ./checkpoints/T7/basketball
-
-# Eval (Video mIoU + feature similarity)
-STEP_DIR=./checkpoints/T7/basketball/validation/step-<N>
-VALIDATION_DIR=$STEP_DIR bash svi_bench/tasks/t7_motion_conditioned_generation/eval/run_basketball.sh
-bash svi_bench/tasks/t7_motion_conditioned_generation/eval/run_basketball_featsim.sh $STEP_DIR
-```
-
-## Quickstart (T8 generation demo)
-
-Same torch heads-up as T7 above — pre-install a CUDA-matching torch wheel
-if your driver is < 13.
-
-```bash
-git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
-pip install "svi-bench[t8]"
-bash scripts/download_t7_t8.sh                      # ~65 GB; T7+T8 data, tracker weights, LLaVA-Qwen checkpoint
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/download_checkpoint.sh
-
-# Inference (test_1000 split, 8 GPUs)
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/inference/infer.sh \
-    ./checkpoints/T8/basketball
-
-# Eval (last-frame mIoU + feature similarity + goal accuracy)
-VIDEO_DIR=./checkpoints/T8/basketball/validation/step-<N>
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/eval/run_basketball.sh         $VIDEO_DIR
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/eval/run_basketball_featsim.sh $VIDEO_DIR
-bash svi_bench/tasks/t8_goal_conditioned_action_generation/eval/run_basketball_goalacc.sh $VIDEO_DIR
-```
-
-For other tasks, see the per-task README.
+Per-task quickstarts (clone → install → download → infer → eval one-shot
+recipes) live in those READMEs.
 
 ## Data
 
