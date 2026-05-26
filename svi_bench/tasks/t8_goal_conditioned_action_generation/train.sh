@@ -3,7 +3,7 @@
 # LoRA fine-tunes Wan2.1-Fun-V1.1-1.3B-Control with per-video polished
 # captions and first/last-frame bbox conditioning. Typically chained off a
 # T7 checkpoint via --lora_checkpoint. Data is pulled from HuggingFace
-# (MVP-Group/SVI-Bench) via `scripts/download_t7_t8.sh` and lives under
+# (MVP-Group/SVI-Bench) via `svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh` and lives under
 # $SVI_BENCH_DATA (default: ./data at the repo root).
 
 set -euo pipefail
@@ -22,7 +22,7 @@ SPORT_DIR="$DATA_ROOT/T8/basketball"
 SPLIT_IDS="$SPORT_DIR/splits/train.txt"
 SPLIT_BBOX_LIST="$SPORT_DIR/splits/train.bbox_paths.txt"
 if [ ! -f "$SPLIT_BBOX_LIST" ]; then
-  python3 "$REPO_ROOT/scripts/build_split_bbox_list.py" \
+  python3 "$REPO_ROOT/svi_bench/tasks/t7_motion_conditioned_generation/scripts/build_split_bbox_list.py" \
     --ids "$SPLIT_IDS" \
     --root "$SPORT_DIR/bboxes" \
     --out "$SPLIT_BBOX_LIST"

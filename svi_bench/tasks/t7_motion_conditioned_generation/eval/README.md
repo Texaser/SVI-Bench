@@ -85,7 +85,7 @@ to additionally report the no-tracker baseline ("gt_box" mode).
 
 ## Required external assets
 
-All shipped on HF and pulled by `scripts/download_t7_t8.sh`:
+All shipped on HF and pulled by `svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh`:
 
 - **Tracker weights** (~1.2 GB) — `yolox_x_sports_train.pth.tar` (YOLOX
   detector) + `MixFormer_sports_train.pth.tar` (MixFormer-ViT tracker)

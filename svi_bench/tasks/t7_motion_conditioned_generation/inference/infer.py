@@ -94,7 +94,7 @@ def main():
         sys.exit(1)
 
     # Validation parameters from environment variables. Defaults assume the
-    # SVI-Bench data layout produced by scripts/download_t7_t8.sh under
+    # SVI-Bench data layout produced by svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh under
     # $SVI_BENCH_DATA (default ./data). Set SPORT={basketball,soccer} to pick
     # which T7 subset to infer over (default: basketball).
     _DATA_ROOT = os.environ.get('SVI_BENCH_DATA', os.path.abspath('./data'))

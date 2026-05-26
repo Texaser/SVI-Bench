@@ -40,21 +40,26 @@ task's README for download and setup instructions.
 ```
 SVI-Bench/
 ├── pyproject.toml
-├── svi_bench/
-│   ├── core/                 # shared utilities
-│   └── tasks/                # one subpackage per task
-│       ├── t1_structured_play_description/
-│       ├── t2_fine_grained_action_qa/
-│       ├── t3_compositional_video_retrieval/
-│       ├── t4_strategic_reasoning_qa/
-│       ├── t5_outcome_forecasting/
-│       ├── t6_long_form_narrative_synthesis/
-│       ├── t7_motion_conditioned_generation/
-│       ├── t8_goal_conditioned_action_generation/
-│       └── t9_cross_corpus_agentic_reasoning/
-├── configs/                  # YAML configs per task
-└── scripts/                  # helper scripts (download, extract_tars, etc.)
+├── README.md
+├── LICENSE
+└── svi_bench/
+    ├── core/                 # shared utilities (config loader, model registry)
+    └── tasks/                # one self-contained subpackage per task
+        ├── t1_structured_play_description/
+        ├── t2_fine_grained_action_qa/
+        ├── t3_compositional_video_retrieval/
+        ├── t4_strategic_reasoning_qa/
+        ├── t5_outcome_forecasting/
+        ├── t6_long_form_narrative_synthesis/
+        ├── t7_motion_conditioned_generation/
+        ├── t8_goal_conditioned_action_generation/
+        └── t9_cross_corpus_agentic_reasoning/
 ```
+
+Each task dir holds its own `train.sh` / `inference/` / `eval/` / `scripts/`
+/ `configs/` / `figures/` as needed. T7 owns the cross-task helpers used
+by T7+T8 (`scripts/download_t7_t8.sh`, `scripts/build_split_bbox_list.py`,
+`scripts/extract_tars.py`) — sibling tasks reference them via the T7 path.
 
 ## License
 

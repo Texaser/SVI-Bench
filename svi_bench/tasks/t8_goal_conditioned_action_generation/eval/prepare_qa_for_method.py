@@ -3,7 +3,7 @@
 Given:
   - the anonymized master QA (one Q*.json per question type, with `id`,
     `video`, `start_bbox`, `conversations`), downloaded into
-    $SVI_BENCH_DATA/T8/basketball/qa_test/ by scripts/download_t7_t8.sh
+    $SVI_BENCH_DATA/T8/basketball/qa_test/ by svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh
   - a flat directory of the method's generated 5-second clips, each named
     <anon_id>.mp4
 

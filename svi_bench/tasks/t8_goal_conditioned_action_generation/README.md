@@ -1,6 +1,6 @@
 # T8 — Goal-Conditioned Action Generation
 
-![T7 (top) and T8 (bottom)](../../../docs/figures/pillar3.png)
+![T7 (top) and T8 (bottom)](../t7_motion_conditioned_generation/figures/pillar3.png)
 
 ## Quickstart
 
@@ -16,7 +16,7 @@
 ```bash
 git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
 pip install "svi-bench[t8]"
-bash scripts/download_t7_t8.sh                                # ~65 GB; T7+T8 data, tracker weights, LLaVA-Qwen checkpoint
+bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh                                # ~65 GB; T7+T8 data, tracker weights, LLaVA-Qwen checkpoint
 bash svi_bench/tasks/t8_goal_conditioned_action_generation/download_checkpoint.sh
 
 HERE=svi_bench/tasks/t8_goal_conditioned_action_generation
@@ -63,7 +63,7 @@ metrics.
 ## Data
 
 ```bash
-bash scripts/download_t7_t8.sh
+bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh
 ```
 
 Layout under `$SVI_BENCH_DATA/T8/basketball/`:

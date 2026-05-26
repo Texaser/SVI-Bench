@@ -1,6 +1,6 @@
 # T7 — Motion-Conditioned Generation
 
-![T7 (top) and T8 (bottom)](../../../docs/figures/pillar3.png)
+![T7 (top) and T8 (bottom)](figures/pillar3.png)
 
 ## Quickstart
 
@@ -16,7 +16,7 @@
 ```bash
 git clone https://github.com/Texaser/SVI-Bench && cd SVI-Bench
 pip install "svi-bench[t7]"
-bash scripts/download_t7_t8.sh                                # ~50 GB; T7+T8 data + tracker weights
+bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh                                # ~50 GB; T7+T8 data + tracker weights
 bash svi_bench/tasks/t7_motion_conditioned_generation/download_checkpoint.sh basketball
 
 HERE=svi_bench/tasks/t7_motion_conditioned_generation
@@ -60,7 +60,7 @@ pip install "svi-bench[t7]"
 ## Data
 
 ```bash
-bash scripts/download_t7_t8.sh
+bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh
 ```
 
 Layout under `$SVI_BENCH_DATA/T7/{basketball,soccer}/`:

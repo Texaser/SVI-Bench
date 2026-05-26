@@ -19,7 +19,7 @@
 #   bash eval/run_basketball_goalacc.sh <VIDEO_DIR> [QA_MASTER] [MODEL_PATH]
 #
 # QA_MASTER and MODEL_PATH default to $SVI_BENCH_DATA/T8/{basketball/qa_test,llava_qa_checkpoint},
-# i.e. the layout produced by scripts/download_t7_t8.sh.
+# i.e. the layout produced by svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh.
 #
 # Output: $OUTPUT_DIR/<qa_type>/qa_eval_f${EVAL_FRAMES}_results.json
 # Each file's `overall.accuracy` is the per-QA-type goal accuracy; we
@@ -50,20 +50,20 @@ if [ -z "$VIDEO_DIR" ]; then
     echo "  bash eval/run_basketball_goalacc.sh /path/to/generated_videos" >&2
     echo "" >&2
     echo "QA_MASTER and MODEL_PATH default to \$SVI_BENCH_DATA/T8/..." >&2
-    echo "(downloaded by scripts/download_t7_t8.sh). Override via positional" >&2
+    echo "(downloaded by svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh). Override via positional" >&2
     echo "args 2-3 or env vars if your layout differs." >&2
     exit 1
 fi
 
 if [ ! -d "$QA_MASTER" ]; then
     echo "Error: QA_MASTER does not exist: $QA_MASTER" >&2
-    echo "Run scripts/download_t7_t8.sh to fetch the T8 QA master set." >&2
+    echo "Run svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh to fetch the T8 QA master set." >&2
     exit 1
 fi
 
 if [ ! -d "$MODEL_PATH" ]; then
     echo "Error: MODEL_PATH does not exist: $MODEL_PATH" >&2
-    echo "Run scripts/download_t7_t8.sh to fetch the fine-tuned LLaVA-Qwen checkpoint" >&2
+    echo "Run svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh to fetch the fine-tuned LLaVA-Qwen checkpoint" >&2
     echo "(~15 GB, under T8/llava_qa_checkpoint/ on MVP-Group/SVI-Bench)." >&2
     exit 1
 fi

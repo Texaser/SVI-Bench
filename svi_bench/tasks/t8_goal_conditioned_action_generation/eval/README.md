@@ -62,7 +62,7 @@ The HF dataset ships two pieces under `T8/`:
   and the question text — but **no rendered videos**: the per-method
   bbox-overlay videos are produced on the fly from your generated outputs.
 
-`scripts/download_t7_t8.sh` pulls both into `$SVI_BENCH_DATA`.
+`svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh` pulls both into `$SVI_BENCH_DATA`.
 
 The wrapper auto-runs [`prepare_qa_for_method.py`](prepare_qa_for_method.py)
 on first invocation for a given `VIDEO_DIR`: it filters the master QA to
@@ -145,7 +145,7 @@ Results land at `${VIDEO_DIR}/video_miou_results/{summary.json,per_video_metrics
 
 ## Required external assets
 
-All shipped on HF and pulled by `scripts/download_t7_t8.sh`:
+All shipped on HF and pulled by `svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh`:
 
 - **Tracker weights** (~1.2 GB) — `yolox_x_sports_train.pth.tar` + `MixFormer_sports_train.pth.tar`
   land in `eval/pretrained/` (symlinked from `$SVI_BENCH_DATA/T8/tracker_weights/`).

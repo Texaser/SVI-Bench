@@ -11,7 +11,7 @@
 # - The latest step-*.safetensors checkpoint under output_path is picked
 #   automatically.
 # - Data comes from HuggingFace (MVP-Group/SVI-Bench) via
-#   scripts/download_t7_t8.sh and lives under $SVI_BENCH_DATA
+#   svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh and lives under $SVI_BENCH_DATA
 #   (default: ./data at the repo root).
 
 set -euo pipefail
@@ -41,7 +41,7 @@ VALIDATION_SCRIPT="$HERE/infer.py"
 TEST_IDS="$SPORT_DIR/splits/test_100.txt"
 TEST_SUBSET="$SPORT_DIR/splits/test_100.bbox_paths.txt"
 if [ ! -f "$TEST_SUBSET" ]; then
-    python3 "$REPO_ROOT/scripts/build_split_bbox_list.py" \
+    python3 "$HERE/scripts/build_split_bbox_list.py" \
         --ids "$TEST_IDS" \
         --root "$SPORT_DIR/bboxes" \
         --out "$TEST_SUBSET"
