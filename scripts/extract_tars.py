@@ -42,28 +42,50 @@ def find_tars(root: str):
                 yield os.path.join(dirpath, f)
 
 
-def already_extracted(tar_path: str) -> bool:
-    """Heuristic: a tar is 'already extracted' if every top-level member
-    it would write already exists in its parent dir."""
+def _extract_target(tar_path: str):
+    """Return (target_dir, expected_bucket_subdir) for ``tar_path``.
+
+    Two HF tar packing conventions coexist:
+      (a) members rooted at the bucket name (``26/0019266.mp4``) — pack with
+          ``tar -C parent_dir bucket``. Extract to the tar's parent dir; the
+          ``<bucket>/`` subdir is created naturally.
+      (b) members rooted at ``.`` (``./0083400.txt``) — pack with
+          ``tar -C bucket_dir .``. Extract into ``<parent>/<bucket>/`` so the
+          bucket layout is reconstructed.
+    """
     parent = os.path.dirname(tar_path)
+    stem = os.path.splitext(os.path.basename(tar_path))[0]
     try:
         with tarfile.open(tar_path, "r") as tf:
-            top_members = {m.name.split("/", 1)[0] for m in tf.getmembers() if m.name}
+            for m in tf.getmembers():
+                if not m.name or m.name == "." or m.name == "./":
+                    continue
+                head = m.name.lstrip("./").split("/", 1)[0]
+                if head == stem:
+                    return parent, stem        # convention (a)
+                return os.path.join(parent, stem), stem   # convention (b)
     except tarfile.TarError:
-        return False
-    if not top_members:
-        return False
-    return all(os.path.exists(os.path.join(parent, m)) for m in top_members)
+        pass
+    return parent, stem
+
+
+def already_extracted(tar_path: str) -> bool:
+    """Already extracted if the expected ``<parent>/<bucket>/`` exists and is
+    non-empty."""
+    target, stem = _extract_target(tar_path)
+    bucket_dir = target if os.path.basename(target) == stem else os.path.join(target, stem)
+    return os.path.isdir(bucket_dir) and any(os.scandir(bucket_dir))
 
 
 def extract_one(tar_path: str, dry_run: bool) -> bool:
-    parent = os.path.dirname(tar_path)
+    target, _stem = _extract_target(tar_path)
     if dry_run:
-        log(f"  DRY-RUN would extract -> {parent}")
+        log(f"  DRY-RUN would extract -> {target}")
         return True
     try:
+        os.makedirs(target, exist_ok=True)
         with tarfile.open(tar_path, "r") as tf:
-            tf.extractall(path=parent)
+            tf.extractall(path=target)
         return True
     except (tarfile.TarError, OSError) as e:
         log(f"  ERROR extracting: {e}")

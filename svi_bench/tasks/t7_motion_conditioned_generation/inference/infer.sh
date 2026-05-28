@@ -41,7 +41,7 @@ VALIDATION_SCRIPT="$HERE/infer.py"
 TEST_IDS="$SPORT_DIR/splits/test_100.txt"
 TEST_SUBSET="$SPORT_DIR/splits/test_100.bbox_paths.txt"
 if [ ! -f "$TEST_SUBSET" ]; then
-    python3 "$HERE/scripts/build_split_bbox_list.py" \
+    python3 "$TASK_DIR/scripts/build_split_bbox_list.py" \
         --ids "$TEST_IDS" \
         --root "$SPORT_DIR/bboxes" \
         --out "$TEST_SUBSET"

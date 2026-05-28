@@ -65,3 +65,7 @@ svi_bench/tasks/t9_cross_corpus_agentic_reasoning/.triton/
 
 svi_bench/tasks/t9_cross_corpus_agentic_reasoning/logs/
 
+
+# inference runtime outputs (created by inference/infer.sh under CWD)
+validation_logs/
+validation_splits/
