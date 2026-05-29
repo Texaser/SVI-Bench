@@ -129,18 +129,23 @@ def infer_mcq_options_from_text(question_text: str):
 
 
 def get_option_logits_and_probs(processor, outputs, options):
-    """Extract logits and softmax probabilities for MCQ option tokens."""
+    """Extract logits and softmax probabilities for MCQ option tokens.
+
+    For each option letter, checks both the bare token ("B", id=33) and the
+    space-prefixed token (" B", id=425) and takes the higher logit of the two.
+    This ensures the probabilities are consistent with greedy generation.
+    """
     if not (hasattr(outputs, "scores") and outputs.scores and len(outputs.scores) > 0):
         raise ValueError("No generation scores available.")
     tokenizer = processor.tokenizer
-    opt_token_ids = {}
-    for opt in options:
-        ids = tokenizer.encode(" " + opt, add_special_tokens=False)
-        if not ids:
-            raise ValueError(f"Tokenizer produced no ids for option '{opt}'.")
-        opt_token_ids[opt] = ids[-1]
     step0_logits = outputs.scores[0][0]
-    opt_logits = {opt: float(step0_logits[opt_token_ids[opt]].detach().cpu()) for opt in options}
+    opt_logits = {}
+    for opt in options:
+        bare_ids = tokenizer.encode(opt, add_special_tokens=False)
+        space_ids = tokenizer.encode(" " + opt, add_special_tokens=False)
+        bare_logit = float(step0_logits[bare_ids[-1]].detach().cpu())
+        space_logit = float(step0_logits[space_ids[-1]].detach().cpu())
+        opt_logits[opt] = max(bare_logit, space_logit)
     logits_tensor = torch.tensor([opt_logits[o] for o in options], dtype=torch.float32)
     probs = F.softmax(logits_tensor, dim=0)
     opt_probs = {o: float(p.item()) for o, p in zip(options, probs)}
@@ -232,6 +237,7 @@ def main():
     parser.add_argument("--model", default="Qwen/Qwen3-VL-8B-Instruct", help="Base model name/path")
     parser.add_argument("--adapter", default="", help="Path to LoRA adapter checkpoint (optional)")
     parser.add_argument("--sample_fps", type=float, default=0.2, help="Frame sampling rate (FPS)")
+    parser.add_argument("--video_root", default="", help="Root directory to prepend to relative video paths")
     args = parser.parse_args()
 
     rank, world_size, local_rank = setup_distributed()
@@ -279,6 +285,8 @@ def main():
     for idx, entry in enumerate(progress):
         entry_id = entry.get("id", f"entry_{idx}")
         video_path = entry.get("video")
+        if args.video_root and video_path and not os.path.isabs(video_path):
+            video_path = os.path.join(args.video_root, video_path)
 
         question, ground_truth = None, None
         for conv in entry.get("conversations", []):

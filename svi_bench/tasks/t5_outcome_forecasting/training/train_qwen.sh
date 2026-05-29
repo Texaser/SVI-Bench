@@ -11,8 +11,8 @@
 # Usage:
 #   # 1. Convert training JSON to Swift JSONL format:
 #   python training/convert_train_to_jsonl.py \
-#       --input dataset/basketball_train.json dataset/hockey_train.json dataset/soccer_train.json \
-#       --output dataset/train.jsonl
+#       --input data/basketball_train.json data/hockey_train.json data/soccer_train.json \
+#       --output data/train.jsonl
 #
 #   # 2. Run training (adjust GPU count and paths as needed):
 #   bash training/train_qwen.sh
@@ -38,7 +38,7 @@ export DECORD_VIDEO_NON_KEY_FRAME_RETRY_MAX=1
 
 # -------- Paths ----------
 MODEL="Qwen/Qwen3-VL-8B-Instruct"
-TRAIN_JSONL="dataset/train.jsonl"
+TRAIN_JSONL="data/train.jsonl"
 OUT_DIR="output/qwen3-vl-8b-lora-t5-forecasting"
 
 # -------- Training ----------

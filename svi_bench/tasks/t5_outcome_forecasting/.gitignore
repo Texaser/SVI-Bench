@@ -1,0 +1,7 @@
+# Internal utilities (not part of the public release)
+local_asset/
+
+# Outputs and logs
+outputs/
+logs/
+*.out

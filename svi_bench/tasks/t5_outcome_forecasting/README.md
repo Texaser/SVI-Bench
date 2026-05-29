@@ -77,14 +77,14 @@ Each JSON file contains a list of entries:
 
 - **`id`**: Encodes the question type and source game (e.g., `Q1_0_404818` is question type Q1).
 - **`conversations`**: The `human` turn contains the question with `<video>` placeholder; the `gpt` turn contains the ground-truth answer letter.
-- **`video`**: Absolute path to the video file. You will need to update these paths to match your local setup.
+- **`video`**: Path to the video file. Update these paths to match your local setup, or use the `--video_root` flag at inference time (supported by `infer_qwen.py`).
 
 ## Evaluation
 
 ### Metrics
 
 - **Accuracy**: Top-1 accuracy of the predicted answer letter.
-- **Calibration Error (CE)**: Predictions are grouped into *B*=5 equally spaced confidence bins. CE = (1/*B*) * sum |acc(*i*) - conf(*i*)| over all bins. CE = 0 indicates perfect calibration. (Applicable to models that output token-level probabilities, i.e., Qwen and Molmo.)
+- **Calibration Error (CE)**: Predictions are grouped into *B*=5 equally spaced confidence bins. CE = (1/*B*) &times; &sum; |acc(*i*) &minus; conf(*i*)| over all bins. CE = 0 indicates perfect calibration. Applicable to models that output token-level probabilities (Qwen and Molmo).
 
 ### Supported Models
 
@@ -92,39 +92,48 @@ Four inference scripts are provided in `evaluation/`, one per model family:
 
 | Model | Script | Temporal Sampling | Dependencies |
 |---|---|---|---|
-| GPT | `evaluation/infer_gpt.py` | Configurable FPS (default 0.5), frames as base64 JPEG | `openai`, `decord`, `numpy`, `tqdm`, `Pillow` |
-| Gemini | `evaluation/infer_gemini.py` | Direct video upload via Files API | `google-genai`, `tqdm` |
 | Qwen3-VL | `evaluation/infer_qwen.py` | Configurable FPS (default 0.2), optional LoRA adapter | `torch`, `transformers`, `peft`, `decord`, `numpy`, `tqdm`, `Pillow` |
 | Molmo2-8B | `evaluation/infer_molmo.py` | Configurable FPS (default 0.2) | `torch`, `transformers`, `molmo_utils`, `decord`, `numpy`, `tqdm` |
+| GPT | `evaluation/infer_gpt.py` | Configurable FPS (default 0.5), frames as base64 JPEG | `openai`, `decord`, `numpy`, `tqdm`, `Pillow` |
+| Gemini | `evaluation/infer_gemini.py` | Direct video upload via Files API | `google-genai`, `tqdm` |
 
 ### Running Evaluation
 
-**Qwen3-VL** (`evaluation/infer_qwen.py`) — supports optional LoRA adapter and multi-GPU distributed inference via `torchrun`:
+**Qwen3-VL** (`evaluation/infer_qwen.py`) — supports optional LoRA adapter, `--video_root` for path prefixing, and multi-GPU distributed inference via `torchrun`:
 
 ```bash
 # Single GPU
 python evaluation/infer_qwen.py \
-    --test_json dataset/basketball_test.json \
+    --test_json data/basketball_test.json \
     --output outputs/basketball_qwen.json \
     --sample_fps 0.2
 
-# With LoRA adapter
+# With LoRA adapter and video root
 python evaluation/infer_qwen.py \
-    --test_json dataset/hockey_test.json \
+    --test_json data/hockey_test.json \
     --output outputs/hockey_qwen.json \
+    --video_root /path/to/video/root \
     --adapter /path/to/lora/checkpoint
 
 # Multi-GPU (4 GPUs)
 torchrun --nproc_per_node=4 evaluation/infer_qwen.py \
-    --test_json dataset/soccer_test.json \
+    --test_json data/soccer_test.json \
     --output outputs/soccer_qwen.json
+```
+
+An example SLURM submission script is provided in `evaluation/run.sh`. Edit the paths and GPU count to match your setup:
+
+```bash
+bash evaluation/run.sh
+# or via SLURM:
+sbatch --gpus=8 --job-name=t5-qwen-eval --wrap="bash evaluation/run.sh"
 ```
 
 **Molmo2** (`evaluation/infer_molmo.py`) — supports multi-GPU distributed inference via `torchrun`:
 
 ```bash
 python evaluation/infer_molmo.py \
-    --test_json dataset/basketball_test.json \
+    --test_json data/basketball_test.json \
     --output outputs/basketball_molmo.json \
     --sample_fps 0.2
 ```
@@ -135,7 +144,7 @@ python evaluation/infer_molmo.py \
 export OPENAI_API_KEY="sk-..."
 
 python evaluation/infer_gpt.py \
-    --test_json dataset/basketball_test.json \
+    --test_json data/basketball_test.json \
     --output outputs/basketball_gpt.json \
     --model gpt-4o \
     --frame_fps 0.5 \
@@ -148,10 +157,21 @@ python evaluation/infer_gpt.py \
 export GEMINI_API_KEY="AIza..."
 
 python evaluation/infer_gemini.py \
-    --test_json dataset/soccer_test.json \
+    --test_json data/soccer_test.json \
     --output outputs/soccer_gemini.json \
     --model gemini-2.5-flash-preview
 ```
+
+### Calculating Calibration Error
+
+After running inference with a model that outputs option probabilities (Qwen or Molmo), use `evaluation/calc_ce.py` to calculate calibration error:
+
+```bash
+python evaluation/calc_ce.py --results outputs/basketball_qwen.json
+python evaluation/calc_ce.py --results outputs/basketball_qwen.json --num_bins 10
+```
+
+This script computes the calibration error and provides a detailed analysis of prediction confidence, accuracy per confidence bin, and model calibration quality.
 
 ## Training
 
@@ -160,8 +180,8 @@ We provide a LoRA fine-tuning script for Qwen3-VL using [ms-swift](https://githu
 ```bash
 # 1. Convert training data (can combine multiple sports)
 python training/convert_train_to_jsonl.py \
-    --input dataset/basketball_train.json dataset/hockey_train.json dataset/soccer_train.json \
-    --output dataset/train.jsonl
+    --input data/basketball_train.json data/hockey_train.json data/soccer_train.json \
+    --output data/train.jsonl
 
 # 2. Run LoRA fine-tuning (edit training/train_qwen.sh to adjust GPU count, paths, etc.)
 bash training/train_qwen.sh
@@ -181,7 +201,7 @@ The resulting LoRA checkpoint can be loaded for inference via `evaluation/infer_
 t5_outcome_forecasting/
 ├── __init__.py
 ├── README.md
-├── dataset/
+├── data/
 │   ├── basketball_train.json
 │   ├── basketball_test.json
 │   ├── hockey_train.json
@@ -192,12 +212,12 @@ t5_outcome_forecasting/
 │   ├── infer_qwen.py
 │   ├── infer_molmo.py
 │   ├── infer_gpt.py
-│   └── infer_gemini.py
-├── training/
-│   ├── convert_train_to_jsonl.py
-│   └── train_qwen.sh
-├── logs/
-└── outputs/
+│   ├── infer_gemini.py
+│   ├── calc_ce.py
+│   └── run.sh
+└── training/
+    ├── convert_train_to_jsonl.py
+    └── train_qwen.sh
 ```
 
 ## Notes
