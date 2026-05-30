@@ -1,0 +1,29 @@
+name: svi_t5
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    # Core
+    - torch==2.6.0
+    - torchvision==0.21.0
+    - transformers==4.57.3
+    - accelerate==1.7.0
+    - peft==0.17.1
+    - safetensors==0.7.0
+
+    # Video & image
+    - decord==0.6.0
+    - pillow==11.3.0
+
+    # Inference utilities
+    - numpy==1.26.4
+    - tqdm==4.67.1
+
+    # API-based models
+    - openai==2.14.0
+
+    # Training (ms-swift)
+    - ms-swift[llm]==3.12.0
+    - deepspeed==0.17.1

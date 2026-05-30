@@ -1,29 +1,65 @@
 #!/usr/bin/env bash
 # ============================================================
-# Example: Run Qwen3-VL inference on outcome forecasting data
+# T5 Outcome Forecasting — Inference Examples
 #
-# This script shows how to launch multi-GPU inference using
-# torchrun. Adjust NUM_GPUS, paths, and SLURM flags to match
-# your cluster setup.
+# Adjust paths, GPU counts, and API keys to match your setup.
+# Each section can be run independently.
 #
 # Usage:
-#   # Direct launch (no SLURM)
 #   bash evaluation/run.sh
 #
-#   # Via SLURM
-#   sbatch --gpus=8 --job-name=t5-qwen-eval --wrap="bash evaluation/run.sh"
+#   # Via SLURM (example)
+#   sbatch --gpus=8 --job-name=t5-eval --wrap="bash evaluation/run.sh"
 # ============================================================
 
+# ------- Common settings -------
 NUM_GPUS=8
+DATA_DIR="data/T5"
+OUTPUT_DIR="outputs"
+VIDEO_ROOT="/path/to/video/root"
 
-# ------- Adjust these paths -------
-TEST_JSON="data/hockey_test.json"
-OUTPUT="outputs/hockey_qwen.json"
-VIDEO_ROOT="/path/to/video/root"           # Root directory for video files
-ADAPTER="/path/to/lora/checkpoint"         # Set to "" to use base model
+mkdir -p "$OUTPUT_DIR"
 
+# ============================================================
+# Qwen3-VL (with LoRA adapter)
+# ============================================================
 torchrun --nproc_per_node=$NUM_GPUS evaluation/infer_qwen.py \
-    --test_json "$TEST_JSON" \
-    --output "$OUTPUT" \
+    --test_json "$DATA_DIR/basketball_test.json" \
+    --output "$OUTPUT_DIR/basketball_qwen.json" \
     --video_root "$VIDEO_ROOT" \
-    --adapter "$ADAPTER"
+    --sample_fps 0.2 \
+    --adapter /path/to/lora/checkpoint
+
+# ============================================================
+# Molmo2
+# ============================================================
+# torchrun --nproc_per_node=$NUM_GPUS evaluation/infer_molmo.py \
+#     --test_json "$DATA_DIR/basketball_test.json" \
+#     --output "$OUTPUT_DIR/basketball_molmo.json" \
+#     --sample_fps 0.2
+
+# ============================================================
+# GPT
+# ============================================================
+# export OPENAI_API_KEY="sk-..."
+# python evaluation/infer_gpt.py \
+#     --test_json "$DATA_DIR/basketball_test.json" \
+#     --output "$OUTPUT_DIR/basketball_gpt.json" \
+#     --model gpt-4o \
+#     --frame_fps 0.5 \
+#     --image_detail low
+
+# ============================================================
+# Gemini
+# ============================================================
+# export GEMINI_API_KEY="AIza..."
+# python evaluation/infer_gemini.py \
+#     --test_json "$DATA_DIR/soccer_test.json" \
+#     --output "$OUTPUT_DIR/soccer_gemini.json" \
+#     --model gemini-2.5-flash-preview
+
+# ============================================================
+# Calibration Error (after Qwen or Molmo inference)
+# ============================================================
+# python evaluation/calc_ce.py --results "$OUTPUT_DIR/basketball_qwen.json"
+# python evaluation/calc_ce.py --results "$OUTPUT_DIR/basketball_qwen.json" --num_bins 5

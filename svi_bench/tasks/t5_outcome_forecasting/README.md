@@ -1,226 +1,117 @@
 # T5 — Outcome Forecasting
 
-**Pillar 2: Causal Reasoning** &nbsp;|&nbsp; 3–15 min video segments &nbsp;|&nbsp; MCQ &nbsp;|&nbsp; Accuracy
+Given a 3–15 min video segment and a multiple-choice question about a future event, predict the outcome by selecting the correct answer (A–E). The target event occurs *beyond* the input window. Metrics: Accuracy and Calibration Error (CE).
 
-## Task Overview
+Two design choices prevent shortcuts: (1) questions ask about *future* progression only, blocking statistical priors; (2) players are referenced via visual cues (e.g., *"the player who makes a 3-point shot during 4:13–4:23"*), forcing visual identification.
 
-Given a video segment capturing a sequence of play (3–15 minutes) and a multiple-choice question about a future event, the model must predict the outcome by selecting the correct answer from a candidate set. The target event occurs *beyond* the input window, requiring the model to infer the most probable course of game development from visual evidence rather than trend extrapolation.
+## 1. Install
 
-Questions span three forecasting categories:
+```bash
+conda env create -f environment.yaml && conda activate svi_t5
+```
 
-| Category | Description | Example |
-|---|---|---|
-| **Performance forecasting** | Predicting future player- or team-level statistics | *How many points will this player score from the end of this segment until the end of the half?* |
-| **Game state evolution** | Anticipating how the game state will change, including final scores, possession shifts, and overall outcomes | *Predict which team will win the game by the end of regulation.* |
-| **Strategic intention** | Inferring the most likely tactics from observed play patterns | *Which play type will this team attempt most frequently?* |
+Or follow the official guides for the models you plan to use:
+- [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) &nbsp;|&nbsp; [Molmo2](https://github.com/allenai/molmo)
 
-## Question Types
+For training, additionally install [ms-swift](https://github.com/modelscope/ms-swift): `pip install ms-swift[llm]`
 
-We define 15 question types across three sports (6 shared, 4 basketball-specific, 2 hockey-specific, 3 soccer-specific):
+## 2. Data
 
-| # | Question Type | Category | Sports |
-|---|---|---|---|
-| 1 | Player Statistics Prediction | Performance | All |
-| 2 | Team Statistics Prediction | Performance | All |
-| 3 | Player Statistics Milestone | Performance | All |
-| 4 | Team Statistics Milestone | Performance | All |
-| 5 | Game Outcome Prediction | Game state | All |
-| 6 | Next Player Action Prediction | Game state | All |
-| 7 | Player Most Attempted Play Type | Strategic intention | Basketball |
-| 8 | Player Most Attempted Shot Type | Strategic intention | Basketball |
-| 9 | Team Most Attempted Play Type | Strategic intention | Basketball |
-| 10 | Team Most Attempted Shot Type | Strategic intention | Basketball |
-| 11 | Player Most Attempted Shot Type | Strategic intention | Hockey |
-| 12 | Team Most Attempted Shot Type | Strategic intention | Hockey |
-| 13 | Team Most Attempted Attack Flank | Strategic intention | Soccer |
-| 14 | Next Team to Score | Game state | Soccer |
-| 15 | Team Most Possession | Strategic intention | Soccer |
+```bash
+huggingface-cli download MVP-Group/SVI-Bench --repo-type dataset \
+    --include "T5/**" --local-dir data/
+```
 
-Basketball has Q1–Q10, hockey has Q1–Q8 (mapped from type IDs 1–6, 11–12), and soccer has Q1–Q9 (mapped from type IDs 1–6, 13–15). The question type is encoded in each entry's `id` field (e.g., `Q1_0_404818`).
+Everything goes under `data/T5/`:
 
-### Preventing Shortcut Solutions
+```
+data/T5/
+├── {basketball,hockey,soccer}_train.json
+└── {basketball,hockey,soccer}_test.json
+```
 
-Two design choices ensure the task requires genuine visual forecasting:
-
-1. **Future-oriented questions.** All questions ask about *future* game progression relative to the observation window, not cumulative totals. This prevents models from exploiting seasonal statistical priors.
-2. **Indirect player references.** Player names are never revealed. Instead, questions use indirect visual references grounded in the observation clip (e.g., *"the player who makes a 3-point shot during 4:13–4:23"*), forcing the model to visually identify the relevant player before any prediction.
-
-## Dataset
-
-| Sport | Train | Test | Video Hours | Avg. Clip Length |
-|---|---|---|---|---|
-| Basketball | 43,466 | 7,000 | 6,053 | 431.8 s |
-| Hockey | 43,585 | 7,123 | 7,009 | 497.7 s |
-| Soccer | 10,328 | 2,593 | 945 | 525.9 s |
-| **Total** | **97,379** | **16,716** | **14,007** | |
-
-### Data Format
-
-Each JSON file contains a list of entries:
+Each entry:
 
 ```json
 {
-  "id": "Q1_0_404818",
+  "id": "Q1_2846637",
   "conversations": [
-    {
-      "from": "human",
-      "value": "<video>\nAnalyze the 10-minute segment from the 3rd period. Focus on the player who makes a three-point attempt between time 1:19 and 1:29. How many total assists will this specific player record during the 4th period?\nA: 4\nB: 2\nC: 10\nD: 5\nE: 8"
-    },
-    {
-      "from": "gpt",
-      "value": "B"
-    }
+    {"from": "human", "value": "<video>\n[question with options A–E]"},
+    {"from": "gpt", "value": "B"}
   ],
-  "video": "/path/to/video.mp4"
+  "video": "T5/basketball/shards/shard_07/Q1_5526717.mp4"
 }
 ```
 
-- **`id`**: Encodes the question type and source game (e.g., `Q1_0_404818` is question type Q1).
-- **`conversations`**: The `human` turn contains the question with `<video>` placeholder; the `gpt` turn contains the ground-truth answer letter.
-- **`video`**: Path to the video file. Update these paths to match your local setup, or use the `--video_root` flag at inference time (supported by `infer_qwen.py`).
+The `video` field is a relative path. Use `--video_root` at inference time to prepend your local root.
 
-## Evaluation
+## 3. Evaluate
 
-### Metrics
+Four inference scripts in `evaluation/`, one per model family. All support resumption.
 
-- **Accuracy**: Top-1 accuracy of the predicted answer letter.
-- **Calibration Error (CE)**: Predictions are grouped into *B*=5 equally spaced confidence bins. CE = (1/*B*) &times; &sum; |acc(*i*) &minus; conf(*i*)| over all bins. CE = 0 indicates perfect calibration. Applicable to models that output token-level probabilities (Qwen and Molmo).
-
-### Supported Models
-
-Four inference scripts are provided in `evaluation/`, one per model family:
-
-| Model | Script | Temporal Sampling | Dependencies |
-|---|---|---|---|
-| Qwen3-VL | `evaluation/infer_qwen.py` | Configurable FPS (default 0.2), optional LoRA adapter | `torch`, `transformers`, `peft`, `decord`, `numpy`, `tqdm`, `Pillow` |
-| Molmo2-8B | `evaluation/infer_molmo.py` | Configurable FPS (default 0.2) | `torch`, `transformers`, `molmo_utils`, `decord`, `numpy`, `tqdm` |
-| GPT | `evaluation/infer_gpt.py` | Configurable FPS (default 0.5), frames as base64 JPEG | `openai`, `decord`, `numpy`, `tqdm`, `Pillow` |
-| Gemini | `evaluation/infer_gemini.py` | Direct video upload via Files API | `google-genai`, `tqdm` |
-
-### Running Evaluation
-
-**Qwen3-VL** (`evaluation/infer_qwen.py`) — supports optional LoRA adapter, `--video_root` for path prefixing, and multi-GPU distributed inference via `torchrun`:
+**Qwen3-VL** — supports LoRA adapter, `--video_root`, multi-GPU via `torchrun`:
 
 ```bash
-# Single GPU
-python evaluation/infer_qwen.py \
-    --test_json data/basketball_test.json \
+torchrun --nproc_per_node=8 evaluation/infer_qwen.py \
+    --test_json data/T5/basketball_test.json \
     --output outputs/basketball_qwen.json \
-    --sample_fps 0.2
-
-# With LoRA adapter and video root
-python evaluation/infer_qwen.py \
-    --test_json data/hockey_test.json \
-    --output outputs/hockey_qwen.json \
     --video_root /path/to/video/root \
+    --sample_fps 0.2 \
     --adapter /path/to/lora/checkpoint
-
-# Multi-GPU (4 GPUs)
-torchrun --nproc_per_node=4 evaluation/infer_qwen.py \
-    --test_json data/soccer_test.json \
-    --output outputs/soccer_qwen.json
 ```
 
-An example SLURM submission script is provided in `evaluation/run.sh`. Edit the paths and GPU count to match your setup:
+**Molmo2** — multi-GPU via `torchrun`:
 
 ```bash
-bash evaluation/run.sh
-# or via SLURM:
-sbatch --gpus=8 --job-name=t5-qwen-eval --wrap="bash evaluation/run.sh"
-```
-
-**Molmo2** (`evaluation/infer_molmo.py`) — supports multi-GPU distributed inference via `torchrun`:
-
-```bash
-python evaluation/infer_molmo.py \
-    --test_json data/basketball_test.json \
+torchrun --nproc_per_node=8 evaluation/infer_molmo.py \
+    --test_json data/T5/basketball_test.json \
     --output outputs/basketball_molmo.json \
     --sample_fps 0.2
 ```
 
-**GPT** (`evaluation/infer_gpt.py`) — uses OpenAI Responses API with resumption support:
+**GPT** — OpenAI Responses API:
 
 ```bash
 export OPENAI_API_KEY="sk-..."
-
 python evaluation/infer_gpt.py \
-    --test_json data/basketball_test.json \
+    --test_json data/T5/basketball_test.json \
     --output outputs/basketball_gpt.json \
-    --model gpt-4o \
-    --frame_fps 0.5 \
-    --image_detail low
+    --model gpt-4o --frame_fps 0.5 --image_detail low
 ```
 
-**Gemini** (`evaluation/infer_gemini.py`) — uploads video directly via Files API with resumption support:
+**Gemini** — direct video upload via Files API:
 
 ```bash
 export GEMINI_API_KEY="AIza..."
-
 python evaluation/infer_gemini.py \
-    --test_json data/soccer_test.json \
+    --test_json data/T5/soccer_test.json \
     --output outputs/soccer_gemini.json \
     --model gemini-2.5-flash-preview
 ```
 
-### Calculating Calibration Error
+An example SLURM launch script is provided in `evaluation/run.sh`.
 
-After running inference with a model that outputs option probabilities (Qwen or Molmo), use `evaluation/calc_ce.py` to calculate calibration error:
+**Calibration Error** — after running inference with option logits available:
 
 ```bash
 python evaluation/calc_ce.py --results outputs/basketball_qwen.json
-python evaluation/calc_ce.py --results outputs/basketball_qwen.json --num_bins 10
+python evaluation/calc_ce.py --results outputs/basketball_qwen.json --num_bins 5
 ```
 
-This script computes the calibration error and provides a detailed analysis of prediction confidence, accuracy per confidence bin, and model calibration quality.
+## 4. Train
 
-## Training
-
-We provide a LoRA fine-tuning script for Qwen3-VL using [ms-swift](https://github.com/modelscope/ms-swift). First convert the training JSON to Swift's JSONL format, then run training:
+LoRA fine-tuning for Qwen3-VL using [ms-swift](https://github.com/modelscope/ms-swift). Runs on 8 GPUs with DeepSpeed ZeRO-3.
 
 ```bash
-# 1. Convert training data (can combine multiple sports)
+# 1. Convert training data to Swift JSONL format
 python training/convert_train_to_jsonl.py \
-    --input data/basketball_train.json data/hockey_train.json data/soccer_train.json \
-    --output data/train.jsonl
+    --input data/T5/basketball_train.json data/T5/hockey_train.json data/T5/soccer_train.json \
+    --output data/T5/train.jsonl
 
 # 2. Run LoRA fine-tuning (edit training/train_qwen.sh to adjust GPU count, paths, etc.)
 bash training/train_qwen.sh
 ```
 
-Key training settings (in `training/train_qwen.sh`):
-- **LoRA** rank 8 / alpha 32 on all linear layers, ViT and aligner frozen
-- **Video sampling**: 0.2 FPS with max 768 visual tokens per video
-- **Sequence length**: 50,000 tokens
-- **Optimizer**: AdamW with lr=1e-4, bfloat16 precision
+Key settings: LoRA rank 8 / alpha 32, frozen ViT + aligner, 0.2 FPS, 50k seq length, AdamW lr=1e-4, bfloat16.
 
-The resulting LoRA checkpoint can be loaded for inference via `evaluation/infer_qwen.py --adapter <checkpoint_path>`.
-
-## Directory Structure
-
-```
-t5_outcome_forecasting/
-├── __init__.py
-├── README.md
-├── data/
-│   ├── basketball_train.json
-│   ├── basketball_test.json
-│   ├── hockey_train.json
-│   ├── hockey_test.json
-│   ├── soccer_train.json
-│   └── soccer_test.json
-├── evaluation/
-│   ├── infer_qwen.py
-│   ├── infer_molmo.py
-│   ├── infer_gpt.py
-│   ├── infer_gemini.py
-│   ├── calc_ce.py
-│   └── run.sh
-└── training/
-    ├── convert_train_to_jsonl.py
-    └── train_qwen.sh
-```
-
-## Notes
-
-- Data config on HF: `t5_outcome_forecasting`
-- Default eval config: [`configs/t5.yaml`](../../../configs/t5.yaml)
+The resulting checkpoint can be loaded via `evaluation/infer_qwen.py --adapter <path>`.
