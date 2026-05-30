@@ -44,7 +44,7 @@ SVI-Bench/
 ├── LICENSE
 ├── scripts/                  # benchmark-wide helpers (e.g. extract_tars.py)
 └── svi_bench/
-    ├── core/                 # shared utilities (config loader, model registry)
+    ├── core/                 # shared utilities
     └── tasks/                # one self-contained subpackage per task
         ├── t1_structured_play_description/
         ├── t2_fine_grained_action_qa/
