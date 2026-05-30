@@ -1,6 +1,7 @@
 from evaluation.models.model import Model
 from evaluation.prompts import *
 
+import argparse
 import json
 import re
 from openai import OpenAI
@@ -20,35 +21,15 @@ def get_sport(league: str) -> str:
     else:
         return "soccer"
 
-def get_video_path(game_id: str, league: str) -> str:
-    path = None
-    if league == "NBA" or league == "NCAA":
-        path = f"/mnt/sun/shared/datasets/sports_dataset/basketball/full_game_video/{game_id}_full.mp4"
-    
-    if league == "EuroLeague":
-        if os.path.exists(f"../Basketball_QA/euroleague_games/{game_id}_full.mp4"):
-            path = f"../Basketball_QA/euroleague_games/{game_id}_full.mp4"
-        else:
-            path = f"/mnt/sun/shared/datasets/sports_dataset/basketball/0501_Euroleague/{game_id}_full.mp4"
-    
-    if league == "NHL":
-        path = f"/mnt/sun/shared/datasets/sports_dataset/hockey/full_game_video/{game_id}_full.mp4"
-    
-    if league == "LaLiga" or league == "Premier League":
-        paths = []
-        for dirpath, dirnames, filenames in os.walk("/mnt/sun/shared/datasets/sports_dataset/soccer/full_game_video"):
-            for filename in filenames:
-                paths.append(os.path.join(dirpath, filename))
-
-        for p in paths:
-            if game_id in p:
-                path = p
-                break
-    
+def get_video_path(item: dict, video_root: str) -> str:
+    """Resolve video path using the relative video_path field and a root directory."""
+    rel_path = item.get("video_path", "")
+    if not rel_path:
+        return None
+    path = os.path.join(video_root, rel_path) if video_root else rel_path
     if os.path.exists(path):
         return path
-    else:
-        return None
+    return None
 
 def parse_answers(text: str, max_answers: int = 5) -> list[str]:
     answers = [
@@ -125,16 +106,16 @@ def score_answers(question: str, answer: str, answers: list[str]) -> int:
 
     return score, results
 
-def process_qa(path: str, model: Model, max_answers=5):
+def process_qa(path: str, model: Model, video_root: str = "", max_answers=5):
 
     with open(path, 'r') as f:
         qa = json.load(f)
-    
+
     trace = []
 
     for item in tqdm(qa, desc=f"{model.name()}, {path}"):
         try:
-            response = model.process_question(EVAL_PROMPT.format(item["question"], max_answers), get_video_path(item["game_id"], item["league"]))
+            response = model.process_question(EVAL_PROMPT.format(item["question"], max_answers), get_video_path(item, video_root))
             answers = parse_answers(response, max_answers=max_answers)
             score, output = score_answers(item["question"], item["answer"], answers)
             trace += output
@@ -153,12 +134,12 @@ def process_qa(path: str, model: Model, max_answers=5):
     
     return qa, trace
 
-def evaluate(model: Model, max_answers=5, subset=False):
-    
+def evaluate(model: Model, video_root: str = "", max_answers=5, subset=False):
+
     out_dir = f"outputs/{model.name()}/k-{max_answers}"
     os.makedirs(out_dir, exist_ok=True)
 
-    qa, trace = process_qa("dataset/qa.json" if not subset else "dataset/qa_subset.json", model, max_answers=max_answers)
+    qa, trace = process_qa("dataset/qa.json" if not subset else "dataset/qa_subset.json", model, video_root=video_root, max_answers=max_answers)
 
     with open(f"{out_dir}/llm_judge_trace.json", 'w') as f:
         json.dump(trace, f, indent=4)
@@ -194,6 +175,15 @@ def evaluate(model: Model, max_answers=5, subset=False):
         f.write(f"overall score: {total_score / total_succeeded if total_succeeded > 0 else -1}, {total_succeeded}/{len(qa)} questions succeeded\n")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="T4 Strategic Reasoning QA Evaluation")
+    parser.add_argument("--video_root", default="", help="Root directory to prepend to relative video paths")
+    parser.add_argument("--model", default="qwen", choices=["qwen", "molmo", "gpt", "gemini"],
+                        help="Model to evaluate")
+    parser.add_argument("--model_key", default="", help="API key for GPT/Gemini models")
+    parser.add_argument("--max_answers", type=int, default=5, help="Max answers per question")
+    parser.add_argument("--subset", action="store_true", help="Use qa_subset.json instead of qa.json")
+    args = parser.parse_args()
+
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     if not OPENROUTER_API_KEY:
         raise RuntimeError(
@@ -201,15 +191,16 @@ if __name__ == "__main__":
             "Please export it, e.g.\n"
             "  export OPENROUTER_API_KEY=your_key_here"
         )
-    
-    # from evaluation.models.molmo import Molmo
-    # evaluate(Molmo())
 
-    # from evaluation.models.qwen import Qwen
-    # evaluate(Qwen())
-
-    # from evaluation.models.gpt import GPT
-    # evaluate(GPT(key=""))
-
-    # from evaluation.models.gemini import Gemini
-    # evaluate(Gemini(key=""))
+    if args.model == "molmo":
+        from evaluation.models.molmo import Molmo
+        evaluate(Molmo(), video_root=args.video_root, max_answers=args.max_answers, subset=args.subset)
+    elif args.model == "qwen":
+        from evaluation.models.qwen import Qwen
+        evaluate(Qwen(), video_root=args.video_root, max_answers=args.max_answers, subset=args.subset)
+    elif args.model == "gpt":
+        from evaluation.models.gpt import GPT
+        evaluate(GPT(key=args.model_key), video_root=args.video_root, max_answers=args.max_answers, subset=args.subset)
+    elif args.model == "gemini":
+        from evaluation.models.gemini import Gemini
+        evaluate(Gemini(key=args.model_key), video_root=args.video_root, max_answers=args.max_answers, subset=args.subset)
