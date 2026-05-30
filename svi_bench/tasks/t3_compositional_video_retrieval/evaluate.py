@@ -208,12 +208,7 @@ def run(
     the per-combination metric summary (R@1, R@10, R@100, MedR, n).
     """
     if config is None:
-        try:
-            from svi_bench.core.config import load_config
-
-            config = load_config(TASK)
-        except FileNotFoundError:
-            config = {}
+        config = {}
 
     sports = sports or config.get("sports") or SPORTS
     splits = splits or config.get("splits") or SPLITS

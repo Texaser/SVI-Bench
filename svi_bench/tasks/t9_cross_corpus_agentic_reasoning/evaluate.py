@@ -371,12 +371,7 @@ def run(
             non-interactive shell.
     """
     if config is None:
-        try:
-            from svi_bench.core.config import load_config
-
-            config = load_config(TASK)
-        except FileNotFoundError:
-            config = {}
+        config = {}
 
     selected_archs = _resolve_archs(model_name, archs, config)
     root = _resolve_data_root(local_data_root)
