@@ -75,16 +75,17 @@ def get_prompt(sample_dir):
     return prompt
 
 
-def get_game_ids(sample_dir, q_type):
+def get_video_paths_from_meta(sample_dir, q_type):
+    """Get relative video paths from metadata.json."""
     meta_path = os.path.join(sample_dir, "metadata.json")
     if not os.path.exists(meta_path):
         return []
     with open(meta_path) as f:
         meta = json.load(f)
     if q_type.startswith("multi_"):
-        return [str(g) for g in meta.get("game_id_list", [])]
-    gid = meta.get("game_id")
-    return [str(gid)] if gid else []
+        return meta.get("video_paths", [])
+    vp = meta.get("video_path", "")
+    return [vp] if vp else []
 
 
 # ============================================================================
@@ -152,23 +153,24 @@ def concat_videos(video_paths, output_path):
         os.unlink(list_path)
 
 
-def prepare_video(video_dir, game_ids, cache_dir, total_duration):
+def prepare_video(video_paths, cache_dir, total_duration):
     """Compress and optionally concatenate game videos."""
-    if len(game_ids) == 1:
-        src = os.path.join(video_dir, f"{game_ids[0]}_full.mp4")
+    if len(video_paths) == 1:
+        src = video_paths[0]
         if not os.path.exists(src):
             return None
-        dst = os.path.join(cache_dir, f"{game_ids[0]}_compressed.mp4")
+        name = os.path.splitext(os.path.basename(src))[0]
+        dst = os.path.join(cache_dir, f"{name}_compressed.mp4")
         return compress_video(src, dst, total_duration)
 
     # Multi-game: split duration evenly
-    per_game = total_duration / len(game_ids)
+    per_game = total_duration / len(video_paths)
     compressed = []
-    for gid in game_ids:
-        src = os.path.join(video_dir, f"{gid}_full.mp4")
+    for src in video_paths:
         if not os.path.exists(src):
             continue
-        dst = os.path.join(cache_dir, f"{gid}_compressed_{int(per_game)}s.mp4")
+        name = os.path.splitext(os.path.basename(src))[0]
+        dst = os.path.join(cache_dir, f"{name}_compressed_{int(per_game)}s.mp4")
         result = compress_video(src, dst, per_game)
         if result:
             compressed.append(result)
@@ -307,11 +309,12 @@ def main():
             if not prompt:
                 continue
 
-            game_ids = get_game_ids(sample_dir, q_type)
-            if not game_ids:
+            rel_paths = get_video_paths_from_meta(sample_dir, q_type)
+            if not rel_paths:
                 continue
+            full_paths = [os.path.join(args.video_dir, rp) for rp in rel_paths]
 
-            video_path = prepare_video(args.video_dir, game_ids, args.video_cache_dir,
+            video_path = prepare_video(full_paths, args.video_cache_dir,
                                        args.total_duration)
             if not video_path:
                 results_list.append({"q_type": q_type, "sample_id": sid,

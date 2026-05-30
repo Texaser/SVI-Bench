@@ -124,11 +124,11 @@ def get_video_paths(sample_dir, q_type, video_dir):
     with open(meta_path) as f:
         meta = json.load(f)
     if q_type.startswith("multi_"):
-        game_ids = meta.get("game_id_list", [])
+        rel_paths = meta.get("video_paths", [])
     else:
-        gid = meta.get("game_id")
-        game_ids = [str(gid)] if gid else []
-    return [os.path.join(video_dir, f"{gid}_full.mp4") for gid in game_ids]
+        vp = meta.get("video_path", "")
+        rel_paths = [vp] if vp else []
+    return [os.path.join(video_dir, rp) for rp in rel_paths]
 
 
 # ============================================================================

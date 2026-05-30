@@ -156,6 +156,8 @@ def main():
     parser.add_argument("--output", required=True, help="Output evaluation results JSON")
     parser.add_argument("--judge_model", default="Qwen/Qwen3-235B-A22B-Thinking-2507-FP8")
     parser.add_argument("--tensor_parallel", type=int, default=4)
+    parser.add_argument("--pipeline_parallel", type=int, default=2,
+                        help="Pipeline parallel size (use 2 for A6000 8-GPU, 1 for H100 4-GPU)")
     parser.add_argument("--batch_size", type=int, default=8)
     args = parser.parse_args()
 
@@ -167,10 +169,13 @@ def main():
     with open(args.predictions) as f:
         predictions = json.load(f)
 
+    # A6000 (8 GPUs): --tensor_parallel 4 --pipeline_parallel 2
+    # H100  (4 GPUs): --tensor_parallel 4 --pipeline_parallel 1
     print(f"Loading judge model: {args.judge_model}")
     llm = LLM(
         model=args.judge_model,
         tensor_parallel_size=args.tensor_parallel,
+        pipeline_parallel_size=args.pipeline_parallel,
         gpu_memory_utilization=0.90,
         max_model_len=32768 * 5,
         trust_remote_code=True,

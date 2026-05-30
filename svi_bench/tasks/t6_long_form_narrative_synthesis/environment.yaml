@@ -1,0 +1,29 @@
+name: SVI_t6
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    # ── Core ML ──
+    - torch>=2.4.0
+    - transformers>=4.45.0
+    - peft>=0.12.0
+    - accelerate>=0.34.0
+    - vllm>=0.6.0
+
+    # ── Inference APIs ──
+    - openai>=1.50.0
+    - google-genai>=1.0.0
+
+    # ── Video / Image ──
+    - opencv-python-headless>=4.8.0
+    - decord>=0.6.0
+    - Pillow>=10.0.0
+
+    # ── Utilities ──
+    - numpy>=1.26.0
+    - tqdm>=4.66.0
