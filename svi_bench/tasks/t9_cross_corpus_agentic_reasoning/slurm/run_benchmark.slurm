@@ -23,7 +23,7 @@ CONDA_ENV="${CONDA_ENV:-svi-bench-t9}"
 #   TOTAL_QUESTIONS=1000
 #   ARCH=gpt5
 
-QUESTIONS_FILE="${QUESTIONS_FILE:-${T9_ROOT:-$PIPELINE_DIR/../../data/T9}/questions/hockey.json}"
+QUESTIONS_FILE="${QUESTIONS_FILE:-${T9_ROOT:-$PIPELINE_DIR/../../../data/T9}/questions/hockey.json}"
 TOTAL_QUESTIONS="${TOTAL_QUESTIONS:-1000}"
 ARCH="${ARCH:-gpt5}"
 SPORT="${SPORT:?ERROR: SPORT env var required (basketball/hockey/soccer)}"

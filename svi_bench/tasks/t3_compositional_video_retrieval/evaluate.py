@@ -100,9 +100,9 @@ def _resolve_data_root(local_data_root: str | pathlib.Path | None) -> pathlib.Pa
     cached = snapshot_download(
         repo_id="MVP-Group/SVI-Bench",
         repo_type="dataset",
-        allow_patterns=[f"{TASK}/*"],
+        allow_patterns=["T3/**"],
     )
-    return pathlib.Path(cached) / TASK
+    return pathlib.Path(cached) / "T3"
 
 
 def _embed_path(embed_dir: pathlib.Path, sport: str, split: str, suffix: str) -> pathlib.Path:

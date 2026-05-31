@@ -9,14 +9,17 @@ same-sport negatives. Metrics: R@K and median rank.
 ## 1. Install
 
 ```bash
+cd SVI-Bench/                # repo root (contains pyproject.toml)
 conda create -n svi-bench-t3 python=3.11 -y && conda activate svi-bench-t3
-pip install -e ".[t3]"     # from the SVI-Bench/ repo root
+pip install -e ".[t3]"
 python -c "from transformers import BertTokenizer; BertTokenizer.from_pretrained('bert-large-uncased')"
 ```
 
 ---
 
 ## 2. Data
+
+From the repo root:
 
 ```bash
 huggingface-cli download MVP-Group/SVI-Bench --repo-type dataset \
@@ -50,9 +53,9 @@ Two steps: 1. **extract embeddings** 2. **run retrieval**
 
 ### 3.1 Extract embeddings
 
-For the provided baselines, embeddings are already at
-`data/T3/embeds/embeds_{val|test}_{sport}_{full|partial}.pt` from
-`svi-bench download`. Skip to 3.2.
+For the provided baselines, embeddings are already included in the
+download from §2 at `data/T3/embeds/embeds_{val|test}_{sport}_{full|partial}.pt`.
+Skip to 3.2.
 
 For your own checkpoint, point the eval scripts at it and choose a short
 tag for the output filename:
@@ -60,7 +63,8 @@ tag for the output filename:
 ```bash
 cd svi_bench/tasks/t3_compositional_video_retrieval/internvideo2
 
-export EVAL_CKPT=$T3_ROOT/results/finetune_full_caption/ckpt_latest.pth
+export T3_ROOT=../../../../data/T3    # adjust if your data lives elsewhere
+export EVAL_CKPT=$T3_ROOT/results/finetune_full_caption/ckpt_04.pth
 export EVAL_SUFFIX=myrun     # any short tag
 
 for sport in basketball hockey soccer; do
@@ -100,6 +104,8 @@ svi-bench evaluate --task t3 --model my-model
 ---
 
 ## 4. Train
+
+From the repo root:
 
 ```bash
 cd svi_bench/tasks/t3_compositional_video_retrieval/internvideo2

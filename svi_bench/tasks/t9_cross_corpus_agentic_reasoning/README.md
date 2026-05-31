@@ -5,6 +5,7 @@ T9 is the cross-corpus agentic reasoning task in SVI-Bench: an agent searches vi
 ## Install
 
 ```bash
+cd SVI-Bench/                # repo root (contains pyproject.toml)
 conda create -n svi-bench-t9 python=3.11 -y && conda activate svi-bench-t9
 pip install -e ".[t9]"
 export HF_HOME=/path/to/hf_cache   # edit this for the hf cache location
@@ -19,13 +20,15 @@ echo 'xpack.security.enabled: false' >> elasticsearch-9.2.3/config/elasticsearch
 
 ## Data
 
+From the repo root:
+
 ```bash
 huggingface-cli download MVP-Group/SVI-Bench --repo-type dataset \
     --include "T9/**" --local-dir data/
 ```
 
 Large data (game archives, embeddings, ES indices) are shipped as `.tar`
-bundles. After downloading, extract them:
+bundles. After downloading, extract them (still from the repo root):
 
 ```bash
 python3 scripts/extract_tars.py --root data/T9
@@ -55,10 +58,16 @@ data/T9/
 
 ## Launch the environment
 
+All commands below run from the **T9 task directory**:
+
+```bash
+cd svi_bench/tasks/t9_cross_corpus_agentic_reasoning
+```
+
 Start Elasticsearch and ingest the data (one-time, shared by both modes below):
 
 ```bash
-elasticsearch-9.2.3/bin/elasticsearch -d
+/path/to/elasticsearch-9.2.3/bin/elasticsearch -d    # absolute path to your ES install
 python3 scripts/ingest.py
 curl -X GET "localhost:9200/_cat/indices?v"
 ```
@@ -112,7 +121,7 @@ export T9_AGENT_SERVER_HOST=<orchestrator-host>                       # default:
 export CONDA_PROFILE=/path/to/miniconda3/etc/profile.d/conda.sh       # required for SLURM submission
 
 bash scripts/submit_experiment.sh <arch-id> \
-    --questions-file data/T9/questions/<sport>.json \
+    --questions-file $T9_ROOT/questions/<sport>.json \
     --sport <sport>
 ```
 
