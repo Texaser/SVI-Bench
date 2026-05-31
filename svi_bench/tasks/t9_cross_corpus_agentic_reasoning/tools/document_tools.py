@@ -148,140 +148,24 @@ def init_document_database(persist_dir: str, data_metadata: Dict, enabled_source
         storage_context_bm25 = StorageContext.from_defaults(vector_store=es_store_bm25)
         _INDEX_BM25 = VectorStoreIndex.from_vector_store(es_store_bm25, storage_context=storage_context_bm25, embed_model=embed_model)
         
-        # Check emptiness — primary signal: query ES directly. Secondary
-        # signal: per-persist-dir flag file (kept for offline scenarios).
-        es_already_populated = _es_index_populated(es_url, index_name)
-        ingested_flag = os.path.join(persist_dir, "es_ingested.flag")
+        if not _es_index_populated(es_url, index_name):
+            raise RuntimeError(
+                f"Elasticsearch index '{index_name}' is empty. "
+                f"Run 'python3 scripts/ingest.py' to populate it before starting the agent."
+            )
+        print(f"Using existing Elasticsearch index: {index_name}")
 
-        if not es_already_populated and not os.path.exists(ingested_flag):
-            # Use a lock file to prevent race conditions among multiple workers
-            lock_file_path = os.path.join(persist_dir, "ingestion.lock")
-            if not os.path.exists(persist_dir): os.makedirs(persist_dir, exist_ok=True)
-            
-            import fcntl
-            import time
-            
-            print(f"Acquiring lock for ingestion at {lock_file_path}...")
-            with open(lock_file_path, 'w') as lock_file:
-                try:
-                    # Blocking exclusive lock
-                    fcntl.flock(lock_file, fcntl.LOCK_EX)
-                    
-                    # Check flag again after acquiring lock (double-checked locking)
-                    if not os.path.exists(ingested_flag):
-                        print("Lock acquired. Building new index into Elasticsearch...")
-                        docs = load_documents(data_metadata, enabled_sources)
-                        if not docs:
-                             print("Warning: No documents found to index.")
-                        else:
-                            from tqdm import tqdm
-                            
-                            node_parser = SentenceWindowNodeParser.from_defaults(
-                                window_size=3,
-                                window_metadata_key="window",
-                                original_text_metadata_key="original_text",
-                            )
-                            nodes = node_parser.get_nodes_from_documents(docs)
-                            
-                            print(f"Processing {len(nodes)} nodes...")
-                            for node in tqdm(nodes, desc="Setting node metadata"):
-                                node.excluded_embed_metadata_keys.extend(["window", "original_text"])
-
-                            # Ingest ALL nodes at once (not in loop!)
-                            print("Ingesting nodes into Elasticsearch...")
-                            _INDEX = VectorStoreIndex(
-                                nodes,
-                                storage_context=storage_context,
-                                embed_model=embed_model,
-                                show_progress=True,
-                                use_async=True,
-                                insert_batch_size=4096,
-                            )
-                            
-                            # Re-bind BM25 index wrapper to ensure it sees the update
-                            _INDEX_BM25 = VectorStoreIndex.from_vector_store(es_store_bm25, storage_context=storage_context_bm25, embed_model=embed_model)
-                            
-                            # Mark done
-                            with open(ingested_flag, 'w') as f: f.write("done")
-                            
-                            # Save Entities
-                            entities_path = os.path.join(persist_dir, "doc_entities.json")
-                            with open(entities_path, 'w') as f:
-                                json.dump({
-                                    "teams": list(_CANONICAL_TEAMS),
-                                    "players": list(_CANONICAL_PLAYERS)
-                                }, f)
-                            
-                            print(f"✅ Ingestion complete. Indexed {len(nodes)} nodes from {len(docs)} documents.")
-                    else:
-                        print("Index was built by another worker while waiting for lock. Skipping ingestion.")
-                        # Need to reload from store now that it's ready
-                        _INDEX = VectorStoreIndex.from_vector_store(es_store, storage_context=storage_context, embed_model=embed_model)
-                        _INDEX_BM25 = VectorStoreIndex.from_vector_store(es_store_bm25, storage_context=storage_context_bm25, embed_model=embed_model)
-
-                finally:
-                    fcntl.flock(lock_file, fcntl.LOCK_UN)
-        else:
-            print("Index marked as ingested. Using existing Elasticsearch index.")
-            # Load Entities
-            entities_path = os.path.join(persist_dir, "doc_entities.json")
-            if os.path.exists(entities_path):
-                try:
-                    with open(entities_path, 'r') as f:
-                        data = json.load(f)
-                        _CANONICAL_TEAMS.update(data.get("teams", []))
-                        _CANONICAL_PLAYERS.update(data.get("players", []))
-                    print(f"Loaded {len(_CANONICAL_TEAMS)} teams and {len(_CANONICAL_PLAYERS)} players from persistence.")
-                except Exception as e:
-                    print(f"Failed to load entities: {e}")
-            
-            if not _CANONICAL_TEAMS and not _CANONICAL_PLAYERS:
-                print("Entities not found or empty. Scanning metadata to rebuild...")
-                try:
-                    # Use data_metadata to access clips_metadata for each game
-                    for game_id, game_data in data_metadata.items():
-                        clips_metadata_path = game_data.get("clips_metadata")
-                        
-                        if clips_metadata_path and os.path.exists(clips_metadata_path):
-                            try:
-                                with open(clips_metadata_path, 'r') as f:
-                                    data = json.load(f)
-                                    
-                                    # Extract teams and players
-                                    teams = []
-                                    players = []
-                                    windows = data.get("windows", {})
-                                    teams_set = set()
-                                    players_set = set()
-                                    for win in windows.values():
-                                        win_meta = win.get("metadata", {})
-                                        teams_set.update(win_meta.get("teams", {}).values())
-                                        players_set.update(win_meta.get("players", {}).values())
-                                    teams = list(teams_set)
-                                    players = list(players_set)
-                                    
-                                    if not teams: teams = list(data.get("teams", {}).values())
-                                    if not players: players = list(data.get("players", {}).values())
-                                    
-                                    for t in teams: _CANONICAL_TEAMS.add(t)
-                                    for p in players: _CANONICAL_PLAYERS.add(p)
-                            except: pass
-                    
-                    # Save results
-                    if _CANONICAL_TEAMS or _CANONICAL_PLAYERS:
-                         if not os.path.exists(persist_dir): os.makedirs(persist_dir, exist_ok=True)
-                         with open(entities_path, 'w') as f:
-                            json.dump({
-                                "teams": list(_CANONICAL_TEAMS),
-                                "players": list(_CANONICAL_PLAYERS)
-                            }, f)
-                         print(f"Rebuilt entities: {len(_CANONICAL_TEAMS)} teams, {len(_CANONICAL_PLAYERS)} players.")
-                except Exception as e:
-                    print(f"Failed to rebuild entities: {e}")
-            
-            # Ensure _INDEX is definitely set (it was set above, but let's double check logic)
-            if _INDEX is None:
-                print("Error: _INDEX is None after loading from existing store.")
+        # Load entities from persistence
+        entities_path = os.path.join(persist_dir, "doc_entities.json")
+        if os.path.exists(entities_path):
+            try:
+                with open(entities_path, 'r') as f:
+                    data = json.load(f)
+                    _CANONICAL_TEAMS.update(data.get("teams", []))
+                    _CANONICAL_PLAYERS.update(data.get("players", []))
+                print(f"Loaded {len(_CANONICAL_TEAMS)} teams and {len(_CANONICAL_PLAYERS)} players.")
+            except Exception as e:
+                print(f"Failed to load entities: {e}")
 
     except Exception as e:
         print(f"Error connecting to Elasticsearch: {e}")

@@ -1,150 +1,124 @@
+#!/usr/bin/env python3
+"""Extract InternVideo2 clip embeddings for T9 games.
+
+Reads clip paths from metadata.json, runs each clip through InternVideo2,
+and writes per-clip .npy embedding files. Resumes automatically by skipping
+clips whose .npy already exists.
+
+Requires a GPU with the InternVideo2 checkpoint.
+
+Usage:
+  python3 tools/extract_embeddings.py --sport basketball
+  python3 tools/extract_embeddings.py --sport hockey --batch-size 16 --limit 100
+  python3 tools/extract_embeddings.py --sport soccer --game-ids 5234828 5234880
+"""
 import argparse
-import os
 import json
-import glob
-import numpy as np
+import os
 import sys
 
-# Ensure tools package is in path
+import numpy as np
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
 from tools.embedding_utils import get_embedding_model
-from _t9_root import T9_ROOT_NOT_SET, resolve_t9_data_root as _resolve_t9_root
+from _t9_root import require_t9_data_root
 
-# Configuration — defaults resolve to ${T9_ROOT}/data and ${T9_ROOT}/embeds/videos.
-# T9_ROOT defaults to <repo>/data/t9/. Override via env var T9_ROOT.
-# The presence-check is deferred to main() so this module imports cleanly
-# even before `svi-bench download --tasks t9` has populated the data dir.
-
-_T9_ROOT = _resolve_t9_root()
-DATA_PATH = os.path.join(_T9_ROOT, "data") if _T9_ROOT != T9_ROOT_NOT_SET else None
-OUTPUT_PATH = os.path.join(_T9_ROOT, "embeds", "videos") if _T9_ROOT != T9_ROOT_NOT_SET else None
-DATASET_NAME = "basketball"
-BATCH_SIZE = 8
-LIMIT = None
-GAME_IDS = None # Set to None to process all games, or list of strings ["401738"]
 
 def main():
-    if _T9_ROOT == T9_ROOT_NOT_SET:
-        raise FileNotFoundError(
-            "T9 data root not found. Set the T9_ROOT env var or run "
-            "`svi-bench download --tasks t9` to populate <repo>/data/t9/."
-        )
-    # DATA_PATH is always absolute (built from _T9_ROOT above).
-    data_path = f"{DATA_PATH}/{DATASET_NAME}"
-    print(f"Data Path: {data_path}")
-    
-    # Resolve Output Path
-    out_dir = f"{OUTPUT_PATH}/{DATASET_NAME}"
+    p = argparse.ArgumentParser(description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--sport", required=True, help="Sport name (basketball, hockey, soccer)")
+    p.add_argument("--batch-size", type=int, default=8, help="Clips per batch (default: 8)")
+    p.add_argument("--limit", type=int, default=None, help="Max clips to process (default: all)")
+    p.add_argument("--game-ids", nargs="+", default=None, help="Only process these game IDs")
+    p.add_argument("--t9-root", default=None, help="T9 data root (default: T9_ROOT env var)")
+    args = p.parse_args()
+
+    if args.t9_root:
+        os.environ["T9_ROOT"] = args.t9_root
+    t9_root = require_t9_data_root()
+
+    data_path = os.path.join(t9_root, "data", args.sport)
+    out_dir = os.path.join(t9_root, "embeds", "videos", args.sport)
     os.makedirs(out_dir, exist_ok=True)
 
-    print("Reading metadata.json...")
     metadata_file = os.path.join(data_path, "metadata.json")
     if not os.path.exists(metadata_file):
         print(f"Error: metadata.json not found at {metadata_file}")
-        return
-    try:
-        with open(metadata_file, 'r') as f:
-            metadata = json.load(f)
-    except Exception as e:
-        print(f"Error loading metadata.json: {e}")
-        return
+        return 1
+
+    with open(metadata_file, 'r') as f:
+        metadata = json.load(f)
+    print(f"Found {len(metadata)} games in metadata.")
+
+    if args.game_ids:
+        print(f"Filtering for games: {args.game_ids}")
+
+    print("Initializing InternVideo2 embedding model...")
+    embed_model = get_embedding_model("internvideo2")
 
     all_tasks = []
     seen_ids = set()
-    print(f"Found {len(metadata)} games in metadata.")
-    target_games = GAME_IDS
-    if target_games:
-        print(f"Filtering for games: {target_games}")
-
-    print(f"Initializing Embedding Model (InternVideo2)...")
-    try:
-        embed_model = get_embedding_model("internvideo2")
-    except Exception as e:
-        print(f"Failed to load model: {e}")
-        return
-
     for game_id, game_data in metadata.items():
-        if target_games and game_id not in target_games:
+        if args.game_ids and game_id not in args.game_ids:
             continue
-            
+
         clip_paths_rel = game_data.get("clip_paths")
         if not clip_paths_rel:
-            print(f"Warning: No clip_paths found for game {game_id}")
             continue
-            
-        # Resolve relative path
+
         clip_paths_file = os.path.join(data_path, clip_paths_rel)
-        
         if not os.path.exists(clip_paths_file):
-             print(f"Warning: clip_paths file not found: {clip_paths_file}")
-             continue
-             
-        try:
-            with open(clip_paths_file, 'r') as fp:
-                clips_map = json.load(fp)
-                # data format: {"clip_id": "abs_path" or "rel_path"}.
-                # Values may be absolute or relative to the clips/ directory.
-                clip_dir = os.path.dirname(clip_paths_file)
+            continue
 
-                for cid, cpath in clips_map.items():
-                    if cid in seen_ids: continue
+        with open(clip_paths_file, 'r') as fp:
+            clips_map = json.load(fp)
+            clip_dir = os.path.dirname(clip_paths_file)
 
-                    if not os.path.isabs(cpath):
-                        cpath = os.path.join(clip_dir, cpath)
-
-                    out_path = os.path.join(out_dir, f"{cid}.npy")
-
-                    # Skip if already exists
-                    if os.path.exists(out_path):
-                         seen_ids.add(cid)
-                         continue
-
-                    all_tasks.append((cid, cpath, out_path))
+            for cid, cpath in clips_map.items():
+                if cid in seen_ids:
+                    continue
+                if not os.path.isabs(cpath):
+                    cpath = os.path.join(clip_dir, cpath)
+                out_path = os.path.join(out_dir, f"{cid}.npy")
+                if os.path.exists(out_path):
                     seen_ids.add(cid)
-                    
+                    continue
+                all_tasks.append((cid, cpath, out_path))
+                seen_ids.add(cid)
+
+    print(f"Found {len(all_tasks)} clips to extract.")
+    if args.limit:
+        all_tasks = all_tasks[:args.limit]
+        print(f"Limited to first {args.limit} clips.")
+
+    if not all_tasks:
+        print("Nothing to process.")
+        return 0
+
+    total_batches = (len(all_tasks) + args.batch_size - 1) // args.batch_size
+    print(f"Extracting {len(all_tasks)} clips in {total_batches} batches...")
+
+    from tqdm import tqdm
+    for i in tqdm(range(0, len(all_tasks), args.batch_size), desc="Extracting"):
+        batch = all_tasks[i:i + args.batch_size]
+        paths = [b[1] for b in batch]
+        out_paths = [b[2] for b in batch]
+        try:
+            embeddings = embed_model.get_video_embeddings(paths)
+            for j, emb in enumerate(embeddings):
+                np.save(out_paths[j], np.array(emb))
         except Exception as e:
-            print(f"Error processing {clip_paths_file}: {e}")
-
-    print(f"Found {len(all_tasks)} clips to extract from metadata.")
-    if LIMIT:
-        all_tasks = all_tasks[:LIMIT]
-        print(f"Limiting to first {LIMIT} tasks.")
-
-    # Batch Processing
-    batch_size = BATCH_SIZE
-    total_batches = (len(all_tasks) + batch_size - 1) // batch_size
-    
-    if total_batches > 0:
-        print(f"Starting extraction for {len(all_tasks)} clips in {total_batches} batches...")
-        
-        from tqdm import tqdm
-        for i in tqdm(range(0, len(all_tasks), batch_size), desc="Extracting Embeddings"):
-            batch = all_tasks[i:i+batch_size]
-            
             cids = [b[0] for b in batch]
-            paths = [b[1] for b in batch]
-            out_paths = [b[2] for b in batch]
-            
-            try:
-                # get_video_embeddings is a custom method on InternVideo2Embedding
-                embeddings = embed_model.get_video_embeddings(paths)
-                
-                for j, emb in enumerate(embeddings):
-                    if j < len(out_paths):
-                        np.save(out_paths[j], np.array(emb))
-                    else:
-                        print(f"Warning: More embeddings returned than paths?")
-            except Exception as e:
-                print(f"Batch failed ({cids}): {e}")
+            print(f"Batch failed ({cids}): {e}")
 
-    else:
-        print("No tasks to process.")
-        
     print("Done.")
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

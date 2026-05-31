@@ -214,70 +214,13 @@ def init_video_database(persist_dir: str, data_metadata: Dict,
         _VIDEO_INDEX_BM25 = VectorStoreIndex.from_vector_store(es_store_bm25, storage_context=storage_context_bm25,
                                                                embed_model=embed_model)
         
-        # Check emptiness — primary signal: query ES directly. Secondary
-        # signal: per-persist-dir flag file (kept for offline scenarios).
-        es_already_populated = _es_index_populated(es_url, index_name)
-        ingested_flag = os.path.join(persist_dir, "ingested.flag")
-
-        if not es_already_populated and not os.path.exists(ingested_flag):
-            # Use a lock file to prevent race conditions among multiple workers
-            lock_file_path = os.path.join(persist_dir, "ingestion.lock")
-            if not os.path.exists(persist_dir): os.makedirs(persist_dir, exist_ok=True)
-            
-            import fcntl
-            import time
-            
-            print(f"Acquiring lock for video ingestion ({embedding_source}) at {lock_file_path}...")
-            # Note: We use 'a+' to create if not exists, but we need write mode for flock
-            # 'w' truncates, which is fine for a lock file derived from persist_dir
-            with open(lock_file_path, 'w') as lock_file:
-                try:
-                    # Blocking exclusive lock
-                    fcntl.flock(lock_file, fcntl.LOCK_EX)
-                    
-                    # Check flag again after acquiring lock (double-checked locking)
-                    if not os.path.exists(ingested_flag):
-                        print(f"Lock acquired. Index not marked as ingested for {embedding_source}. Loading data...")
-                        
-                        # Load Nodes based on source
-                        nodes = []
-                        try:
-                            if embedding_source == "video":
-                                nodes = _load_video_nodes_visual(data_metadata, clip_embeddings_base_path)
-                            else:
-                                nodes = _load_video_nodes_caption(data_metadata)
-                                 
-                            if nodes:
-                                print(f"Ingesting {len(nodes)} clips into ES ({embedding_source})...")
-                                _VIDEO_INDEX = VectorStoreIndex(nodes, storage_context=storage_context, embed_model=embed_model)
-                                
-                                # Re-bind BM25 index wrapper to ensure it sees the update (if shared index)
-                                _VIDEO_INDEX_BM25 = VectorStoreIndex.from_vector_store(es_store_bm25, storage_context=storage_context_bm25, embed_model=embed_model)
-
-                                if not os.path.exists(persist_dir): os.makedirs(persist_dir, exist_ok=True)
-                                with open(ingested_flag, 'w') as f: f.write("done")
-                                _save_entities(persist_dir)
-                                print("Ingestion complete.")
-                            else:
-                                print("No nodes found to ingest.")
-                    
-                        except Exception as e:
-                            print(f"Error processing metadata: {e}")
-                            import traceback
-                            traceback.print_exc()
-                    else:
-                        print(f"Index for {embedding_source} was built by another worker. Skipping ingestion.")
-                        # Reload/Rebind to ensure we have the latest view
-                        _VIDEO_INDEX = VectorStoreIndex.from_vector_store(es_store, storage_context=storage_context, embed_model=embed_model)
-                        _VIDEO_INDEX_BM25 = VectorStoreIndex.from_vector_store(es_store_bm25, storage_context=storage_context_bm25, embed_model=embed_model)
-                        _load_entities(persist_dir)
-
-                finally:
-                    fcntl.flock(lock_file, fcntl.LOCK_UN)
-
-        else:
-            print("Index marked as ingested. Using existing.")
-            _load_entities(persist_dir)
+        if not _es_index_populated(es_url, index_name):
+            raise RuntimeError(
+                f"Elasticsearch index '{index_name}' is empty. "
+                f"Run 'python3 scripts/ingest.py' to populate it before starting the agent."
+            )
+        print(f"Using existing Elasticsearch index: {index_name}")
+        _load_entities(persist_dir)
 
     except Exception as e:
         import traceback

@@ -210,7 +210,7 @@ def section_hn_bin_analysis(results):
     lines = ["\n  4. HARD NEGATIVE ANALYSIS (per hn_bin)",
              "  " + "=" * 76]
     if not any('per_hn_bin' in results[s] for s in SPORTS):
-        lines.append("  [NO DATA] per_hn_bin not found. Re-run evaluate_retrieval.py first.")
+        lines.append("  [NO DATA] per_hn_bin not found. Re-run evaluate.py first.")
         return '\n'.join(lines)
 
     headers = (['HN Bin', 'n']

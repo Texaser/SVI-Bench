@@ -34,7 +34,7 @@ SPORTS = ["basketball", "hockey", "soccer"]
 #                       user-trained models that bring their own embeddings.
 #
 # Adding a user-trained model: pick a suffix, place your embeddings at
-# ``data/t3/embeds/embeds_{split}_{sport}_<suffix>.pt``, then register here:
+# ``data/T3/embeds/embeds_{split}_{sport}_<suffix>.pt``, then register here:
 #
 #     "my-model-v3": {"suffix": "my-suffix"}        # BYO embeddings
 #

@@ -174,7 +174,7 @@ t9 = [
     "requests>=2.30",
     "tiktoken>=0.7",
     # RAG layer used by the document + video tools
-    "llama-index-core>=0.10",
+    "llama-index-core>=0.14,<0.15",
     "llama-index-vector-stores-elasticsearch>=0.2",
     "llama-index-embeddings-huggingface>=0.2",
     # InternVideo2 embedding server (tools/serve_internvideo2.py, launched by start_services.py)

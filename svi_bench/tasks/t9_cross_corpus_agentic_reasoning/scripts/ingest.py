@@ -1,38 +1,130 @@
 #!/usr/bin/env python3
 """Pre-populate Elasticsearch indices for T9 before running experiments.
 
-Ingests game documents and video clip embeddings into Elasticsearch so that
-the agent's search tools can query them. Run this once after downloading
-and extracting the data; subsequent run_agent.py / run_batch.py starts will
-detect the populated indices and skip re-ingestion.
+Loads pre-computed embedding nodes from disk and bulk-inserts them into
+Elasticsearch. No GPU or embedding model needed — all embeddings are
+pre-computed and shipped with the dataset.
+
+Three index types per sport:
+  - document_index_{sport}_m3_all      (document search)
+  - video_index_{sport}_video_internvideo2_all  (video search by visual embedding)
+  - video_index_{sport}_caption_m3_all  (video search by caption embedding)
 
 Requires:
   - Elasticsearch running (see README for setup)
-  - T9 data downloaded and extracted (metadata.json, game dirs, embeddings)
+  - T9 data downloaded and extracted
 
 Usage:
-  # Ingest all sports (default)
   python3 scripts/ingest.py
-
-  # Ingest one sport
-  python3 scripts/ingest.py --sport basketball
-
-  # Custom ES host
   python3 scripts/ingest.py --es-url http://my-es-host:9200
 """
 from __future__ import annotations
 
 import argparse
+import logging
 import os
+import pickle
+import shutil
 import sys
 import time
-import yaml
+import warnings
+
+warnings.filterwarnings("ignore", message="Unclosed client session")
+warnings.filterwarnings("ignore", message="Unclosed connector")
+warnings.filterwarnings("ignore", category=ResourceWarning)
 
 TASK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TASK_DIR)
 
 from _t9_root import require_t9_data_root
 from run_agent import load_data_metadata, load_config
+
+from llama_index.core import StorageContext, VectorStoreIndex
+from llama_index.core.embeddings import MockEmbedding
+from llama_index.vector_stores.elasticsearch import (
+    AsyncBM25Strategy,
+    AsyncDenseVectorStrategy,
+    ElasticsearchStore,
+)
+
+logging.getLogger("llama_index.core.embeddings.mock_embed_model").setLevel(logging.CRITICAL)
+logging.getLogger("llama_index").setLevel(logging.WARNING)
+
+
+def _es_index_populated(es_url: str, index_name: str) -> bool:
+    try:
+        from elasticsearch import Elasticsearch
+        client = Elasticsearch(es_url)
+        try:
+            if not client.indices.exists(index=index_name):
+                return False
+            return client.count(index=index_name).get("count", 0) > 0
+        finally:
+            try:
+                client.close()
+            except Exception:
+                pass
+    except Exception:
+        return False
+
+
+def ingest_precomputed_nodes(
+    nodes_pkl: str,
+    index_name: str,
+    es_url: str,
+    embed_dim: int,
+    persist_dir: str,
+    flag_name: str,
+    entities_src: str | None = None,
+    entities_dst_name: str = "doc_entities.json",
+    batch_size: int = 4096,
+) -> bool:
+    if _es_index_populated(es_url, index_name):
+        print(f"  Index '{index_name}' already populated — skipping.")
+        return True
+
+    if not os.path.exists(nodes_pkl):
+        print(f"  ERROR: pre-computed nodes not found: {nodes_pkl}")
+        return False
+
+    print(f"  Loading nodes from {os.path.basename(nodes_pkl)} ...")
+    with open(nodes_pkl, "rb") as f:
+        nodes = pickle.load(f)
+    print(f"  Loaded {len(nodes)} nodes.")
+
+    missing = sum(1 for n in nodes if n.embedding is None)
+    if missing:
+        print(f"  WARNING: {missing}/{len(nodes)} nodes missing embeddings.")
+
+    es_store = ElasticsearchStore(
+        es_url=es_url,
+        index_name=index_name,
+        dim=embed_dim,
+        retrieval_strategy=AsyncDenseVectorStrategy(hybrid=False, rrf=False),
+    )
+    storage_context = StorageContext.from_defaults(vector_store=es_store)
+    noop_embed = MockEmbedding(embed_dim=embed_dim)
+
+    print(f"  Ingesting into '{index_name}' (batch_size={batch_size}) ...")
+    t0 = time.time()
+    VectorStoreIndex(
+        nodes,
+        storage_context=storage_context,
+        embed_model=noop_embed,
+        show_progress=True,
+        use_async=True,
+        insert_batch_size=batch_size,
+    )
+    print(f"  Ingested in {time.time() - t0:.1f}s.")
+
+    os.makedirs(persist_dir, exist_ok=True)
+    with open(os.path.join(persist_dir, flag_name), "w") as f:
+        f.write("done")
+
+    if entities_src and os.path.exists(entities_src):
+        shutil.copy2(entities_src, os.path.join(persist_dir, entities_dst_name))
+
+    return True
 
 
 def main() -> int:
@@ -44,124 +136,138 @@ def main() -> int:
                    help="T9 data root (default: T9_ROOT env var or auto-detected)")
     args = p.parse_args()
 
-    # Resolve T9 root
     if args.t9_root:
         os.environ["T9_ROOT"] = args.t9_root
     t9_root = require_t9_data_root()
     print(f"T9_ROOT: {t9_root}")
 
-    # Load configs
-    paths_cfg = load_config(os.path.join(TASK_DIR, "configs/paths.yaml"))
     hyper_cfg = load_config(os.path.join(TASK_DIR, "configs/hyperparameters.yaml"))
-    models_cfg = load_config(os.path.join(TASK_DIR, "configs/models.yaml"))
+    paths_cfg = load_config(os.path.join(TASK_DIR, "configs/paths.yaml"))
 
-    # Resolve paths to absolute
-    for key in ("data_base_path", "clip_embeddings_base_path",
-                "video_persist_dir", "document_persist_dir"):
+    for key in ("video_persist_dir", "document_persist_dir"):
         val = paths_cfg.get(key)
         if val and not os.path.isabs(val):
             paths_cfg[key] = os.path.join(t9_root, val)
 
-    # Determine sports
     sports = hyper_cfg.get("data", {}).get("enabled_datasets", [])
     if not sports:
-        print("ERROR: no sports configured. Pass --sport or check hyperparameters.yaml")
+        print("ERROR: no sports configured in hyperparameters.yaml")
         return 1
-    print(f"Sports: {sports}")
 
-    # ES URL
     es_url = (args.es_url
               or os.environ.get("T9_ES_URL")
               or hyper_cfg.get("elasticsearch", {}).get("url", "http://localhost:9200"))
+
+    print(f"Sports: {sports}")
     print(f"Elasticsearch: {es_url}")
 
-    # Enabled sources
-    enabled_sources = hyper_cfg.get("data", {}).get("enabled_sources", [])
-    print(f"Enabled sources: {enabled_sources}")
-
-    from tools import document_tools, video_tools
-
-    split = "all"
+    embeds_base = os.path.join(t9_root, "embeds")
     overall_t0 = time.time()
+    failures = 0
 
     for sport in sports:
         print(f"\n{'='*60}")
-        print(f"  Ingesting: {sport}")
+        print(f"  {sport}")
         print(f"{'='*60}")
 
-        # Load metadata
-        datasets_metadata = load_data_metadata(paths_cfg["data_base_path"], [sport])
+        split = "all"
+
+        # 1. Documents
+        print(f"\n--- Documents ({sport}) ---")
+        doc_pkl = os.path.join(embeds_base, "documents", sport, "all_nodes_embedded.pkl")
+        doc_entities = os.path.join(embeds_base, "documents", sport, "doc_entities.json")
+        doc_persist = f"{paths_cfg['document_persist_dir']}_{sport}_m3_{split}"
+        if not ingest_precomputed_nodes(
+            nodes_pkl=doc_pkl,
+            index_name=f"document_index_{sport}_m3_{split}",
+            es_url=es_url,
+            embed_dim=1024,
+            persist_dir=doc_persist,
+            flag_name="es_ingested.flag",
+            entities_src=doc_entities,
+            entities_dst_name="doc_entities.json",
+        ):
+            failures += 1
+
+        # 2. Video (InternVideo2 embeddings)
+        print(f"\n--- Videos ({sport}) ---")
+        video_persist = f"{paths_cfg['video_persist_dir']}_{sport}"
+        video_entities = os.path.join(embeds_base, "captions", sport, "entities.json")
+
+        # Video nodes are built from .npy files at runtime (fast, no model needed)
+        # Load metadata + build nodes + ingest
+        data_path = os.path.join(t9_root, "data")
+        datasets_metadata = load_data_metadata(data_path, [sport])
         all_data_metadata = {}
         for dataset, data_metadata in datasets_metadata.items():
             for item_id, item_data in data_metadata.items():
                 item_data["sport"] = dataset
                 all_data_metadata[item_id] = item_data
-        print(f"Loaded {len(all_data_metadata)} items for {sport}")
 
-        # Document ingestion
-        doc_emb_model = "m3"
-        doc_persist_dir = f"{paths_cfg['document_persist_dir']}_{sport}_{doc_emb_model}_{split}"
-        print(f"\n--- Documents ({sport}) ---")
-        print(f"Persist dir: {doc_persist_dir}")
-        t0 = time.time()
-        document_tools.init_document_database(
-            doc_persist_dir,
-            all_data_metadata,
-            enabled_sources=enabled_sources,
-            model_config={"embedding_model": doc_emb_model},
+        clip_embeddings_base = os.path.join(embeds_base, "videos")
+
+        if not _es_index_populated(es_url, f"video_index_{sport}_video_internvideo2_{split}"):
+            print(f"  Building video nodes from .npy files ...")
+            sys.path.insert(0, TASK_DIR)
+            from tools.video_tools import _load_video_nodes_visual
+
+            nodes = _load_video_nodes_visual(all_data_metadata, clip_embeddings_base)
+            if nodes:
+                print(f"  Loaded {len(nodes)} video nodes.")
+                es_store = ElasticsearchStore(
+                    es_url=es_url,
+                    index_name=f"video_index_{sport}_video_internvideo2_{split}",
+                    dim=512,
+                    retrieval_strategy=AsyncDenseVectorStrategy(hybrid=False, rrf=False),
+                )
+                storage_context = StorageContext.from_defaults(vector_store=es_store)
+                noop_embed = MockEmbedding(embed_dim=512)
+                t0 = time.time()
+                print(f"  Ingesting into 'video_index_{sport}_video_internvideo2_{split}' ...")
+                VectorStoreIndex(
+                    nodes,
+                    storage_context=storage_context,
+                    embed_model=noop_embed,
+                    show_progress=True,
+                    use_async=True,
+                    insert_batch_size=4096,
+                )
+                print(f"  Ingested in {time.time() - t0:.1f}s.")
+                os.makedirs(f"{video_persist}_video_internvideo2_{split}", exist_ok=True)
+                with open(os.path.join(f"{video_persist}_video_internvideo2_{split}", "ingested.flag"), "w") as f:
+                    f.write("done")
+                if os.path.exists(video_entities):
+                    shutil.copy2(video_entities, os.path.join(f"{video_persist}_video_internvideo2_{split}", "entities.json"))
+            else:
+                print(f"  WARNING: no video nodes found for {sport}")
+                failures += 1
+        else:
+            print(f"  Index already populated — skipping.")
+
+        # 3. Video captions (pre-computed M3 embeddings)
+        print(f"\n--- Video captions ({sport}) ---")
+        caption_pkl = os.path.join(embeds_base, "captions", sport, "all_nodes_embedded.pkl")
+        caption_entities = os.path.join(embeds_base, "captions", sport, "entities.json")
+        caption_persist = f"{video_persist}_caption_m3_{split}"
+        if not ingest_precomputed_nodes(
+            nodes_pkl=caption_pkl,
+            index_name=f"video_index_{sport}_caption_m3_{split}",
             es_url=es_url,
-            split=split,
-            sport=sport,
-        )
-        print(f"Documents done ({time.time() - t0:.1f}s)")
-
-        # Video ingestion (only if videos in enabled_sources)
-        if "videos" in enabled_sources:
-            video_emb_model = "internvideo2"
-            video_emb_source = "video"
-            video_persist_dir = f"{paths_cfg['video_persist_dir']}_{sport}"
-
-            tool_model_cfg = {"embedding_model": video_emb_model}
-            iv2_cfg = models_cfg.get("embedding_models", {}).get("internvideo2", {})
-            tool_model_cfg.update(iv2_cfg)
-
-            print(f"\n--- Videos ({sport}) ---")
-            print(f"Persist dir: {video_persist_dir}")
-            print(f"Embeddings: {paths_cfg['clip_embeddings_base_path']}")
-            t0 = time.time()
-            video_tools.init_video_database(
-                persist_dir=video_persist_dir,
-                data_metadata=all_data_metadata,
-                clip_embeddings_base_path=paths_cfg["clip_embeddings_base_path"],
-                model_config=tool_model_cfg,
-                embedding_source=video_emb_source,
-                es_url=es_url,
-                split=split,
-                sport=sport,
-            )
-            print(f"Videos done ({time.time() - t0:.1f}s)")
-
-            # Caption-based video index
-            caption_persist_dir = f"{paths_cfg['video_persist_dir']}_{sport}"
-            print(f"\n--- Video captions ({sport}) ---")
-            t0 = time.time()
-            video_tools.init_video_database(
-                persist_dir=caption_persist_dir,
-                data_metadata=all_data_metadata,
-                clip_embeddings_base_path=paths_cfg["clip_embeddings_base_path"],
-                model_config={"embedding_model": "m3"},
-                embedding_source="caption",
-                es_url=es_url,
-                split=split,
-                sport=sport,
-            )
-            print(f"Video captions done ({time.time() - t0:.1f}s)")
+            embed_dim=1024,
+            persist_dir=caption_persist,
+            flag_name="ingested.flag",
+            entities_src=caption_entities,
+            entities_dst_name="entities.json",
+        ):
+            failures += 1
 
     elapsed = time.time() - overall_t0
     print(f"\n{'='*60}")
     print(f"  All done ({elapsed / 60:.1f} min)")
+    if failures:
+        print(f"  {failures} index(es) failed — check output above.")
     print(f"{'='*60}")
-    return 0
+    return 0 if failures == 0 else 1
 
 
 if __name__ == "__main__":

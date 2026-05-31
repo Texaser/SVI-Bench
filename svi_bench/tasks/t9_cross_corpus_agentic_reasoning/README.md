@@ -43,8 +43,11 @@ data/T9/
 │   ├── basketball/
 │   ├── hockey/
 │   └── soccer/
-├── embeds/videos/
-├── storage/                    # Elasticsearch index
+├── embeds/
+│   ├── videos/{sport}/*.npy          # pre-computed InternVideo2 clip embeddings
+│   ├── documents/{sport}/*.pkl       # pre-computed M3 document embeddings
+│   └── captions/{sport}/*.pkl        # pre-computed M3 caption embeddings
+├── storage/                          # populated by scripts/ingest.py
 └── ckpts/
     ├── internvideo2_sports.pth                       # video search encoder
     └── llava_next_video_sports_100k_f16_full_ft_hf/  # video_qa tool model
@@ -57,12 +60,13 @@ Start Elasticsearch and ingest the data (one-time, shared by both modes below):
 ```bash
 elasticsearch-9.2.3/bin/elasticsearch -d
 python3 scripts/ingest.py
-curl http://localhost:9200/_cat/indices
+curl -X GET "localhost:9200/_cat/indices?v"
 ```
 
-Ingestion populates the document and video search indices. This runs once;
-subsequent starts of `run_agent.py` / `run_batch.py` will detect the
-populated indices and skip re-ingestion.
+Ingestion loads pre-computed embeddings into Elasticsearch (no GPU needed).
+This may take a while depending on your hardware. This runs once; subsequent starts
+of `run_agent.py` / `run_batch.py` will detect the populated indices and
+skip re-ingestion.
 
 Then bring up the tool and orchestrator services.
 

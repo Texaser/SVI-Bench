@@ -34,7 +34,13 @@ conda activate "${CONDA_ENV:-svi-bench-t9}"
 T9_TASK="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 T9_REPO="$(cd "$T9_TASK/../../.." && pwd)"
 export T9_TASK T9_REPO
-export T9_ROOT="$T9_REPO/data/t9"
+if [ -d "$T9_REPO/data/T9" ]; then
+    export T9_ROOT="$T9_REPO/data/T9"
+elif [ -d "$T9_REPO/data/t9" ]; then
+    export T9_ROOT="$T9_REPO/data/t9"
+else
+    echo "WARNING: could not find data/T9 or data/t9 under $T9_REPO" >&2
+fi
 cd "$T9_TASK"
 
 # Logging helper: `run <tag> <cmd...>` tees stdout+stderr to a per-tag logfile

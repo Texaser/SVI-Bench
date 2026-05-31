@@ -10,9 +10,10 @@ def __find_t3_root() -> str:
     here = __pathlib.Path(__file__).resolve()
     for parent in here.parents:
         if (parent / "pyproject.toml").exists():
-            candidate = parent / "data" / "t3"
-            if candidate.exists():
-                return str(candidate)
+            for _name in ("T3", "t3"):
+                candidate = parent / "data" / _name
+                if candidate.exists():
+                    return str(candidate)
             break
     return "T3_ROOT_NOT_SET"
 

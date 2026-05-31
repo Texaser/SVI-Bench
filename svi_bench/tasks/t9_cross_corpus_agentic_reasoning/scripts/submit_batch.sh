@@ -7,7 +7,7 @@
 #   QUESTIONS            — path to questions JSON (REQUIRED; e.g., $T9_ROOT/questions/hockey.json)
 #   SPORT                — basketball|hockey|soccer (default: unset = all sports)
 #   EXPERIMENT_NAME      — experiment name (default: t9_batch_<arch>_<timestamp>)
-#   T9_ROOT              — data root (auto-detected from <repo>/data/t9 if unset)
+#   T9_ROOT              — data root (auto-detected from <repo>/data/T9 if unset)
 #   T9_ES_URL            — Elasticsearch URL (default: http://localhost:9200)
 #   T9_TOOL_SERVER_HOST     — hostname of tool-services node (default: localhost)
 #   T9_AGENT_SERVER_HOST    — hostname of agent vLLM node (default: localhost)
@@ -27,10 +27,12 @@ if [ -z "${T9_ROOT:-}" ]; then
     while [ "$_dir" != "/" ] && [ ! -f "$_dir/pyproject.toml" ]; do
         _dir="$(dirname "$_dir")"
     done
-    if [ -d "$_dir/data/t9" ]; then
+    if [ -d "$_dir/data/T9" ]; then
+        T9_ROOT="$_dir/data/T9"
+    elif [ -d "$_dir/data/t9" ]; then
         T9_ROOT="$_dir/data/t9"
     else
-        echo "ERROR: T9_ROOT not set and could not auto-detect <repo>/data/t9." >&2
+        echo "ERROR: T9_ROOT not set and could not auto-detect <repo>/data/T9." >&2
         exit 1
     fi
 fi

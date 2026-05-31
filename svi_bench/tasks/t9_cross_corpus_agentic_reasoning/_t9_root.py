@@ -5,8 +5,8 @@ Used by ``run_agent.py``, ``run_batch.py``, ``tools/extract_embeddings.py``
 
 Resolution order:
   1. ``T9_ROOT`` env var, if set.
-  2. Walk up from this file to find ``pyproject.toml``; if a ``data/t9/``
-     dir lives next to it, use that.
+  2. Walk up from this file to find ``pyproject.toml``; if a ``data/T9/``
+     (or ``data/t9/``) dir lives next to it, use that.
   3. Sentinel ``T9_ROOT_NOT_SET`` so module import never fails — callers
      that actually need the dir should use ``require_t9_data_root()``
      which raises a clear error.
@@ -42,7 +42,7 @@ def require_t9_data_root() -> str:
     if root == T9_ROOT_NOT_SET:
         raise FileNotFoundError(
             "T9 data root not found. Either set the T9_ROOT env var or run "
-            "`svi-bench download --tasks t9` to populate <repo>/data/t9/."
+            "the download instructions in the T9 README to populate <repo>/data/T9/."
         )
     return root
 

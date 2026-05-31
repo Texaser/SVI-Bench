@@ -6,7 +6,9 @@ if [ -z "${T3_ROOT:-}" ]; then
     while [ "$_dir" != "/" ] && [ ! -f "$_dir/pyproject.toml" ]; do
         _dir="$(dirname "$_dir")"
     done
-    if [ -d "$_dir/data/t3" ]; then
+    if [ -d "$_dir/data/T3" ]; then
+        T3_ROOT="$_dir/data/T3"
+    elif [ -d "$_dir/data/t3" ]; then
         T3_ROOT="$_dir/data/t3"
     else
         echo "ERROR: T3_ROOT not set and could not auto-detect <repo>/data/t3." >&2

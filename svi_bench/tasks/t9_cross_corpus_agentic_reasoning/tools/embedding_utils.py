@@ -111,7 +111,7 @@ class InternVideo2Embedding(BaseEmbedding):
 
         # Resolve relative paths:
         #   - config_path: task-module-relative (vendored fork lives next to us)
-        #   - model_path: T9_ROOT-relative (downloaded ckpt under data/t9/ckpts/)
+        #   - model_path: T9_ROOT-relative (downloaded ckpt under data/T9/ckpts/)
         if config_path and not os.path.isabs(config_path):
             config_path = os.path.join(base_dir, config_path)
         if model_path and not os.path.isabs(model_path):

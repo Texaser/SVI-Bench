@@ -11,6 +11,7 @@ same-sport negatives. Metrics: R@K and median rank.
 ```bash
 conda create -n svi-bench-t3 python=3.11 -y && conda activate svi-bench-t3
 pip install -e ".[t3]"     # from the SVI-Bench/ repo root
+python -c "from transformers import BertTokenizer; BertTokenizer.from_pretrained('bert-large-uncased')"
 ```
 
 ---
