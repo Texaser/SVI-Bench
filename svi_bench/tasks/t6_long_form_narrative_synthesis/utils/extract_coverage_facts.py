@@ -30,7 +30,7 @@ from tqdm import tqdm
 # ==========================================
 # CONFIGURATION
 # ==========================================
-MODEL = "gpt-4o"
+MODEL = "gpt-5-2025-08-07"
 QUESTION_TYPES = ["Q1", "Q2", "Q3", "Q4", "Q5"]
 
 INPUT_REPORT_FILE = "ground_truth_report.txt"

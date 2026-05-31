@@ -351,6 +351,17 @@ def main():
         json.dump(results, f, indent=2, ensure_ascii=False)
     print(f"\nResults saved to {args.output}")
 
+    # Print summary
+    if "overall" in results["summary"]:
+        o = results["summary"]["overall"]
+        print(f"\n{'=' * 40}")
+        print("OVERALL SCORES:")
+        print(f"  Stylistic & Persona Adherence: {o['avg_stylistic']:.2f}")
+        print(f"  Narrative Coherence & Quality: {o['avg_narrative']:.2f}")
+        print(f"  Final Overall Score: {o['avg_final']:.2f}")
+        print(f"  Samples Evaluated: {o['num_samples']}")
+        print("=" * 40)
+
 
 if __name__ == "__main__":
     main()

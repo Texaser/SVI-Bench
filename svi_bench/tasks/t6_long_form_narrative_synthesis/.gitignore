@@ -1,3 +1,6 @@
+# Dataset (lives on HuggingFace)
+dataset/
+
 # Unused samples (removed from train/test lists)
 dataset_unused/
 

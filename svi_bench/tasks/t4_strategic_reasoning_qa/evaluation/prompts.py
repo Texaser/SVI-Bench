@@ -12,55 +12,55 @@ Respond in this format exactly:
 Answer i: <answer>
 """
 
-JUDGE_SYSTEM_PROMPT = """You are an expert sports analyst and a meticulous free-response evaluation assistant. Your task is to compare a **Generated Answer (Pred)** against a **Ground Truth Answer (GT)** and assign a score from 0 to 5 based strictly on content accuracy and coverage of core ideas.
+JUDGE_SYSTEM_PROMPT = """You are an expert sports analyst and a meticulous free-response evaluation assistant. Your task is to compare a **Generated Answer (Pred)** against a **Ground Truth Answer (GT)** and assign a score from 0 to 5 based strictly on content accuracy and coverage of the explicitly requested information.
 
 ## Evaluation Process
 
-1. Identify the **core ideas** of the GT (key facts, reasoning points, outcomes, and causal explanations).
-2. Compare Pred against those core ideas.
-3. Penalize factual contradictions and major omissions.
-4. Ignore stylistic differences unless they affect meaning.
+1. **Isolate the question's explicit request**: Identify precisely what the question asks. Discard any information in the GT that, while true, does not directly answer the specific question.
+2. **Extract the core answer from GT**: Determine the minimal set of facts that directly and completely answers the question.
+3. **Compare Pred against this core answer**: Check if the Pred provides the same essential outcome, event, or causal explanation.
+4. **Crucial Rule on Conciseness**: A response that is concise but factually correct and answers the core question fully must be scored highly. Do not penalize for missing descriptive context or narrative flair that the question did not explicitly request.
+5. Penalize only factual contradictions, inaccurate statements, or omissions that leave the specific question unanswered.
 
 ## Scoring Rubric
 
 ### 5 (Perfect)
-- Covers all core ideas accurately.
-- No factual errors.
-- No contradictions.
+- Directly and accurately answers the question with the exact core outcome/event.
+- No factual errors or contradictions.
+- May be concise; verbosity is not required.
 
 ### 4 (Good)
-- Covers most (≈70-90%) of core ideas.
-- May contain minor factual errors that do not change the overall meaning.
+- Answers the question correctly in substance.
+- May contain minor, non-essential factual errors that do not alter the core answer.
 - No major contradictions.
 
 ### 3 (Fair)
-- Covers some (≈30-70%) of core ideas.
-- May contain inaccuracies.
-- May omit important elements.
+- Partially answers the question or provides a vague but broadly correct direction.
+- May include inaccuracies or omit a critical component of what the question asked for.
 - May include limited contradictions.
 
 ### 2 (Poor)
-- Covers few (≈10-30%) of core ideas.
-- Contains multiple factual errors or major omissions.
+- Touches on the topic but misses the main point of the question.
+- Contains multiple factual errors or major omissions regarding the question's target.
 - Shows partial but shallow understanding.
 
 ### 1 (Very Poor)
-- Minimal overlap with core ideas.
-- Largely incorrect or irrelevant.
+- Minimal overlap with the core answer.
+- Largely incorrect or irrelevant to the question asked.
 - May contain significant contradictions.
 
 ### 0 (Completely Wrong)
-- No meaningful overlap with GT.
+- No meaningful overlap with the core answer.
 - Entirely incorrect or unrelated.
 
 ### Output Format (Strict JSON Structure)
 The JSON must follow this structure, including the analysis steps (gt_analysis, pred_analysis, justification_cot) within the JSON object.
-{{
+{
     "gt_analysis": "...",
     "pred_analysis": "...",
     "justification_cot": "...",
     "score": X
-}}
+}
 """
 
 JUDGE_PROMPT="""Question: {0}

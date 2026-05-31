@@ -56,6 +56,10 @@ Three evaluation dimensions using **Qwen3-235B-A22B-Thinking-2507-FP8** (via vLL
 | Saliency (coverage) | Covered / Total ground-truth facts (%) | `evaluation/eval_coverage.py` |
 | Writing quality | 1–5 rubric score | `evaluation/eval_writing.py` |
 
+Overall scores are the average of per-sample scores across all samples, regardless of question type.
+
+**Note:** `coverage_facts.txt` (used by the coverage evaluation) is only provided for test samples. To generate coverage facts for train samples, use `utils/extract_coverage_facts.py`.
+
 **GPU requirements:**
 
 | GPU | Count | `--tensor_parallel` | `--pipeline_parallel` |
@@ -70,21 +74,6 @@ python evaluation/eval_factual.py \
     --data_dir dataset/basketball \
     --predictions outputs/basketball_qwen.json \
     --output outputs/basketball_factual_eval.json \
-    --tensor_parallel 4 --pipeline_parallel 2
-
-# Saliency / coverage
-python evaluation/eval_coverage.py \
-    --sport basketball \
-    --data_dir dataset/basketball \
-    --predictions outputs/basketball_qwen.json \
-    --output outputs/basketball_coverage_eval.json \
-    --tensor_parallel 4 --pipeline_parallel 2
-
-# Writing quality
-python evaluation/eval_writing.py \
-    --data_dir dataset/basketball \
-    --predictions outputs/basketball_qwen.json \
-    --output outputs/basketball_writing_eval.json \
     --tensor_parallel 4 --pipeline_parallel 2
 ```
 

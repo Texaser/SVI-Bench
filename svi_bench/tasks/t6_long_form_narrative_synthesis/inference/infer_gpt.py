@@ -139,7 +139,7 @@ def main():
     parser.add_argument("--data_dir", required=True, help="Path to sport data dir")
     parser.add_argument("--output", required=True, help="Output results JSON")
     parser.add_argument("--frames_dir", required=True, help="Base dir for pre-extracted frames")
-    parser.add_argument("--model", default="gpt-4o", help="GPT model name")
+    parser.add_argument("--model", default="gpt-5-2025-08-07", help="GPT model name")
     parser.add_argument("--max_frames", type=int, default=500)
     parser.add_argument("--image_detail", default="low", choices=["low", "high", "auto"])
     parser.add_argument("--max_retries", type=int, default=5)

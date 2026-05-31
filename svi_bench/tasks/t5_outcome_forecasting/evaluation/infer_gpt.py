@@ -235,7 +235,7 @@ def main():
     parser = argparse.ArgumentParser(description="GPT Forecasting Inference (Responses API)")
     parser.add_argument("--test_json", required=True, help="Path to test JSON file")
     parser.add_argument("--output", required=True, help="Path to output results JSON")
-    parser.add_argument("--model", default="gpt-4o", help="GPT model name")
+    parser.add_argument("--model", default="gpt-5-2025-08-07", help="GPT model name")
     parser.add_argument("--frame_fps", type=float, default=0.5,
                         help="Frame sampling rate for video (FPS)")
     parser.add_argument("--image_detail", default="low", choices=["low", "high", "auto"],

@@ -262,6 +262,31 @@ def main():
         json.dump(results, f, indent=2, ensure_ascii=False)
     print(f"\nResults saved to {args.output}")
 
+    # Print summary
+    print("\n" + "=" * 40)
+    single_qtypes = sorted(k for k in results["summary"] if not k.startswith("multi_") and k != "overall")
+    multi_qtypes = sorted(k for k in results["summary"] if k.startswith("multi_"))
+
+    if single_qtypes:
+        print("\nSingle-Game Performance:")
+        for q in single_qtypes:
+            s = results["summary"][q]
+            total_samples = len(test_list.get(q, test_list.get("single_" + q.replace("single_", ""), [])))
+            print(f"  {q}: {s['coverage_rate']:.4f} ({s['total_covered']}/{s['total_facts']} facts from {s['num_samples']}/{total_samples} samples)")
+
+    if multi_qtypes:
+        print("\nMulti-Game Performance:")
+        for q in multi_qtypes:
+            s = results["summary"][q]
+            total_samples = len(test_list.get(q, []))
+            print(f"  {q}: {s['coverage_rate']:.4f} ({s['total_covered']}/{s['total_facts']} facts from {s['num_samples']}/{total_samples} samples)")
+
+    if "overall" in results["summary"]:
+        o = results["summary"]["overall"]
+        print(f"\n{'=' * 40}")
+        print(f"OVERALL COVERAGE SCORE: {o['coverage_rate']:.4f}")
+    print("=" * 40)
+
 
 if __name__ == "__main__":
     main()

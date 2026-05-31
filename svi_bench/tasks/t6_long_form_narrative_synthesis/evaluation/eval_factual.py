@@ -194,11 +194,10 @@ def extract_score(response_text):
     m = re.search(r"Overall Score:\s*(\d+)\s*/\s*(\d+)", response_text)
     if m:
         return int(m.group(1)), int(m.group(2))
-    # Fallback: count Supported/Contradicted/Inconclusive lines
-    supported = len(re.findall(r"—\s*Supported", response_text, re.IGNORECASE))
-    contradicted = len(re.findall(r"—\s*Contradicted", response_text, re.IGNORECASE))
-    inconclusive = len(re.findall(r"—\s*Inconclusive", response_text, re.IGNORECASE))
-    total = supported + contradicted + inconclusive
+    # Fallback: count Supported/Contradicted lines (exclude Inconclusive)
+    supported = len(re.findall(r"—\s*\*{0,2}Supported", response_text, re.IGNORECASE))
+    contradicted = len(re.findall(r"—\s*\*{0,2}Contradicted", response_text, re.IGNORECASE))
+    total = supported + contradicted
     return (supported, total) if total > 0 else (None, None)
 
 
@@ -352,6 +351,34 @@ def main():
     with open(args.output, "w") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     print(f"\nResults saved to {args.output}")
+
+    # Print summary
+    print("\n" + "=" * 70)
+    single_qtypes = sorted(k for k in results["summary"] if k.startswith("single_") or (not k.startswith("multi_") and k != "overall"))
+    multi_qtypes = sorted(k for k in results["summary"] if k.startswith("multi_"))
+
+    if single_qtypes:
+        print("\nSingle-Game Performance:")
+        for q in single_qtypes:
+            s = results["summary"][q]
+            samples = results["per_sample"].get(q, [])
+            total_supported = sum(r.get("supported", 0) for r in samples if r.get("score") is not None)
+            total_facts = sum(r.get("total", 0) for r in samples if r.get("score") is not None)
+            print(f"  {q}: {s['avg_score']:.4f} ({s['num_samples']}/{len(test_list.get(q, test_list.get('single_' + q.replace('single_', ''), [])))} samples) | {total_supported}/{total_facts} facts supported")
+
+    if multi_qtypes:
+        print("\nMulti-Game Performance:")
+        for q in multi_qtypes:
+            s = results["summary"][q]
+            samples = results["per_sample"].get(q, [])
+            total_supported = sum(r.get("supported", 0) for r in samples if r.get("score") is not None)
+            total_facts = sum(r.get("total", 0) for r in samples if r.get("score") is not None)
+            print(f"  {q}: {s['avg_score']:.4f} ({s['num_samples']}/{len(test_list.get(q, []))} samples) | {total_supported}/{total_facts} facts supported")
+
+    if "overall" in results["summary"]:
+        o = results["summary"]["overall"]
+        print(f"\nOverall Average Score: {o['avg_score']:.4f}")
+    print("=" * 70)
 
 
 if __name__ == "__main__":
