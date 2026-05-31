@@ -86,9 +86,53 @@ t3 = [
     "termcolor>=2.4",
     "fvcore>=0.1.5",
 ]
-t4 = []
-t5 = ["scipy>=1.11"]
-t6 = []
+t4 = [
+    # Inference (model-specific; pick one)
+    "torch>=2.0,<2.10",
+    "transformers>=4.40",
+    "decord>=0.6",
+    "numpy>=1.24",
+    "Pillow>=10.0",
+    # Evaluation (LLM judge via OpenRouter)
+    "openai>=1.30",
+    "tqdm>=4.66",
+]
+t5 = [
+    # Inference
+    "torch>=2.0,<2.10",
+    "transformers>=4.40",
+    "peft>=0.11",
+    "decord>=0.6",
+    "numpy>=1.24",
+    "Pillow>=10.0",
+    "tqdm>=4.66",
+    # Calibration error / metrics
+    "scipy>=1.11",
+    # API-based models
+    "openai>=1.30",
+    "google-genai>=1.0",
+    # Training (ms-swift)
+    "ms-swift[llm]>=3.0",
+    "deepspeed>=0.13",
+]
+t6 = [
+    # Inference (Qwen3-VL)
+    "torch>=2.0,<2.10",
+    "transformers>=4.40",
+    "peft>=0.11",
+    "decord>=0.6",
+    "numpy>=1.24",
+    "Pillow>=10.0",
+    "tqdm>=4.66",
+    # Inference (GPT)
+    "openai>=1.30",
+    # Inference (Gemini)
+    "google-genai>=1.0",
+    # Evaluation (vLLM judge)
+    "vllm>=0.13",
+    # Utils (frame extraction, video compression)
+    "opencv-python>=4.5",
+]
 # T7 and T8 each bundle their own copy of the DiffSynth-Studio Wan2.1-Fun
 # slice (under svi_bench/tasks/<task>/diffsynth) for training/inference AND
 # the slim MixSort tracker slice (under svi_bench/tasks/<task>/eval) for
