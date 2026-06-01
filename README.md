@@ -64,3 +64,19 @@ Each task dir holds its own `train.sh` / `inference/` / `eval/` / `scripts/`
 
 Code is MIT (see [`LICENSE`](LICENSE)). Data is governed by the gated-access
 agreement on the HF dataset page.
+
+## Citation
+
+If you use SVI-Bench, please cite the benchmark:
+
+```
+@misc{pan2026svibenchdynamicmicroworldstrategic,
+      title={SVI-Bench: A Dynamic Microworld for Strategic Video Intelligence}, 
+      author={Yulu Pan and Han Yi and Seongsu Ha and Md Mohaiminul Islam and Benjamin Zhang and Lorenzo Torresani and Gedas Bertasius},
+      year={2026},
+      eprint={2605.31529},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2605.31529}, 
+}
+```
