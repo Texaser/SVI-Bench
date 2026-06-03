@@ -72,16 +72,16 @@ bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh
 Layout under `$SVI_BENCH_DATA/T8/basketball/`:
 
 ```
-clips/{bucket}/{ID}.mp4         game clip
-bboxes/{bucket}/{ID}.txt        per-frame player bboxes
-backgrounds/{bucket}/{ID}.mp4   player-removed background
+clips/{bucket}/{ID}.mp4         5.4 s game clip, 832×480, 15 fps, 81 frames
+bboxes/{bucket}/{ID}.txt        per-frame player bboxes (MOT-style, 10 cols)
+backgrounds/{bucket}/{ID}.mp4   player-removed background, same shape as clip
 splits/{train,val,test}.txt     one ID per line
 splits/test_{100,1000}.txt      100- and 1000-clip evaluation subsets
 captions.json                   ID -> {refined_instruction, player_specifications}
-qa_test/Q*.json                 goal-accuracy question bank
+qa_test/Q*.json                 goal-accuracy question bank (8 question types)
 ```
 
-`ID` is a zero-padded integer;
+`ID` is a zero-padded integer.
 
 Other artifacts pulled by `download_t7_t8.sh`:
 
@@ -89,6 +89,18 @@ Other artifacts pulled by `download_t7_t8.sh`:
   used by goal accuracy.
 - `T8/tracker_weights/` — YOLOX + MixFormer-ViT sports tracker (~1.2 GB),
   symlinked into `eval/pretrained/`.
+
+### `bboxes/{ID}.txt` format
+
+One detection per line, comma-separated:
+
+```
+frame_id,track_id,x1,y1,x2,y2,confidence,-1,-1,-1
+```
+
+Coordinates are normalized to `[0, 1]` (×width / ×height). The trailing
+`-1,-1,-1` are MOT placeholders (visibility, world-x, world-y) kept for
+format compatibility; the eval pipeline ignores them.
 
 ### `captions.json` schema
 
@@ -113,6 +125,51 @@ Top-level keys are sample IDs. Each value:
 - `refined_instruction` — goal instruction.
 - `player_specifications` — target player(s); 1–3 entries. Bbox
   coordinates are normalized to [0, 1] (×width / ×height).
+
+### `qa_test/Q*.json` schema
+
+Eight question types, one JSON file each, holding the LLM-as-a-judge
+multi-choice questions used by goal accuracy:
+
+```
+Q1_atomic_action_recognition.json
+Q3_contested_shot.json
+Q3_dribble_move.json
+Q3_drive_direction.json
+Q3_play_type.json
+Q3_shooting_hand.json
+Q3_shot_type.json
+Q4_spatial_position.json
+```
+
+Each file is a JSON list whose entries follow the LLaVA-OneVision
+conversation format:
+
+```json
+{
+  "id": "0069003_player0",
+  "video": "clips/93/0069003.mp4",
+  "start_bbox": {"x1": 0.576766, "y1": 0.578147, "x2": 0.644978, "y2": 0.818599},
+  "jersey_number": "#11",
+  "normalized_action": "3 PT Missed",
+  "conversations": [
+    {"from": "human", "value": "<image>\nWhat atomic action is being defended by the player in the red bounding box? ...\nA: Screen\nB: Free Throw Missed\nC: Rebound\nD: 3 PT Missed\nE: 2 PT Shot"},
+    {"from": "gpt",   "value": "D"}
+  ]
+}
+```
+
+- `id` — `<sample_id>_<suffix>` where `<suffix>` is the player slot
+  (`player0..2`) or the QA category (`shot_type`, `play_type`, ...).
+- `video` — clip path relative to `$SVI_BENCH_DATA/T8/basketball/`.
+- `start_bbox` — first-frame bbox of the target player, used by
+  `eval/prepare_qa_for_method.py` to render the red overlay on each
+  generated clip.
+- `jersey_number`, `normalized_action` — provenance metadata; the eval
+  worker doesn't read them, but they're handy for slicing results.
+- `conversations` — single-turn human / GPT pair. The human prompt
+  starts with the `<image>` placeholder (replaced with the video) and
+  ends with five `A:`–`E:` options; the GPT value is the gold letter.
 
 ## Usage
 

@@ -68,14 +68,28 @@ bash svi_bench/tasks/t7_motion_conditioned_generation/scripts/download_t7_t8.sh
 Layout under `$SVI_BENCH_DATA/T7/{basketball,soccer}/`:
 
 ```
-clips/{bucket}/{ID}.mp4         game clip
-bboxes/{bucket}/{ID}.txt        per-frame player bboxes
-backgrounds/{bucket}/{ID}.mp4   player-removed background
+clips/{bucket}/{ID}.mp4         5.4 s game clip, 832×480, 15 fps, 81 frames
+bboxes/{bucket}/{ID}.txt        per-frame player bboxes (MOT-style, 10 cols)
+backgrounds/{bucket}/{ID}.mp4   player-removed background, same shape as clip
 splits/{train,val,test}.txt     one ID per line
 splits/test_100.txt             100-clip evaluation subset
 ```
 
-`ID` is a zero-padded integer. 
+`ID` is a zero-padded integer. Per-task tracker weights are downloaded
+into `eval/pretrained/` (symlinked from `$SVI_BENCH_DATA/T7/tracker_weights/`,
+YOLOX + MixFormer-ViT, ~1.2 GB).
+
+### `bboxes/{ID}.txt` format
+
+One detection per line, comma-separated:
+
+```
+frame_id,track_id,x1,y1,x2,y2,confidence,-1,-1,-1
+```
+
+Coordinates are normalized to `[0, 1]` (×width / ×height). The trailing
+`-1,-1,-1` are MOT placeholders (visibility, world-x, world-y) kept for
+format compatibility; the eval pipeline ignores them.
 
 ## Usage
 
